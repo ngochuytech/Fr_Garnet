@@ -1,0 +1,11 @@
+--color-dusty-rose-50: #f7edee;
+--color-dusty-rose-100: #efdcdc;
+--color-dusty-rose-200: #dfb9b9;
+--color-dusty-rose-300: #d09596;
+--color-dusty-rose-400: #c07274;
+--color-dusty-rose-500: #b04f51;
+--color-dusty-rose-600: #8d3f41;
+--color-dusty-rose-700: #6a2f30;
+--color-dusty-rose-800: #462020;
+--color-dusty-rose-900: #231010;
+--color-dusty-rose-950: #190b0b;

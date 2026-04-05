@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
+@import "tailwindcss";
+
+:root {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+
+  /* Dusty Rose Palette */
+  --color-dusty-rose-50: #f7edee;
+  --color-dusty-rose-100: #efdcdc;
+  --color-dusty-rose-200: #dfb9b9;
+  --color-dusty-rose-300: #d09596;
+  --color-dusty-rose-400: #c07274;
+  --color-dusty-rose-500: #b04f51;
+  --color-dusty-rose-600: #8d3f41;
+  --color-dusty-rose-700: #6a2f30;
+  --color-dusty-rose-800: #462020;
+  --color-dusty-rose-900: #231010;
+  --color-dusty-rose-950: #190b0b;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  min-height: 100svh;
+}
