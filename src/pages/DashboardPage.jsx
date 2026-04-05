@@ -1,5 +1,5 @@
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import Header from '../components/Header';
 
 /**
  * Temporary Dashboard page shown after successful login/register.
