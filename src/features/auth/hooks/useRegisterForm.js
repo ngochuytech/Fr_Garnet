@@ -15,7 +15,6 @@ import {
  */
 export const useRegisterForm = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     fullname: '',
