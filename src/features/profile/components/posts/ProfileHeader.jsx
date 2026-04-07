@@ -13,7 +13,6 @@ const ProfileHeader = () => {
       {/* User Info */}
       <div className="flex-1 pt-2">
         <h1 className="text-3xl font-bold text-gray-900 mb-1">Huy Nguyễn</h1>
-        <button className="text-blue-600 hover:underline text-sm font-medium">Add profile credential</button>
         <div className="text-gray-500 text-sm mt-1">
           <span className="hover:underline cursor-pointer">0 followers</span>
           <span className="mx-1">&middot;</span>

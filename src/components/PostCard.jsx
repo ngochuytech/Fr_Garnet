@@ -99,7 +99,11 @@ const PostCard = ({ author, avatarUrl, authorCredential, timeAgo, title, content
       {isCommentOpen && (
         <div className="mt-3 pt-2">
           {/* Add a comment input */}
-          <CommentInput avatarUrl="https://ui-avatars.com/api/?name=User&background=dfb9b9&color=6a2f30" placeholder="Add a comment..." bgClass="bg-gray-50/80" />
+          <CommentInput 
+            avatarUrl="https://ui-avatars.com/api/?name=User&background=dfb9b9&color=6a2f30" 
+            placeholder="Add a comment..." 
+            bgClass="bg-gray-50/80"
+            toggleComment={toggleComment} />
 
           {/* Comments Header */}
           <div className="flex items-center justify-between border-b border-gray-200 pb-2 mb-3">
@@ -151,7 +155,7 @@ const PostCard = ({ author, avatarUrl, authorCredential, timeAgo, title, content
                 {/* Active Reply Input for Comment 1 */}
                 {activeReplyId === 'comment1' && (
                   <div className="mt-2 ml-2">
-                    <CommentInput avatarUrl="https://ui-avatars.com/api/?name=User&background=dfb9b9&color=6a2f30" placeholder="Reply..." bgClass="bg-transparent" />
+                    <CommentInput avatarUrl="https://ui-avatars.com/api/?name=User&background=dfb9b9&color=6a2f30" placeholder="Reply..." bgClass="bg-transparent" toggleComment={toggleComment}/>
                   </div>
                 )}
 

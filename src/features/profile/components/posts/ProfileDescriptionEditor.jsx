@@ -21,6 +21,7 @@ const ProfileDescriptionEditor = () => {
     insertCode,
     insertMath,
     handleUpdate,
+    handleCancel,
     openEditor,
     handleEditorInput,
     applyFormat, } = useProfileDescriptionEditor();
@@ -42,7 +43,7 @@ const ProfileDescriptionEditor = () => {
               onInput={handleEditorInput}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              className="w-full min-h-[120px] max-h-[400px] p-3 text-[15px] text-gray-800 outline-none overflow-y-auto wysiwyg-editor break-words whitespace-pre-wrap mt-0.5"
+              className="w-full min-h-[120px] max-h-[400px] p-3 text-[15px] text-gray-800 outline-none overflow-y-auto wysiwyg-editor break-words break-all whitespace-pre-wrap mt-0.5"
             />
           </div>
 
@@ -101,7 +102,7 @@ const ProfileDescriptionEditor = () => {
                 Update
               </button>
               <button
-                onMouseDown={(e) => { e.preventDefault(); setIsEditingDesc(false); }}
+                onMouseDown={(e) => { e.preventDefault(); handleCancel(); }}
                 className="text-gray-500 hover:bg-gray-200/50 px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
               >
                 Cancel
@@ -116,20 +117,20 @@ const ProfileDescriptionEditor = () => {
         <div className="group">
           {description ? (
             <div className="relative">
-              <div
-                ref={contentRef}
-                className={`text-gray-800 text-[15px] whitespace-pre-wrap leading-relaxed wysiwyg-content transition-all duration-300 ${!isExpanded ? 'max-h-[400px] overflow-hidden' : ''}`}
-                dangerouslySetInnerHTML={{ __html: description }}
-              />
-              {showSeeMore && !isExpanded && (
-                <div className="absolute top-[350px] left-0 w-full h-[50px] bg-gradient-to-t from-white to-transparent pointer-events-none" />
-              )}
+                <div
+                  ref={contentRef}
+                  className= {`text-gray-800 text-[15px] whitespace-pre-wrap break-words break-all leading-relaxed wysiwyg-content w-full ${!isExpanded ? 'max-h-[300px] overflow-hidden' : ''}`}
+                  dangerouslySetInnerHTML={{ __html: description }}
+                />
+                {showSeeMore && !isExpanded && (
+                  <div className="absolute bottom-0 left-0 w-full h-[60px] bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+                )}
 
-              <div className="mt-2 flex items-center gap-4">
+              <div className="mt-2 flex items-center gap-4 relative z-10">
                 {showSeeMore && (
                   <button
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium focus:outline-none"
                   >
                     {isExpanded ? 'Thu gọn' : 'Xem thêm...'}
                   </button>
@@ -138,7 +139,7 @@ const ProfileDescriptionEditor = () => {
                   onClick={openEditor}
                   className="text-gray-500 text-sm cursor-pointer hover:underline inline-block opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  Edit description
+                  Chỉnh sửa
                 </p>
               </div>
             </div>

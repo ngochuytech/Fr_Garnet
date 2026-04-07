@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 
 export const useProfileDescriptionEditor = () => {
     const [isEditingDesc, setIsEditingDesc] = useState(false);
@@ -15,11 +16,22 @@ export const useProfileDescriptionEditor = () => {
 
     useEffect(() => {
         if (!isEditingDesc && description && contentRef.current) {
-            // Kiểm tra xem chiều cao nội dung có vượt quá 400px không
-            const isOverflowing = contentRef.current.scrollHeight > 400;
-            setShowSeeMore(isOverflowing);
+            // Kiểm tra xem chiều cao nội dung có vượt quá 300px không sau khi DOM render xong
+            setTimeout(() => {
+                if (contentRef.current) {
+                    const isOverflowing = contentRef.current.scrollHeight > 300;
+                    setShowSeeMore(isOverflowing);
+                }
+            }, 10);
         }
     }, [isEditingDesc, description, isExpanded]);
+
+    useEffect(() => {
+        if (description) {
+            const cleanHTML = DOMPurify.sanitize(description, { ALLOWED_TAGS: ['b', 'i', 'u', 'a', 'blockquote', 'pre', 'code', 'span'], ALLOWED_ATTR: ['href', 'target', 'rel'] });
+            setDescription(cleanHTML);
+        }
+    }, [description]);
 
     const getCharCount = (htmlString) => {
         if (!htmlString) return 0;
@@ -80,6 +92,14 @@ export const useProfileDescriptionEditor = () => {
             setDescription(editorRef.current.innerHTML);
         }
         setIsEditingDesc(false);
+        setIsExpanded(false);
+        setShowSeeMore(false);
+    };
+
+    const handleCancel = () => {
+        setIsEditingDesc(false);
+        setIsExpanded(false);
+        setShowSeeMore(false);
     };
 
     const openEditor = () => {
@@ -87,6 +107,7 @@ export const useProfileDescriptionEditor = () => {
         setHasText(!!description);
         setCharCount(getCharCount(description));
         setShowFormatBar(false);
+        setIsExpanded(false);
     };
     return {
         editorRef,
@@ -108,6 +129,7 @@ export const useProfileDescriptionEditor = () => {
         insertCode,
         insertMath,
         handleUpdate,
+        handleCancel,
         openEditor,
         handleEditorInput,
         applyFormat,

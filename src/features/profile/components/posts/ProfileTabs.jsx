@@ -3,7 +3,7 @@ import React from 'react';
 const ProfileTabs = () => {
   return (
     <div className="flex items-center gap-1 border-b border-gray-200 overflow-x-auto no-scrollbar mb-4 mt-2">
-      {['0 Bài đăng', '0 Người theo dõi', 'Đang theo dõi', 'Hoạt động', 'Giới thiệu'].map((tab, idx) => (
+      {['0 Bài đăng', '0 Người theo dõi', 'Đang theo dõi', 'Cài đặt'].map((tab, idx) => (
         <button
           key={tab}
           className={`whitespace-nowrap px-3 py-3 text-sm font-semibold transition-colors ${idx === 0

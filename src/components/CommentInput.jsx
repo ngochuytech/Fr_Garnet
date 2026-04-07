@@ -1,12 +1,32 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
-const CommentInput = ({ avatarUrl, placeholder = "Add a comment...", bgClass = "bg-gray-50" }) => {
+const CommentInput = ({ avatarUrl, placeholder = "Viết bình luận...", bgClass = "bg-gray-50", toggleComment }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [hasText, setHasText] = useState(false);
   const [showFormatBar, setShowFormatBar] = useState(false);
   const editorRef = useRef(null);
 
   const isExpanded = isFocused || hasText;
+
+  useEffect(() => {
+    if (!isOpen) {
+      setHasText(false);
+      setShowFormatBar(false);
+      if (editorRef.current) {
+        editorRef.current.textContent = '';
+      }
+    }
+  }, [isOpen]);
+
+  const handleSubmit = () => (e) => {
+    e.preventDefault();
+    if (hasText) {
+      const content = editorRef.current.textContent.trim();
+      setIsOpen(false);      
+      toggleComment();
+    }
+  };
 
   const handleInput = () => {
     if (editorRef.current) {
@@ -79,7 +99,7 @@ const CommentInput = ({ avatarUrl, placeholder = "Add a comment...", bgClass = "
         </div>
         
         {isExpanded && (
-          <div className="flex items-center justify-between px-2 pb-2 mt-1">
+          <form onSubmit={handleSubmit()} className="flex items-center justify-between px-2 pb-2 mt-1">
             <div className="flex items-center gap-1 text-gray-500 overflow-x-auto no-scrollbar">
               {!showFormatBar ? (
                 <>
@@ -118,12 +138,12 @@ const CommentInput = ({ avatarUrl, placeholder = "Add a comment...", bgClass = "
               )}
             </div>
             
-            <button 
-              onMouseDown={(e) => e.preventDefault()}
+            <button
+              type='submit'
               className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors mt-1 ${hasText ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer' : 'bg-blue-600/60 text-white cursor-not-allowed'}`}>
               Post
             </button>
-          </div>
+          </form>
         )}
       </div>
     </div>
