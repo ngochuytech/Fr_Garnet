@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 
-const CommentInput = ({ avatarUrl, placeholder = "Viết bình luận...", bgClass = "bg-gray-50", toggleComment }) => {
+const CommentInput = ({ avatarUrl, placeholder = "Viết bình luận...", bgClass = "bg-gray-50", toggleComment, onSubmit }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [hasText, setHasText] = useState(false);
@@ -22,9 +22,16 @@ const CommentInput = ({ avatarUrl, placeholder = "Viết bình luận...", bgCla
   const handleSubmit = () => (e) => {
     e.preventDefault();
     if (hasText) {
-      const content = editorRef.current.textContent.trim();
-      setIsOpen(false);      
-      toggleComment();
+      const content = editorRef.current.innerHTML.trim();
+      if (onSubmit) {
+         onSubmit(content);
+      }
+      setIsOpen(false);
+      setHasText(false);
+      setShowFormatBar(false);
+      if (editorRef.current) {
+        editorRef.current.innerHTML = '';
+      }
     }
   };
 
@@ -140,7 +147,8 @@ const CommentInput = ({ avatarUrl, placeholder = "Viết bình luận...", bgCla
             
             <button
               type='submit'
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors mt-1 ${hasText ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer' : 'bg-blue-600/60 text-white cursor-not-allowed'}`}>
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors mt-1 text-white ${hasText ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-60'}`}
+              style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}>
               Post
             </button>
           </form>

@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 
 const CredentialModal = ({ isOpen, onClose, type }) => {
   const [formData, setFormData] = useState({
-    position: '',
-    company: '',
+    interests: '',
+    skills: '',
+    major: '',
     startYear: '',
     endYear: '',
     isCurrent: false,
     school: '',
-    major: '',
     location: ''
   });
 
@@ -16,13 +16,13 @@ const CredentialModal = ({ isOpen, onClose, type }) => {
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        position: '',
-        company: '',
+        interests: '',
+        skills: '',
+        major: '',
         startYear: '',
         endYear: '',
         isCurrent: false,
         school: '',
-        major: '',
         location: ''
       });
     }
@@ -32,12 +32,13 @@ const CredentialModal = ({ isOpen, onClose, type }) => {
 
   const getModalConfig = () => {
     switch (type) {
-      case 'employment':
+      case 'profile-focus':
         return {
-          title: 'Thêm kinh nghiệm làm việc',
+          title: 'Thêm sở thích, kỹ năng và ngành học',
           icon: (
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            <svg className="w-5 h-5 text-[#8d3f41]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.5c1.5-2.1 5.4-1.1 5.4 2.1 0 1.8-1.2 3.2-2.7 4.5L12 16l-2.7-2.9C7.8 11.8 6.6 10.4 6.6 8.6c0-3.2 3.9-4.2 5.4-2.1z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 16h2m-5.5 3h9" />
             </svg>
           )
         };
@@ -107,28 +108,39 @@ const CredentialModal = ({ isOpen, onClose, type }) => {
           </div>
 
           <form className="flex flex-col gap-6">
-            {type === 'employment' && (
+            {type === 'profile-focus' && (
               <>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[15px] font-bold text-[#282829]">Vị trí</label>
+                  <label className="text-[15px] font-bold text-[#282829]">Sở thích</label>
                   <input 
-                    name="position"
+                    name="interests"
                     type="text" 
-                    value={formData.position}
+                    value={formData.interests}
                     onChange={handleInputChange}
-                    placeholder="Kế toán, Kỹ sư phần mềm..." 
-                    className="w-full px-3.5 py-2.5 text-[15px] border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-gray-400"
+                    placeholder="AI, Mạng xã hội, Nghiên cứu GNN..." 
+                    className="w-full px-3.5 py-2.5 text-[15px] border border-gray-300 rounded-md focus:outline-none focus:border-[#b04f51] focus:ring-1 focus:ring-[#b04f51] placeholder:text-gray-400"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[15px] font-bold text-[#282829]">Công ty/Tổ chức</label>
+                  <label className="text-[15px] font-bold text-[#282829]">Kỹ năng</label>
                   <input 
-                    name="company"
+                    name="skills"
                     type="text" 
-                    value={formData.company}
+                    value={formData.skills}
                     onChange={handleInputChange}
-                    placeholder="Tìm kiếm công ty..." 
-                    className="w-full px-3.5 py-2.5 text-[15px] border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-gray-400"
+                    placeholder="Python, PyTorch, Graph Learning..." 
+                    className="w-full px-3.5 py-2.5 text-[15px] border border-gray-300 rounded-md focus:outline-none focus:border-[#b04f51] focus:ring-1 focus:ring-[#b04f51] placeholder:text-gray-400"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] font-bold text-[#282829]">Ngành học</label>
+                  <input 
+                    name="major"
+                    type="text" 
+                    value={formData.major}
+                    onChange={handleInputChange}
+                    placeholder="Khoa học máy tính, Hệ thống thông tin..." 
+                    className="w-full px-3.5 py-2.5 text-[15px] border border-gray-300 rounded-md focus:outline-none focus:border-[#b04f51] focus:ring-1 focus:ring-[#b04f51] placeholder:text-gray-400"
                   />
                 </div>
               </>
@@ -144,7 +156,7 @@ const CredentialModal = ({ isOpen, onClose, type }) => {
                     value={formData.school}
                     onChange={handleInputChange}
                     placeholder="Tên trường..." 
-                    className="w-full px-3.5 py-2.5 text-[15px] border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-gray-400"
+                    className="w-full px-3.5 py-2.5 text-[15px] border border-gray-300 rounded-md focus:outline-none focus:border-[#b04f51] focus:ring-1 focus:ring-[#b04f51] placeholder:text-gray-400"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -155,7 +167,7 @@ const CredentialModal = ({ isOpen, onClose, type }) => {
                     value={formData.major}
                     onChange={handleInputChange}
                     placeholder="Chuyên ngành..." 
-                    className="w-full px-3.5 py-2.5 text-[15px] border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-gray-400"
+                    className="w-full px-3.5 py-2.5 text-[15px] border border-gray-300 rounded-md focus:outline-none focus:border-[#b04f51] focus:ring-1 focus:ring-[#b04f51] placeholder:text-gray-400"
                   />
                 </div>
               </>
@@ -170,57 +182,60 @@ const CredentialModal = ({ isOpen, onClose, type }) => {
                   value={formData.location}
                   onChange={handleInputChange}
                   placeholder="Thành phố, Tỉnh, Quốc gia..." 
-                  className="w-full px-3.5 py-2.5 text-[15px] border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-gray-400"
+                  className="w-full px-3.5 py-2.5 text-[15px] border border-gray-300 rounded-md focus:outline-none focus:border-[#b04f51] focus:ring-1 focus:ring-[#b04f51] placeholder:text-gray-400"
                 />
               </div>
             )}
 
-            <div className="flex gap-4">
-              <div className="flex-1 flex flex-col gap-2">
-                <label className="text-[15px] font-bold text-[#282829]">Năm bắt đầu</label>
-                <select 
-                  name="startYear" 
-                  value={formData.startYear} 
-                  onChange={handleInputChange}
-                  className="w-full px-3.5 py-2.5 text-[15px] bg-white border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer text-gray-700"
-                >
-                  <option value="" disabled></option>
-                  {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1 flex flex-col gap-2">
-                <label className="text-[15px] font-bold text-[#282829]">Năm kết thúc</label>
-                <select 
-                  name="endYear" 
-                  value={formData.endYear} 
-                  onChange={handleInputChange}
-                  disabled={formData.isCurrent}
-                  className="w-full px-3.5 py-2.5 text-[15px] bg-white border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400 cursor-pointer text-gray-700 disabled:cursor-not-allowed"
-                >
-                  <option value="" disabled></option>
-                  {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i + 5).map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            {type !== 'profile-focus' && (
+              <>
+                <div className="flex gap-4">
+                  <div className="flex-1 flex flex-col gap-2">
+                    <label className="text-[15px] font-bold text-[#282829]">Năm bắt đầu</label>
+                    <select 
+                      name="startYear" 
+                      value={formData.startYear} 
+                      onChange={handleInputChange}
+                      className="w-full px-3.5 py-2.5 text-[15px] bg-white border border-gray-300 rounded-md focus:outline-none focus:border-[#b04f51] focus:ring-1 focus:ring-[#b04f51] cursor-pointer text-gray-700"
+                    >
+                      <option value="" disabled></option>
+                      {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1 flex flex-col gap-2">
+                    <label className="text-[15px] font-bold text-[#282829]">Năm kết thúc</label>
+                    <select 
+                      name="endYear" 
+                      value={formData.endYear} 
+                      onChange={handleInputChange}
+                      disabled={formData.isCurrent}
+                      className="w-full px-3.5 py-2.5 text-[15px] bg-white border border-gray-300 rounded-md focus:outline-none focus:border-[#b04f51] focus:ring-1 focus:ring-[#b04f51] disabled:bg-gray-100 disabled:text-gray-400 cursor-pointer text-gray-700 disabled:cursor-not-allowed"
+                    >
+                      <option value="" disabled></option>
+                      {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i + 5).map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-            <div className="flex items-center gap-2 mb-2">
-              <input 
-                type="checkbox" 
-                id="isCurrent" 
-                name="isCurrent"
-                checked={formData.isCurrent}
-                onChange={handleInputChange}
-                className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-              />
-              <label htmlFor="isCurrent" className="text-[15px] text-gray-700 cursor-pointer select-none">
-                {type === 'employment' ? 'Tôi hiện đang làm việc ở đây' : 
-                 type === 'education' ? 'Tôi hiện đang theo học tại đây' : 'Tôi hiện đang sống ở đây'}
-              </label>
-            </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <input 
+                    type="checkbox" 
+                    id="isCurrent" 
+                    name="isCurrent"
+                    checked={formData.isCurrent}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 text-[#b04f51] bg-white border-gray-300 rounded focus:ring-[#b04f51] cursor-pointer"
+                  />
+                  <label htmlFor="isCurrent" className="text-[15px] text-gray-700 cursor-pointer select-none">
+                    {type === 'education' ? 'Tôi hiện đang theo học tại đây' : 'Tôi hiện đang sống ở đây'}
+                  </label>
+                </div>
+              </>
+            )}
           </form>
         </div>
 
@@ -232,7 +247,7 @@ const CredentialModal = ({ isOpen, onClose, type }) => {
           >
             Hủy
           </button>
-          <button className="px-6 py-2 text-[14px] font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-full transition-colors shadow-sm">
+          <button className="px-6 py-2 text-[14px] font-medium text-white bg-[#b04f51] hover:bg-[#8d3f41] rounded-full transition-colors shadow-sm">
             Lưu
           </button>
         </div>

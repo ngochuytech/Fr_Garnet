@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { getProfile } from '../features/profile/services/profileSerivce';
 
 const AuthContext = createContext(null);
 
@@ -29,12 +30,24 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Sync user profile from server if token exists
+  useEffect(() => {
+    const refreshUser = async () => {
+      if (token && !user?.bio) {
+        try {
+          const fullProfile = await getProfile();
+          updateUser(fullProfile);
+        } catch (error) {
+          console.error("Failed to refresh user profile:", error);
+        }
+      }
+    };
+    refreshUser();
+  }, [token, user?.bio]);
+
   const login = useCallback((userData, authToken) => {
     setUser(userData);
     setToken(authToken);
-    console.log("userData: " + userData);
-    console.log("authToken: " + authToken);
-
     
     localStorage.setItem(TOKEN_KEY, authToken);
     localStorage.setItem(USER_KEY, JSON.stringify(userData));
@@ -47,6 +60,14 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem(USER_KEY);
   }, []);
 
+  const updateUser = useCallback((newUserData) => {
+    setUser((prev) => {
+      const updatedUser = { ...prev, ...newUserData };
+      localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  }, []);
+
   const value = {
     user,
     token,
@@ -54,6 +75,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!token,
     login,
     logout,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

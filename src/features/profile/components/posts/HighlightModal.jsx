@@ -90,7 +90,7 @@ const HighlightModal = ({ isOpen, onClose, openCredentialModal }) => {
                     
                         {showDropdown && (
                             <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 z-50 py-2">
-                                <button onClick={() => handleSelectOption('employment')} className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm xl:text-base text-gray-700 font-medium">Kinh nghiệm làm việc</button>
+                                <button onClick={() => handleSelectOption('profile-focus')} className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm xl:text-base text-gray-700 font-medium">Sở thích, kỹ năng, ngành học</button>
                                 <button onClick={() => handleSelectOption('education')} className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm xl:text-base text-gray-700 font-medium">Học vấn</button>
                                 <button onClick={() => handleSelectOption('location')} className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm xl:text-base text-gray-700 font-medium">Địa điểm</button>
                                 <button onClick={() => handleSelectOption('language')} className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm xl:text-base text-gray-700 font-medium">Ngoại ngữ</button>

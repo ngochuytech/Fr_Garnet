@@ -1,5 +1,5 @@
 import PostCard from '../../../../components/PostCard';
-import { useProfilePosts } from '../../hooks/useProfilePosts';
+import { useProfilePosts } from '../../hooks/posts/useProfilePosts';
 
 const mockPosts = [
   {

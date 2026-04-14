@@ -1,0 +1,65 @@
+import { apiFetch } from '../utils/api';
+
+/**
+ * Likes a post.
+ * @param {string|number} postId 
+ */
+export const likePostAPI = async (postId) => {
+    return apiFetch(`/users/posts/${postId}/like`, {
+        method: 'POST',
+    });
+};
+
+/**
+ * Dislikes a post.
+ * @param {string|number} postId 
+ */
+export const dislikePostAPI = async (postId) => {
+    return apiFetch(`/users/posts/${postId}/dislike`, {
+        method: 'POST',
+    });
+};
+
+/**
+ * Gets comments for a post.
+ * @param {string|number} postId 
+ * @param {string} lastCommentId 
+ * @param {number} limit 
+ */
+export const getCommentsByPostId = async (postId, lastCommentId = '', limit = 10) => {
+    const url = `/users/comments?postId=${postId}&lastCommentId=${lastCommentId}&limit=${limit}`;
+    return apiFetch(url, {
+        method: 'GET',
+    });
+};
+
+/**
+ * Creates a comment on a post.
+ * @param {string|number} postId 
+ * @param {string|null} parentId 
+ * @param {string} content 
+ */
+export const createCommentAPI = async (postId, parentId, content) => {
+    return apiFetch(`/users/comments/post/${postId}`, {
+        method: 'POST',
+        body: JSON.stringify({ parentId, content }),
+    });
+};
+
+/**
+ * Likes a comment.
+ */
+export const likeCommentAPI = async (commentId) => {
+    return apiFetch(`/users/comments/${commentId}/like`, {
+        method: 'POST',
+    });
+};
+
+/**
+ * Dislikes a comment.
+ */
+export const dislikeCommentAPI = async (commentId) => {
+    return apiFetch(`/users/comments/${commentId}/dislike`, {
+        method: 'POST',
+    });
+};

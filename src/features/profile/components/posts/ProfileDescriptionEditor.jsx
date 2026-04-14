@@ -1,4 +1,4 @@
-import { useProfileDescriptionEditor } from '../../hooks/useProfileDescriptionEditor';
+import { useProfileDescriptionEditor } from '../../hooks/posts/useProfileDescriptionEditor';
 
 const ProfileDescriptionEditor = () => {
   const {
@@ -7,6 +7,7 @@ const ProfileDescriptionEditor = () => {
     isEditingDesc,
     setIsEditingDesc,
     description,
+    isSaving,
     showFormatBar,
     setShowFormatBar,
     hasText,
@@ -94,12 +95,18 @@ const ProfileDescriptionEditor = () => {
               <button
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  if (charCount <= 1000) handleUpdate();
+                  if (charCount <= 1000 && !isSaving) handleUpdate();
                 }}
-                disabled={charCount > 1000}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${charCount > 1000 ? 'bg-blue-300 text-white cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                disabled={charCount > 1000 || isSaving}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${charCount > 1000 || isSaving ? 'bg-blue-300 text-white cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
               >
-                Update
+                {isSaving && (
+                  <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                {isSaving ? 'Updating...' : 'Update'}
               </button>
               <button
                 onMouseDown={(e) => { e.preventDefault(); handleCancel(); }}
@@ -117,14 +124,14 @@ const ProfileDescriptionEditor = () => {
         <div className="group">
           {description ? (
             <div className="relative">
-                <div
-                  ref={contentRef}
-                  className= {`text-gray-800 text-[15px] whitespace-pre-wrap break-words break-all leading-relaxed wysiwyg-content w-full ${!isExpanded ? 'max-h-[300px] overflow-hidden' : ''}`}
-                  dangerouslySetInnerHTML={{ __html: description }}
-                />
-                {showSeeMore && !isExpanded && (
-                  <div className="absolute bottom-0 left-0 w-full h-[60px] bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
-                )}
+              <div
+                ref={contentRef}
+                className={`text-gray-800 text-[15px] whitespace-pre-wrap break-words break-all leading-relaxed wysiwyg-content w-full ${!isExpanded ? 'max-h-[300px] overflow-hidden' : ''}`}
+                dangerouslySetInnerHTML={{ __html: description }}
+              />
+              {showSeeMore && !isExpanded && (
+                <div className="absolute bottom-0 left-0 w-full h-[60px] bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+              )}
 
               <div className="mt-2 flex items-center gap-4 relative z-10">
                 {showSeeMore && (

@@ -50,7 +50,7 @@ export const useLoginForm = () => {
       const { user, token } = await loginUser(formData);
       login(user, token);
       toast.success('Đăng nhập thành công!');
-      navigate('/dashboard');
+      navigate('/home');
     } catch (err) {
       setServerError(err.message);
     } finally {

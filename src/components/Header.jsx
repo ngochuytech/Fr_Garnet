@@ -1,7 +1,15 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Header = () => {
+  const { user } = useAuth();
+  const location = useLocation();
+  const displayName = user?.fullname || 'User';
+  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30`;
+
+  const isActive = (path) => location.pathname === path;
+
   return (
     <header className="sticky top-0 z-50 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] h-[50px] w-full flex justify-center">
       <div className="flex items-center justify-between w-full max-w-[1100px] h-full px-4">
@@ -16,13 +24,15 @@ const Header = () => {
         {/* Navigation Icons */}
         <nav className="flex items-center ml-4 space-x-5">
           {/* Home */}
-          <button className="p-2 cursor-pointer rounded hover:bg-gray-100 flex items-center justify-center relative group">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.3" stroke="currentColor" className="size-6">
+          <Link to="/home" className={`p-2 cursor-pointer rounded hover:bg-gray-100 flex items-center justify-center relative group ${isActive('/home') ? 'text-[#8d3f41]' : 'text-gray-500 hover:text-gray-800'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill={isActive('/home') ? 'currentColor' : 'none'} viewBox="0 0 24 24" strokeWidth="1.3" stroke="currentColor" className="size-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
             </svg>
-
+            {isActive('/home') && (
+              <span className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ backgroundColor: 'var(--color-dusty-rose-600)' }} />
+            )}
             <div className="absolute top-10 hidden group-hover:block bg-gray-800 text-white text-xs px-2 py-1 rounded">Home</div>
-          </button>
+          </Link>
 
           {/* Following */}
           <button className="p-2 cursor-pointer rounded hover:bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 relative group">
@@ -74,7 +84,7 @@ const Header = () => {
         <div className="flex items-center space-x-3 flex-shrink-0">
 
           <Link to="/profile" className="w-8 h-8 flex items-center justify-center rounded-full overflow-hidden border border-gray-200 cursor-pointer">
-            <img src="https://ui-avatars.com/api/?name=User&background=dfb9b9&color=6a2f30" alt="Avatar" className="w-full h-full object-cover" />
+            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
           </Link>
 
           <button className="text-gray-500 hover:text-gray-800 cursor-pointer">

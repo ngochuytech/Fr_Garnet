@@ -1,11 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
+import { updateBio } from '../../services/profileSerivce';
+import { useAuth } from '../../../../context/AuthContext';
+import { toast } from 'sonner';
+
 import DOMPurify from 'dompurify';
 
 export const useProfileDescriptionEditor = () => {
+    const { user, updateUser } = useAuth();
     const [isEditingDesc, setIsEditingDesc] = useState(false);
-    const [description, setDescription] = useState('');
+    const [description, setDescription] = useState(user?.bio || '');
+    const [isSaving, setIsSaving] = useState(false);
     const [showFormatBar, setShowFormatBar] = useState(false);
-    const [hasText, setHasText] = useState(false);
+    const [hasText, setHasText] = useState(!!user?.bio);
     const [isFocused, setIsFocused] = useState(false);
     const [charCount, setCharCount] = useState(0);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -13,6 +19,19 @@ export const useProfileDescriptionEditor = () => {
 
     const editorRef = useRef(null);
     const contentRef = useRef(null);
+
+    useEffect(() => {
+        if (user?.bio !== undefined) {
+            const bio = user?.bio || '';
+            setDescription(bio);
+            setHasText(bio.trim().length > 0);
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = bio;
+            const text = tempDiv.textContent || tempDiv.innerText || '';
+            setCharCount(text.length);
+        }
+    }, [user?.bio]);
 
     useEffect(() => {
         if (!isEditingDesc && description && contentRef.current) {
@@ -87,13 +106,22 @@ export const useProfileDescriptionEditor = () => {
         }
     };
 
-    const handleUpdate = () => {
-        if (editorRef.current) {
-            setDescription(editorRef.current.innerHTML);
+    const handleUpdate = async () => {
+        setIsSaving(true);
+        try {
+            const currentHTML = editorRef.current ? editorRef.current.innerHTML : description;
+            await updateBio(currentHTML);
+            setDescription(currentHTML);
+            updateUser({ bio: currentHTML });
+            toast.success('Cập nhật giới thiệu thành công!');
+            setIsEditingDesc(false);
+            setIsExpanded(false);
+            setShowSeeMore(false);
+        } catch (error) {
+            toast.error(error.message || 'Cập nhật giới thiệu thất bại');
+        } finally {
+            setIsSaving(false);
         }
-        setIsEditingDesc(false);
-        setIsExpanded(false);
-        setShowSeeMore(false);
     };
 
     const handleCancel = () => {
@@ -115,6 +143,7 @@ export const useProfileDescriptionEditor = () => {
         isEditingDesc,
         setIsEditingDesc,
         description,
+        isSaving,
         showFormatBar,
         setShowFormatBar,
         hasText,

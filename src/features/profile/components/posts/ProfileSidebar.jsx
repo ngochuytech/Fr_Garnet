@@ -1,4 +1,4 @@
-import { useProfileSidebar } from '../../hooks/useProfileSidebar';
+import { useProfileSidebar } from '../../hooks/posts/useProfileSidebar';
 import CredentialModal from './CredentialModal';
 import HighlightModal from './HighlightModal';
 
@@ -21,11 +21,12 @@ const ProfileSidebar = () => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3 group cursor-pointer" onClick={() => openModal('employment')}>
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          <div className="flex items-center gap-3 group cursor-pointer" onClick={() => openModal('profile-focus')}>
+            <svg className="w-5 h-5 text-[#8d3f41]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.5c1.5-2.1 5.4-1.1 5.4 2.1 0 1.8-1.2 3.2-2.7 4.5L12 16l-2.7-2.9C7.8 11.8 6.6 10.4 6.6 8.6c0-3.2 3.9-4.2 5.4-2.1z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 16h2m-5.5 3h9" />
             </svg>
-            <span className="text-sm font-medium text-blue-600 group-hover:underline">Thêm kinh nghiệm làm việc</span>
+            <span className="text-sm font-medium text-[#b04f51] group-hover:underline">Thêm sở thích, kỹ năng, ngành học</span>
           </div>
           <div className="flex items-center gap-3 group cursor-pointer" onClick={() => openModal('education')}>
             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
