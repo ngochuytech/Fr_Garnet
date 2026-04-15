@@ -65,6 +65,24 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     };
   }, [isOptionOpen]);
 
+  const [isModalOptionOpen, setIsModalOptionOpen] = useState(false);
+  const modalOptionRef = useRef(null);
+  const toggleModalOption = () => setIsModalOptionOpen(!isModalOptionOpen);
+
+  useEffect(() => {
+    const handleClickOutsideModal = (event) => {
+      if (modalOptionRef.current && !modalOptionRef.current.contains(event.target)) {
+        setIsModalOptionOpen(false);
+      }
+    };
+    if (isModalOptionOpen) {
+      document.addEventListener('mousedown', handleClickOutsideModal);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutsideModal);
+    };
+  }, [isModalOptionOpen]);
+
   // Share Modal states
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [sharePrivacy, setSharePrivacy] = useState('Everyone'); // 'Everyone' or other groups
@@ -179,6 +197,8 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
       const lastId = refresh || comments.length === 0 ? '' : comments[comments.length - 1].id;
       const res = await getCommentsByPostId(postId, lastId, 10);
       const fetchedComments = res || [];
+      console.log(fetchedComments);
+      
       if (refresh) {
         setComments(fetchedComments);
       } else {
@@ -232,11 +252,6 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
 
           return { ...item, userReaction: newReaction, likeCount: newLikeCount, dislikeCount: newDislikeCount };
         }
-        
-        if (item.replies && item.replies.length > 0) {
-          return { ...item, replies: updateItems(item.replies) };
-        }
-        
         return item;
       });
     };
@@ -252,6 +267,15 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     }
   };
 
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const openPostModal = () => {
+    setIsPostModalOpen(true);
+    if (!isCommentOpen && comments.length === 0) {
+      loadComments();
+    }
+  };
+  const closePostModal = () => setIsPostModalOpen(false);
+
   return {
     upvotesCount, downvotesCount, isLiked, isDisliked, handleLike, handleDislike,
     comments, loadingComments, hasMoreComments, loadComments, handleCreateComment, handleReactionComment,
@@ -264,6 +288,8 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     hasText, setHasText,
     showFormatBar, setShowFormatBar,
     editorRef,
-    handleInput, applyFormat, handleLink, insertQuote, insertCode, insertMath
+    handleInput, applyFormat, handleLink, insertQuote, insertCode, insertMath,
+    isPostModalOpen, openPostModal, closePostModal,
+    isModalOptionOpen, toggleModalOption, modalOptionRef
   };
 };

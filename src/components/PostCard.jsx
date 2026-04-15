@@ -1,11 +1,12 @@
 import { usePostCard } from '../hooks/usePostCard';
 import CommentInput from './CommentInput';
+import Comment from './Comment';
 
 const formatTimeAgo = (dateString) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
-  
+
   if (diffInSeconds < 60) return `${diffInSeconds} giây trước`;
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
@@ -26,6 +27,8 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
     showFormatBar, setShowFormatBar,
     editorRef,
     handleInput, applyFormat, handleLink,
+    isPostModalOpen, openPostModal, closePostModal,
+    isModalOptionOpen, toggleModalOption, modalOptionRef
   } = usePostCard({ postId, initialUpvotes: upvotes, initialDownvotes: downvotes, initialUserReaction: userReaction });
 
   return (
@@ -51,18 +54,21 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
         </div>
       </div>
 
-      {/*Content */}
-      <div
-        className="text-[14px] md:text-[15px] text-gray-800 leading-normal mb-3 wysiwyg-editor whitespace-pre-wrap break-words"
-        dangerouslySetInnerHTML={{ __html: content }}
-      />
+      {/* Clickable Content */}
+      <div className="cursor-pointer group" onClick={openPostModal}>
+        {/*Content */}
+        <div
+          className="text-[14px] md:text-[15px] text-gray-800 leading-normal mb-3 wysiwyg-editor whitespace-pre-wrap break-words group-hover:text-gray-900 transition-colors"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
 
-      {/* Post Image (Optional) */}
-      {image && (
-        <div className="w-full rounded-md overflow-hidden mb-3 border border-gray-200 bg-gray-50">
-          <img src={image} alt="Post attachment" className="w-full h-auto object-cover max-h-[300px] sm:max-h-[400px]" />
-        </div>
-      )}
+        {/* Post Image (Optional) */}
+        {image && (
+          <div className="w-full rounded-md overflow-hidden mb-3 border border-gray-200 bg-gray-50">
+            <img src={image} alt="Post attachment" className="w-full h-auto object-cover max-h-[300px] sm:max-h-[400px]" />
+          </div>
+        )}
+      </div>
 
       {/* Action Bar */}
       <div className="flex items-center justify-between text-gray-500 mt-1">
@@ -146,107 +152,17 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
               <div className="py-2 text-center text-sm text-gray-500">Chưa có bình luận nào. Hãy là người đầu tiên!</div>
             ) : (
               comments.map((comment) => (
-                <div key={comment.id} className="flex items-start gap-2">
-                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                    <img src={comment.user?.avatar || `https://ui-avatars.com/api/?name=${comment.user?.name || 'User'}&background=random`} alt={comment.user?.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex flex-col flex-1">
-                    <div className="flex items-center text-[13px] text-gray-900 border-l-[2px] pl-2" style={{ borderColor: 'var(--color-dusty-rose-500)' }}>
-                      <span className="font-bold hover:underline cursor-pointer">{comment.user?.name}</span>
-                      {comment.user?.id === authorId && (
-                        <span className="text-[11px] font-bold px-1 rounded ml-1" style={{ backgroundColor: '#f7edee', color: 'var(--color-dusty-rose-700)' }}>
-                          Tác giả
-                        </span>
-                      )}
-                      <span className="mx-1 text-gray-500">&middot;</span>
-                      <span className="text-gray-500 text-[12px]">{formatTimeAgo(comment.createdAt)}</span>
-                    </div>
-                    <div className="text-[14px] text-gray-800 mt-[2px] leading-snug pl-2 wysiwyg-editor whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: comment.content }} />
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 mt-1 pl-2">
-                      <div className="flex items-center rounded-full overflow-hidden border border-gray-100 bg-gray-50/50 flex-shrink-0">
-                        <button
-                          onClick={() => handleReactionComment(comment.id, 'LIKE')}
-                          className={`flex items-center gap-1 px-2 py-0.5 transition-colors ${comment.userReaction === 'LIKE' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'}`}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                          <span className="text-[12px] font-medium">{comment.likeCount || 0}</span>
-                        </button>
-                        <button
-                          onClick={() => handleReactionComment(comment.id, 'DISLIKE')}
-                          className={`flex items-center px-2 py-0.5 border-l border-gray-200 transition-colors ${comment.userReaction === 'DISLIKE' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'}`}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="rotate-180"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                        </button>
-                      </div>
-
-                      <button
-                        onClick={() => setActiveReplyId(activeReplyId === comment.id ? null : comment.id)}
-                        className={`px-3 py-1 text-[13px] font-medium text-gray-500 rounded transition-colors ${activeReplyId === comment.id ? 'bg-gray-200' : 'hover:bg-gray-100'}`}>
-                        Phản hồi
-                      </button>
-                    </div>
-
-                    {/* Reply Input */}
-                    {activeReplyId === comment.id && (
-                      <div className="mt-2 ml-2">
-                        <CommentInput
-                          avatarUrl="https://ui-avatars.com/api/?name=User&background=dfb9b9&color=6a2f30"
-                          placeholder="Viết phản hồi..."
-                          bgClass="bg-transparent"
-                          toggleComment={() => setActiveReplyId(null)}
-                          onSubmit={(content) => handleCreateComment(content, comment.id)} />
-                      </div>
-                    )}
-
-                    {/* Replies list */}
-                    {comment.replies && comment.replies.length > 0 && comment.replies.map((reply) => (
-                      <div key={reply.id} className="flex items-start gap-2 mt-3 mb-1 pl-2 border-l border-gray-200 ml-1">
-                        <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 mt-0.5">
-                          <img src={reply.user?.avatar || `https://ui-avatars.com/api/?name=${reply.user?.name || 'User'}&background=random`} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex flex-col flex-1 pl-2">
-                          <div className="flex items-center text-[13px] text-gray-900">
-                            <span className="font-bold hover:underline cursor-pointer">{reply.user?.name}</span>
-                            {authorId === reply.user?.id && (
-                              <>
-                                <span className="mx-1 text-gray-500">&middot;</span>
-                                <span className="text-[11px] font-bold px-1 rounded mr-1" style={{ backgroundColor: '#f7edee', color: 'var(--color-dusty-rose-700)' }}>Tác giả</span>
-                              </>
-                            )}
-                            <span className="mx-1 text-gray-500">&middot;</span>
-                            <span className="text-gray-500 text-[12px]">{formatTimeAgo(reply.createdAt)}</span>
-                          </div>
-                          <div className="text-[14px] text-gray-800 mt-[2px] leading-snug" dangerouslySetInnerHTML={{ __html: reply.content }} />
-                          
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="flex items-center rounded-full overflow-hidden border border-gray-100 bg-gray-50/50 flex-shrink-0">
-                              <button
-                                onClick={() => handleReactionComment(reply.id, 'LIKE')}
-                                className={`flex items-center gap-1 px-2 py-0.5 transition-colors ${reply.userReaction === 'LIKE' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'}`}
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                                <span className="text-[12px] font-medium">{reply.likeCount || 0}</span>
-                              </button>
-                              <button
-                                onClick={() => handleReactionComment(reply.id, 'DISLIKE')}
-                                className={`flex items-center px-2 py-0.5 border-l border-gray-200 transition-colors ${reply.userReaction === 'DISLIKE' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'}`}
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="rotate-180"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                              </button>
-                            </div>
-                            <button
-                               onClick={() => setActiveReplyId(activeReplyId === reply.id ? null : reply.id)}
-                               className={`px-3 py-1 text-[13px] font-medium text-gray-500 rounded transition-colors ${activeReplyId === reply.id ? 'bg-gray-200' : 'hover:bg-gray-100'}`}>
-                               Phản hồi
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <Comment
+                  key={comment.id}
+                  comment={comment}
+                  authorId={authorId}
+                  activeReplyId={activeReplyId}
+                  setActiveReplyId={setActiveReplyId}
+                  handleReactionComment={handleReactionComment}
+                  handleCreateComment={handleCreateComment}
+                  formatTimeAgo={formatTimeAgo}
+                  isChild={false}
+                />
               ))
             )}
 
@@ -261,7 +177,7 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
 
       {/* Share Modal */}
       {isShareModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#242424]/80 backdrop-blur-[2px] transition-opacity">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#242424]/80 backdrop-blur-[2px] transition-opacity">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-[620px] overflow-hidden flex flex-col max-h-[90vh]">
             {/* Modal Header */}
             <div className="relative flex items-center justify-center border-b border-gray-100 py-3 px-4">
@@ -316,7 +232,7 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
                   <img src={avatarUrl} alt={author} className="w-5 h-5 rounded-full object-cover" />
                   <span className="font-bold text-gray-900 ml-0.5">{author}</span>
                   <span>&middot;</span>
-                  <span>{timeAgo}</span>
+                  <span>{formatTimeAgo(createdAt)}</span>
                 </div>
                 <h4 className="text-[15px] font-bold text-gray-900 mb-1.5 leading-snug">{title}</h4>
                 <p className="text-[14px] text-gray-700 line-clamp-3 leading-normal">
@@ -368,6 +284,142 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
               <button className="px-6 py-2 text-[14px] font-bold text-white rounded-full transition-colors shadow-sm ml-2" style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}>
                 Share
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Post Modal */}
+      {isPostModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 bg-[#242424]/80 backdrop-blur-[2px] transition-opacity">
+          <div className="bg-white rounded-none sm:rounded-xl shadow-2xl w-full max-w-[700px] flex flex-col h-full sm:h-auto sm:max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="relative flex items-center justify-center border-b border-gray-100 py-3 px-4 shrink-0">
+              <span className="font-bold text-[16px] text-gray-900">Bài viết của {author}</span>
+              <button
+                onClick={closePostModal}
+                className="absolute right-4 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+                title="Đóng"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 relative">
+              {/* Post Header */}
+              <div className="flex items-start gap-2 mb-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                  <img src={avatarUrl} alt={`${author}'s Avatar`} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center text-[14px] text-gray-900 font-bold flex-wrap">
+                    <span className="hover:underline cursor-pointer">{author}</span>
+                    {!isOwnPost && (
+                      <>
+                        <span className="mx-1 font-normal text-gray-500">&middot;</span>
+                        <button className="text-[14px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
+                      </>
+                    )}
+                  </div>
+                  <div className="text-[13px] text-gray-500 line-clamp-1">
+                    {authorCredential} <span className="mx-1">&middot;</span> {formatTimeAgo(createdAt)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div
+                className="text-[15px] md:text-[16px] text-gray-800 leading-relaxed mb-4 wysiwyg-editor whitespace-pre-wrap break-words"
+                dangerouslySetInnerHTML={{ __html: content }}
+              />
+
+              {/* Post Image (Optional) */}
+              {image && (
+                <div className="w-full rounded-md overflow-hidden mb-4 border border-gray-200 bg-gray-50">
+                  <img src={image} alt="Post attachment" className="w-full h-auto object-cover" />
+                </div>
+              )}
+
+              {/* Action Bar */}
+              <div className="flex items-center justify-between text-gray-500 mt-2 mb-4 border-y border-gray-100 py-1">
+                <div className="flex items-center gap-2">
+                  <button onClick={handleLike} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${isLiked ? 'text-blue-600 bg-blue-50' : 'hover:bg-gray-100'}`}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                    <span className="text-[14px] font-medium">{upvotesCount > 0 ? upvotesCount : 'Thích'}</span>
+                  </button>
+                  <button onClick={handleDislike} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${isDisliked ? 'text-blue-600 bg-blue-50' : 'hover:bg-gray-100'}`}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-180"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                    {downvotesCount > 0 && <span className="text-[14px] font-medium">{downvotesCount}</span>}
+                  </button>
+                </div>
+                {/* Right side: Share & Option */}
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <button onClick={openShareModal} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                    <span className="text-[14px] font-medium hidden sm:inline">Chia sẻ</span>
+                  </button>
+                  {/* Option button */}
+                  <div className='relative' ref={modalOptionRef}>
+                    <button
+                      onClick={toggleModalOption}
+                      className="p-1.5 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                    </button>
+
+                    {/* Option Section */}
+                    {isModalOptionOpen && (
+                      <div className="absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded shadow-md w-48 z-10">
+                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Chỉnh sửa bài viết</button>
+                        <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Xóa bài viết</button>
+                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Báo cáo bài viết</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Comments inside Modal (Always open) */}
+              <div className="mt-2">
+                <CommentInput
+                  avatarUrl="https://ui-avatars.com/api/?name=User&background=dfb9b9&color=6a2f30"
+                  placeholder="Viết bình luận..."
+                  bgClass="bg-gray-50/80"
+                  toggleComment={() => { }}
+                  onSubmit={(content) => handleCreateComment(content)} />
+
+                {/* Comments List */}
+                <div className="flex flex-col gap-4 mt-4">
+                  {/* Comments Header */}
+                  <div className="text-[14px] font-bold text-gray-800 mb-2 border-b border-gray-100 pb-2">
+                    Bình luận
+                  </div>
+                  {loadingComments && comments.length === 0 ? (
+                    <div className="py-2 text-center text-sm text-gray-500">Đang tải bình luận...</div>
+                  ) : comments.length === 0 ? (
+                    <div className="py-2 text-center text-sm text-gray-500">Chưa có bình luận nào. Hãy là người đầu tiên!</div>
+                  ) : (
+                    comments.map((comment) => (
+                      <Comment
+                        key={comment.id}
+                        comment={comment}
+                        authorId={authorId}
+                        activeReplyId={activeReplyId}
+                        setActiveReplyId={setActiveReplyId}
+                        handleReactionComment={handleReactionComment}
+                        handleCreateComment={handleCreateComment}
+                        formatTimeAgo={formatTimeAgo}
+                        isChild={false}
+                      />
+                    ))
+                  )}
+
+                  {hasMoreComments && comments.length > 0 && (
+                    <button onClick={() => loadComments(false)} className="text-[13px] self-center text-gray-500 hover:text-gray-800 font-medium py-1 px-4 border border-gray-200 rounded-full mt-2 transition-colors hover:bg-gray-50">
+                      {loadingComments ? 'Đang tải...' : 'Xem thêm bình luận'}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

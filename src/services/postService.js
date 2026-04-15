@@ -34,6 +34,22 @@ export const getCommentsByPostId = async (postId, lastCommentId = '', limit = 10
 };
 
 /**
+ * Gets replies for a comment.
+ * @param {string|number} commentId 
+ * @param {string} lastCommentId 
+ * @param {number} limit 
+ */
+export const getRepliesByCommentId = async (commentId, lastCommentId = null, limit = 10) => {
+    let url = `/users/comments/${commentId}/replies?limit=${limit}`;
+    if (lastCommentId) {
+        url += `&lastCommentId=${lastCommentId}`;
+    }
+    return apiFetch(url, {
+        method: 'GET',
+    });
+};
+
+/**
  * Creates a comment on a post.
  * @param {string|number} postId 
  * @param {string|null} parentId 
