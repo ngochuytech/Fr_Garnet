@@ -79,3 +79,25 @@ export const dislikeCommentAPI = async (commentId) => {
         method: 'POST',
     });
 };
+
+/**
+ * Edits a post.
+ * @param {string|number} postId 
+ * @param {object} payload 
+ */
+export const editPostAPI = async (postId, payload) => {
+    return apiFetch(`/users/posts/${postId}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+    });
+};
+
+/**
+ * Deletes a post.
+ * @param {string|number} postId 
+ */
+export const deletePostAPI = async (postId) => {
+    return apiFetch(`/users/posts/${postId}`, {
+        method: 'DELETE',
+    });
+};

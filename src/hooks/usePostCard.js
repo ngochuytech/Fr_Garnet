@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { likePostAPI, dislikePostAPI, getCommentsByPostId, createCommentAPI, likeCommentAPI, dislikeCommentAPI } from '../services/postService';
+import { likePostAPI, dislikePostAPI, getCommentsByPostId, createCommentAPI, likeCommentAPI, dislikeCommentAPI, editPostAPI, deletePostAPI } from '../services/postService';
 
-export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, initialUserReaction = null } = {}) => {
+export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, initialUserReaction = null, initialContent = '' } = {}) => {
   // Reaction states
   const [upvotesCount, setUpvotesCount] = useState(initialUpvotes);
   const [downvotesCount, setDownvotesCount] = useState(initialDownvotes);
@@ -276,6 +276,86 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
   };
   const closePostModal = () => setIsPostModalOpen(false);
 
+  const [localContent, setLocalContent] = useState(initialContent);
+  const [isDeleted, setIsDeleted] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const editEditorRef = useRef(null);
+  const [editHasText, setEditHasText] = useState(true);
+  const [editShowFormatBar, setEditShowFormatBar] = useState(false);
+
+  const openEditModal = () => {
+    setIsEditModalOpen(true);
+    setIsOptionOpen(false);
+    setIsModalOptionOpen(false);
+    setEditHasText(localContent ? localContent.trim().length > 0 : false);
+  };
+  const closeEditModal = () => setIsEditModalOpen(false);
+
+  const handleEditInput = () => {
+    if (editEditorRef.current) {
+        const content = editEditorRef.current.textContent || '';
+        setEditHasText(content.trim().length > 0);
+    }
+  };
+
+  const applyEditFormat = (e, command, value = null) => {
+      e.preventDefault();
+      if (editEditorRef.current) {
+          document.execCommand(command, false, value);
+          editEditorRef.current.focus();
+          handleEditInput();
+      }
+  };
+
+  const handleEditLink = (e) => {
+    e.preventDefault();
+    const url = window.prompt('Nhập link URL liên kết:', 'https://');
+    if (url) {
+      applyEditFormat(e, 'createLink', url);
+    }
+  };
+
+  const insertEditQuote = (e) => {
+    e.preventDefault();
+    applyEditFormat(e, 'formatBlock', 'BLOCKQUOTE');
+  };
+
+  const insertEditCode = (e) => {
+    e.preventDefault();
+    applyEditFormat(e, 'formatBlock', 'PRE');
+  };
+
+  const insertEditMath = (e) => {
+    e.preventDefault();
+    applyEditFormat(e, 'insertText', ' $$ equation $$ ');
+  };
+
+  const handleDeletePost = async () => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa bài viết này?')) {
+      try {
+        await deletePostAPI(postId);
+        toast.success('Đã xóa bài viết!');
+        setIsDeleted(true);
+      } catch (error) {
+        toast.error(error || 'Lỗi khi xóa bài viết');
+      }
+    }
+  };
+
+  const handleUpdatePost = async () => {
+    if (editEditorRef.current && editHasText) {
+      const newContent = editEditorRef.current.innerHTML;
+      try {
+        await editPostAPI(postId, { content: newContent });
+        toast.success('Đã cập nhật bài viết!');
+        setLocalContent(newContent);
+        closeEditModal();
+      } catch (error) {
+        toast.error(error || 'Lỗi khi cập nhật bài viết');
+      }
+    }
+  };
+
   return {
     upvotesCount, downvotesCount, isLiked, isDisliked, handleLike, handleDislike,
     comments, loadingComments, hasMoreComments, loadComments, handleCreateComment, handleReactionComment,
@@ -290,6 +370,12 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     editorRef,
     handleInput, applyFormat, handleLink, insertQuote, insertCode, insertMath,
     isPostModalOpen, openPostModal, closePostModal,
-    isModalOptionOpen, toggleModalOption, modalOptionRef
+    isModalOptionOpen, toggleModalOption, modalOptionRef,
+    localContent, isDeleted,
+    isEditModalOpen, openEditModal, closeEditModal,
+    editEditorRef, editHasText, editShowFormatBar, setEditShowFormatBar,
+    handleEditInput, applyEditFormat,
+    handleEditLink, insertEditQuote, insertEditCode, insertEditMath,
+    handleDeletePost, handleUpdatePost
   };
 };

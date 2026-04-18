@@ -28,8 +28,16 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
     editorRef,
     handleInput, applyFormat, handleLink,
     isPostModalOpen, openPostModal, closePostModal,
-    isModalOptionOpen, toggleModalOption, modalOptionRef
-  } = usePostCard({ postId, initialUpvotes: upvotes, initialDownvotes: downvotes, initialUserReaction: userReaction });
+    isModalOptionOpen, toggleModalOption, modalOptionRef,
+    localContent, isDeleted,
+    isEditModalOpen, openEditModal, closeEditModal,
+    editEditorRef, editHasText, editShowFormatBar, setEditShowFormatBar,
+    handleEditInput, applyEditFormat,
+    handleEditLink, insertEditQuote, insertEditCode, insertEditMath,
+    handleDeletePost, handleUpdatePost
+  } = usePostCard({ postId, initialUpvotes: upvotes, initialDownvotes: downvotes, initialUserReaction: userReaction, initialContent: content });
+
+  if (isDeleted) return null;
 
   return (
     <div className="py-4 border-b border-gray-200">
@@ -59,7 +67,7 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
         {/*Content */}
         <div
           className="text-[14px] md:text-[15px] text-gray-800 leading-normal mb-3 wysiwyg-editor whitespace-pre-wrap break-words group-hover:text-gray-900 transition-colors"
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: localContent }}
         />
 
         {/* Post Image (Optional) */}
@@ -115,10 +123,10 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
 
           {/* Option Section */}
           {isOptionOpen && (
-            <div className="absolute right-0 bottom-full mt-1 bg-white border border-gray-200 rounded shadow-md w-48 z-10">
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit Post</button>
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Delete Post</button>
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Report Post</button>
+            <div className="absolute right-0 bottom-full mt-1 bg-white border border-gray-200 rounded shadow-md w-48 z-10 overflow-hidden">
+              {isOwnPost && <button onClick={openEditModal} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Chỉnh sửa bài viết</button>}
+              {isOwnPost && <button onClick={handleDeletePost} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Xóa bài viết</button>}
+              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Báo cáo bài viết</button>
             </div>
           )}
         </div>
@@ -235,9 +243,10 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
                   <span>{formatTimeAgo(createdAt)}</span>
                 </div>
                 <h4 className="text-[15px] font-bold text-gray-900 mb-1.5 leading-snug">{title}</h4>
-                <p className="text-[14px] text-gray-700 line-clamp-3 leading-normal">
-                  {content}
-                </p>
+                <div 
+                  className="text-[14px] text-gray-700 line-clamp-3 leading-normal wysiwyg-editor"
+                  dangerouslySetInnerHTML={{ __html: localContent }}
+                />
                 {image && (
                   <div className="w-full rounded mt-2 border border-gray-100">
                     <img src={image} className="w-full h-auto max-h-[150px] object-cover rounded" />
@@ -330,7 +339,7 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
               {/* Content */}
               <div
                 className="text-[15px] md:text-[16px] text-gray-800 leading-relaxed mb-4 wysiwyg-editor whitespace-pre-wrap break-words"
-                dangerouslySetInnerHTML={{ __html: content }}
+                dangerouslySetInnerHTML={{ __html: localContent }}
               />
 
               {/* Post Image (Optional) */}
@@ -368,9 +377,9 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
 
                     {/* Option Section */}
                     {isModalOptionOpen && (
-                      <div className="absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded shadow-md w-48 z-10">
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Chỉnh sửa bài viết</button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Xóa bài viết</button>
+                      <div className="absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded shadow-md w-48 z-10 overflow-hidden">
+                        {isOwnPost && <button onClick={openEditModal} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Chỉnh sửa bài viết</button>}
+                        {isOwnPost && <button onClick={handleDeletePost} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Xóa bài viết</button>}
                         <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Báo cáo bài viết</button>
                       </div>
                     )}
@@ -420,6 +429,85 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#242424]/80 backdrop-blur-[2px] transition-opacity">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[620px] overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="relative flex items-center justify-center border-b border-gray-100 py-3 px-4">
+              <span className="font-bold text-[16px] text-gray-900">Chỉnh sửa bài viết</span>
+              <button onClick={closeEditModal} className="absolute left-4 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-4 custom-scrollbar">
+              <div className="flex items-start gap-2 mb-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                  <img src={avatarUrl} alt="Current User" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-[15px] text-gray-900 leading-tight">{author}</span>
+                </div>
+              </div>
+
+              <div className="relative mb-4 border border-gray-200 rounded-lg p-2 focus-within:border-[#d09596] transition-colors">
+                <div
+                  ref={editEditorRef}
+                  contentEditable
+                  onInput={handleEditInput}
+                  dangerouslySetInnerHTML={{ __html: localContent }}
+                  className="w-full min-h-[100px] max-h-[300px] text-[15px] text-gray-800 outline-none overflow-y-auto wysiwyg-editor break-words whitespace-pre-wrap pt-1"
+                />
+              </div>
+            </div>
+
+            <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between bg-white mt-auto">
+              <div className="flex items-center text-gray-500 overflow-x-auto no-scrollbar">
+                {!editShowFormatBar ? (
+                  <div className="flex items-center gap-1">
+                    <button onMouseDown={(e) => { e.preventDefault(); setEditShowFormatBar(true); }} className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors" title="Format">
+                      <span className="font-serif font-bold text-[16px] text-gray-600">Aa</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 bg-gray-50 rounded-full px-1 py-1 border border-gray-200">
+                    <button onMouseDown={(e) => { e.preventDefault(); setEditShowFormatBar(false); }} className="w-7 h-7 flex items-center justify-center bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-colors shrink-0" title="Hide format">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+                    </button>
+                    <div className="w-px h-5 bg-gray-300 mx-0.5"></div>
+                    <button onMouseDown={(e) => applyEditFormat(e, 'bold')} className="hover:bg-gray-200 rounded-full transition-colors font-serif font-bold text-[14px] w-7 h-7 flex items-center justify-center text-gray-700" title="Bold"><span className="leading-none">B</span></button>
+                    <button onMouseDown={(e) => applyEditFormat(e, 'italic')} className="hover:bg-gray-200 rounded-full transition-colors font-serif italic font-bold text-[14px] w-7 h-7 flex items-center justify-center text-gray-700" title="Italic"><span className="leading-none">I</span></button>
+                    <button onMouseDown={(e) => applyEditFormat(e, 'insertOrderedList')} className="hover:bg-gray-200 rounded-full transition-colors shrink-0 w-7 h-7 flex items-center justify-center text-gray-700" title="Numbered List">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="10" y1="6" x2="21" y2="6" /><line x1="10" y1="12" x2="21" y2="12" /><line x1="10" y1="18" x2="21" y2="18" /><line x1="4" y1="6" x2="4.01" y2="6" /><line x1="4" y1="12" x2="4.01" y2="12" /><line x1="4" y1="18" x2="4.01" y2="18" /></svg>
+                    </button>
+                    <button onMouseDown={(e) => applyEditFormat(e, 'insertUnorderedList')} className="hover:bg-gray-200 rounded-full transition-colors shrink-0 w-7 h-7 flex items-center justify-center text-gray-700" title="Bulleted List">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+                    </button>
+                    <button onMouseDown={handleEditLink} className="hover:bg-gray-200 rounded-full transition-colors shrink-0 w-7 h-7 flex items-center justify-center text-gray-700" title="Link">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </button>
+                    <button onMouseDown={insertEditQuote} className="hover:bg-gray-200 rounded-full transition-colors font-serif font-bold text-[18px] shrink-0 w-7 h-7 flex items-center justify-center text-gray-700" title="Quote"><span className="leading-none mt-2">”</span></button>
+                    <button onMouseDown={insertEditCode} className="hover:bg-gray-200 rounded-full transition-colors font-mono font-bold text-[14px] shrink-0 w-7 h-7 flex items-center justify-center text-gray-700" title="Code"><span className="leading-none">{`{}`}</span></button>
+                    <button onMouseDown={insertEditMath} className="hover:bg-gray-200 rounded-full transition-colors font-serif font-bold text-[15px] shrink-0 w-7 h-7 flex items-center justify-center text-gray-700" title="Math"><span className="leading-none">Σ</span></button>
+                    <button onMouseDown={(e) => applyEditFormat(e, 'undo')} className="hover:bg-gray-200 rounded-full transition-colors shrink-0 w-7 h-7 flex items-center justify-center text-gray-700" title="Undo">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" /></svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button 
+                onClick={handleUpdatePost}
+                disabled={!editHasText}
+                className={`px-6 py-2 text-[14px] font-bold text-white rounded-full transition-colors shadow-sm ml-2 ${editHasText ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}`} 
+                style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}>
+                Lưu
+              </button>
             </div>
           </div>
         </div>
