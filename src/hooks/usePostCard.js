@@ -1,45 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { likePostAPI, dislikePostAPI, getCommentsByPostId, createCommentAPI, likeCommentAPI, dislikeCommentAPI, editPostAPI, deletePostAPI } from '../services/postService';
+import { likePostAPI, dislikePostAPI, getCommentsByPostId, createCommentAPI, likeCommentAPI, dislikeCommentAPI, editPostAPI, deletePostAPI, reportPostAPI, sharePostAPI } from '../services/postService';
 
 export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, initialUserReaction = null, initialContent = '' } = {}) => {
-  // Reaction states
-  const [upvotesCount, setUpvotesCount] = useState(initialUpvotes);
-  const [downvotesCount, setDownvotesCount] = useState(initialDownvotes);
-  const [isLiked, setIsLiked] = useState(initialUserReaction === 'LIKE');
-  const [isDisliked, setIsDisliked] = useState(initialUserReaction === 'DISLIKE');
 
-  // Original PostCard states
-  const [isCommentOpen, setIsCommentOpen] = useState(false);
-  const [activeReplyId, setActiveReplyId] = useState(null);
+  // Nội dung bài viết (dùng chung: hiển thị card, modal xem, modal sửa)
+  const [localContent, setLocalContent] = useState(initialContent);
+
+  // Trạng thái bị xóa (dùng chung: ẩn toàn bộ card sau khi xóa)
+  const [isDeleted, setIsDeleted] = useState(false);
+
+  // Dropdown option ngoài card (dùng chung: Edit, Delete, Report đều gọi setIsOptionOpen(false))
   const [isOptionOpen, setIsOptionOpen] = useState(false);
   const optionRef = useRef(null);
-
-  // Comment states
-  const [comments, setComments] = useState([]);
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [hasMoreComments, setHasMoreComments] = useState(true);
-
-
-  useEffect(() => {
-    if (isCommentOpen && comments.length === 0) {
-      loadComments();
-    }
-  }, [isCommentOpen]);
-
-  const handleCreateComment = async (content, parentId = null) => {
-    if (!postId) return;
-    try {
-      await createCommentAPI(postId, parentId, content);
-      toast.success('Đã bình luận thành công!');
-      await loadComments(true);
-      if (parentId) {
-        setActiveReplyId(null);
-      }
-    } catch (error) {
-      toast.error(error || 'Không thể đăng bình luận');
-    }
-  };
+  const toggleOption = () => setIsOptionOpen(!isOptionOpen);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -47,24 +21,20 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
         setIsOptionOpen(false);
       }
     };
-
     const handleScroll = () => {
-      if (isOptionOpen) {
-        setIsOptionOpen(false);
-      }
+      if (isOptionOpen) setIsOptionOpen(false);
     };
-
     if (isOptionOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       window.addEventListener('scroll', handleScroll, true);
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('scroll', handleScroll, true);
     };
   }, [isOptionOpen]);
 
+  // Dropdown option trong Post Modal (dùng chung: Edit, Delete, Report trong modal đều gọi setIsModalOptionOpen(false))
   const [isModalOptionOpen, setIsModalOptionOpen] = useState(false);
   const modalOptionRef = useRef(null);
   const toggleModalOption = () => setIsModalOptionOpen(!isModalOptionOpen);
@@ -83,21 +53,181 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     };
   }, [isModalOptionOpen]);
 
-  // Share Modal states
+  // + REACTIONS (Like / Dislike bài viết)
+
+  const [upvotesCount, setUpvotesCount] = useState(initialUpvotes);
+  const [downvotesCount, setDownvotesCount] = useState(initialDownvotes);
+  const [isLiked, setIsLiked] = useState(initialUserReaction === 'LIKE');
+  const [isDisliked, setIsDisliked] = useState(initialUserReaction === 'DISLIKE');
+
+  const handleLike = async () => {
+    if (!postId) return;
+    const wasLiked = isLiked;
+    const wasDisliked = isDisliked;
+    // Optimistic update
+    setIsLiked(!wasLiked);
+    if (wasDisliked) setIsDisliked(false);
+    setUpvotesCount(prev => prev + (wasLiked ? -1 : 1));
+    if (wasDisliked) setDownvotesCount(prev => prev - 1);
+    try {
+      await likePostAPI(postId);
+    } catch (error) {
+      // Revert on error
+      setIsLiked(wasLiked);
+      if (wasDisliked) setIsDisliked(true);
+      setUpvotesCount(prev => prev - (wasLiked ? -1 : 1));
+      if (wasDisliked) setDownvotesCount(prev => prev + 1);
+      toast.error(error || 'Lỗi kết nối máy chủ');
+    }
+  };
+
+  const handleDislike = async () => {
+    if (!postId) return;
+    const wasDisliked = isDisliked;
+    const wasLiked = isLiked;
+    // Optimistic update
+    setIsDisliked(!wasDisliked);
+    if (wasLiked) setIsLiked(false);
+    setDownvotesCount(prev => prev + (wasDisliked ? -1 : 1));
+    if (wasLiked) setUpvotesCount(prev => prev - 1);
+    try {
+      await dislikePostAPI(postId);
+    } catch (error) {
+      // Revert on error
+      setIsDisliked(wasDisliked);
+      if (wasLiked) setIsLiked(true);
+      setDownvotesCount(prev => prev - (wasDisliked ? -1 : 1));
+      if (wasLiked) setUpvotesCount(prev => prev + 1);
+      toast.error(error || 'Lỗi kết nối máy chủ');
+    }
+  };
+
+  // + COMMENTS (Bình luận & Phản hồi)
+
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [activeReplyId, setActiveReplyId] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [hasMoreComments, setHasMoreComments] = useState(true);
+
+  const toggleComment = () => setIsCommentOpen(!isCommentOpen);
+
+  // Tự động tải comments khi mở section bình luận lần đầu
+  useEffect(() => {
+    if (isCommentOpen && comments.length === 0) {
+      loadComments();
+    }
+  }, [isCommentOpen]);
+
+  const loadComments = async (refresh = false) => {
+    if (!postId || (!hasMoreComments && !refresh) || loadingComments) return;
+    setLoadingComments(true);
+    try {
+      const lastId = refresh || comments.length === 0 ? '' : comments[comments.length - 1].id;
+      const res = await getCommentsByPostId(postId, lastId, 10);
+      const fetchedComments = res || [];
+      if (refresh) {
+        setComments(fetchedComments);
+      } else {
+        setComments(prev => {
+          const existingIds = new Set(prev.map(c => c.id));
+          const newUnique = fetchedComments.filter(c => !existingIds.has(c.id));
+          return [...prev, ...newUnique];
+        });
+      }
+      setHasMoreComments(fetchedComments.length === 10);
+    } catch (error) {
+      toast.error('Lỗi khi tải bình luận');
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const handleCreateComment = async (content, parentId = null) => {
+    if (!postId) return;
+    try {
+      await createCommentAPI(postId, parentId, content);
+      toast.success('Đã bình luận thành công!');
+      await loadComments(true);
+      if (parentId) setActiveReplyId(null);
+    } catch (error) {
+      toast.error(error || 'Không thể đăng bình luận');
+    }
+  };
+
+  const handleReactionComment = async (commentId, type = 'LIKE') => {
+    const originalComments = [...comments];
+    const updateItems = (items) => items.map(item => {
+      if (item.id !== commentId) return item;
+      const wasLiked = item.userReaction === 'LIKE';
+      const wasDisliked = item.userReaction === 'DISLIKE';
+      let newReaction = item.userReaction;
+      let newLikeCount = item.likeCount || 0;
+      let newDislikeCount = item.dislikeCount || 0;
+      if (type === 'LIKE') {
+        if (wasLiked) { newReaction = null; newLikeCount -= 1; }
+        else { newReaction = 'LIKE'; newLikeCount += 1; if (wasDisliked) newDislikeCount -= 1; }
+      } else {
+        if (wasDisliked) { newReaction = null; newDislikeCount -= 1; }
+        else { newReaction = 'DISLIKE'; newDislikeCount += 1; if (wasLiked) newLikeCount -= 1; }
+      }
+      return { ...item, userReaction: newReaction, likeCount: newLikeCount, dislikeCount: newDislikeCount };
+    });
+    setComments(updateItems(comments));
+    try {
+      if (type === 'LIKE') await likeCommentAPI(commentId);
+      else await dislikeCommentAPI(commentId);
+    } catch (error) {
+      setComments(originalComments);
+      toast.error(error || 'Lỗi khi tương tác bình luận');
+    }
+  };
+
+  // + POST DETAIL MODAL (Xem chi tiết bài viết)
+
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+
+  const openPostModal = () => {
+    setIsPostModalOpen(true);
+    // Cũng tải comments nếu chưa có (dùng chung comments state với section bình luận)
+    if (!isCommentOpen && comments.length === 0) {
+      loadComments();
+    }
+  };
+  const closePostModal = () => setIsPostModalOpen(false);
+
+
+  // + SHARE MODAL (Chia sẻ bài viết)
+
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [sharePrivacy, setSharePrivacy] = useState('Everyone'); // 'Everyone' or other groups
+  const [sharePrivacy, setSharePrivacy] = useState('Everyone');
   const [isFocused, setIsFocused] = useState(false);
   const [hasText, setHasText] = useState(false);
   const [showFormatBar, setShowFormatBar] = useState(false);
   const editorRef = useRef(null);
 
-  const toggleComment = () => setIsCommentOpen(!isCommentOpen);
-  const toggleOption = () => setIsOptionOpen(!isOptionOpen);
-
   const openShareModal = () => setIsShareModalOpen(true);
-  const closeShareModal = () => {
-    setIsShareModalOpen(false);
-    // Optionally clear text editor on close
+  const closeShareModal = () => setIsShareModalOpen(false);
+
+  const [isSharing, setIsSharing] = useState(false);
+
+  const handleSharePost = async () => {
+    if (!editorRef.current) return;
+    const sharedContent = editorRef.current.innerHTML;
+
+    setIsSharing(true);
+    try {
+      await sharePostAPI(postId, { content: sharedContent });
+      toast.success('Đã chia sẻ bài viết lên dòng thời gian của bạn!');
+      closeShareModal();
+      // Clear editor content
+      if (editorRef.current) editorRef.current.innerHTML = '';
+      setHasText(false);
+    } catch (error) {
+      toast.error(error || 'Lỗi khi chia sẻ bài viết');
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const handleInput = () => {
@@ -119,165 +249,16 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
   const handleLink = (e) => {
     e.preventDefault();
     const url = window.prompt('Nhập link URL liên kết:', 'https://');
-    if (url) {
-      applyFormat(e, 'createLink', url);
-    }
+    if (url) applyFormat(e, 'createLink', url);
   };
 
-  const insertQuote = (e) => {
-    e.preventDefault();
-    applyFormat(e, 'formatBlock', 'BLOCKQUOTE');
-  };
+  const insertQuote = (e) => { e.preventDefault(); applyFormat(e, 'formatBlock', 'BLOCKQUOTE'); };
+  const insertCode = (e) => { e.preventDefault(); applyFormat(e, 'formatBlock', 'PRE'); };
+  const insertMath = (e) => { e.preventDefault(); applyFormat(e, 'insertText', ' $$ equation $$ '); };
 
-  const insertCode = (e) => {
-    e.preventDefault();
-    applyFormat(e, 'formatBlock', 'PRE');
-  };
 
-  const insertMath = (e) => {
-    e.preventDefault();
-    applyFormat(e, 'insertText', ' $$ equation $$ ');
-  };
+  // + EDIT POST (Chỉnh sửa bài viết)
 
-  const handleLike = async () => {
-    if (!postId) return;
-
-    // Optimistic Update
-    const wasLiked = isLiked;
-    const wasDisliked = isDisliked;
-
-    setIsLiked(!wasLiked);
-    if (wasDisliked) setIsDisliked(false);
-
-    // Add/remove upvote based on toggle
-    setUpvotesCount(prev => prev + (wasLiked ? -1 : 1));
-    if (wasDisliked) setDownvotesCount(prev => prev - 1);
-
-    try {
-      await likePostAPI(postId);
-    } catch (error) {
-      // Revert on error
-      setIsLiked(wasLiked);
-      if (wasDisliked) setIsDisliked(true);
-      setUpvotesCount(prev => prev - (wasLiked ? -1 : 1));
-      if (wasDisliked) setDownvotesCount(prev => prev + 1);
-      toast.error(error || 'Lỗi kết nối máy chủ');
-    }
-  };
-
-  const handleDislike = async () => {
-    if (!postId) return;
-
-    // Optimistic Update
-    const wasDisliked = isDisliked;
-    const wasLiked = isLiked;
-
-    setIsDisliked(!wasDisliked);
-    if (wasLiked) setIsLiked(false);
-
-    setDownvotesCount(prev => prev + (wasDisliked ? -1 : 1));
-    if (wasLiked) setUpvotesCount(prev => prev - 1);
-
-    try {
-      await dislikePostAPI(postId);
-    } catch (error) {
-      // Revert on error
-      setIsDisliked(wasDisliked);
-      if (wasLiked) setIsLiked(true);
-      setDownvotesCount(prev => prev - (wasDisliked ? -1 : 1));
-      if (wasLiked) setUpvotesCount(prev => prev + 1);
-      toast.error(error || 'Lỗi kết nối máy chủ');
-    }
-  };
-
-  const loadComments = async (refresh = false) => {
-    if (!postId || (!hasMoreComments && !refresh) || loadingComments) return;
-    setLoadingComments(true);
-    try {
-      const lastId = refresh || comments.length === 0 ? '' : comments[comments.length - 1].id;
-      const res = await getCommentsByPostId(postId, lastId, 10);
-      const fetchedComments = res || [];
-      console.log(fetchedComments);
-      
-      if (refresh) {
-        setComments(fetchedComments);
-      } else {
-        setComments(prev => {
-          const existingIds = new Set(prev.map(c => c.id));
-          const newUnique = fetchedComments.filter(c => !existingIds.has(c.id));
-          return [...prev, ...newUnique];
-        });
-      }
-      
-      setHasMoreComments(fetchedComments.length === 10);
-    } catch (error) {
-      toast.error('Lỗi khi tải bình luận');
-    } finally {
-      setLoadingComments(false);
-    }
-  };
-
-  const handleReactionComment = async (commentId, type = 'LIKE') => {
-    const originalComments = [...comments];
-    
-    const updateItems = (items) => {
-      return items.map(item => {
-        if (item.id === commentId) {
-          const wasLiked = item.userReaction === 'LIKE';
-          const wasDisliked = item.userReaction === 'DISLIKE';
-          
-          let newReaction = item.userReaction;
-          let newLikeCount = item.likeCount || 0;
-          let newDislikeCount = item.dislikeCount || 0;
-
-          if (type === 'LIKE') {
-            if (wasLiked) {
-              newReaction = null;
-              newLikeCount -= 1;
-            } else {
-              newReaction = 'LIKE';
-              newLikeCount += 1;
-              if (wasDisliked) newDislikeCount -= 1;
-            }
-          } else {
-            if (wasDisliked) {
-              newReaction = null;
-              newDislikeCount -= 1;
-            } else {
-              newReaction = 'DISLIKE';
-              newDislikeCount += 1;
-              if (wasLiked) newLikeCount -= 1;
-            }
-          }
-
-          return { ...item, userReaction: newReaction, likeCount: newLikeCount, dislikeCount: newDislikeCount };
-        }
-        return item;
-      });
-    };
-
-    setComments(updateItems(comments));
-
-    try {
-      if (type === 'LIKE') await likeCommentAPI(commentId);
-      else await dislikeCommentAPI(commentId);
-    } catch (error) {
-      setComments(originalComments);
-      toast.error(error || 'Lỗi khi tương tác bình luận');
-    }
-  };
-
-  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
-  const openPostModal = () => {
-    setIsPostModalOpen(true);
-    if (!isCommentOpen && comments.length === 0) {
-      loadComments();
-    }
-  };
-  const closePostModal = () => setIsPostModalOpen(false);
-
-  const [localContent, setLocalContent] = useState(initialContent);
-  const [isDeleted, setIsDeleted] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const editEditorRef = useRef(null);
   const [editHasText, setEditHasText] = useState(true);
@@ -285,62 +266,37 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
 
   const openEditModal = () => {
     setIsEditModalOpen(true);
-    setIsOptionOpen(false);
-    setIsModalOptionOpen(false);
+    setIsOptionOpen(false);        // đóng dropdown card
+    setIsModalOptionOpen(false);   // đóng dropdown trong Post Modal
     setEditHasText(localContent ? localContent.trim().length > 0 : false);
   };
   const closeEditModal = () => setIsEditModalOpen(false);
 
   const handleEditInput = () => {
     if (editEditorRef.current) {
-        const content = editEditorRef.current.textContent || '';
-        setEditHasText(content.trim().length > 0);
+      const content = editEditorRef.current.textContent || '';
+      setEditHasText(content.trim().length > 0);
     }
   };
 
   const applyEditFormat = (e, command, value = null) => {
-      e.preventDefault();
-      if (editEditorRef.current) {
-          document.execCommand(command, false, value);
-          editEditorRef.current.focus();
-          handleEditInput();
-      }
+    e.preventDefault();
+    if (editEditorRef.current) {
+      document.execCommand(command, false, value);
+      editEditorRef.current.focus();
+      handleEditInput();
+    }
   };
 
   const handleEditLink = (e) => {
     e.preventDefault();
     const url = window.prompt('Nhập link URL liên kết:', 'https://');
-    if (url) {
-      applyEditFormat(e, 'createLink', url);
-    }
+    if (url) applyEditFormat(e, 'createLink', url);
   };
 
-  const insertEditQuote = (e) => {
-    e.preventDefault();
-    applyEditFormat(e, 'formatBlock', 'BLOCKQUOTE');
-  };
-
-  const insertEditCode = (e) => {
-    e.preventDefault();
-    applyEditFormat(e, 'formatBlock', 'PRE');
-  };
-
-  const insertEditMath = (e) => {
-    e.preventDefault();
-    applyEditFormat(e, 'insertText', ' $$ equation $$ ');
-  };
-
-  const handleDeletePost = async () => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa bài viết này?')) {
-      try {
-        await deletePostAPI(postId);
-        toast.success('Đã xóa bài viết!');
-        setIsDeleted(true);
-      } catch (error) {
-        toast.error(error || 'Lỗi khi xóa bài viết');
-      }
-    }
-  };
+  const insertEditQuote = (e) => { e.preventDefault(); applyEditFormat(e, 'formatBlock', 'BLOCKQUOTE'); };
+  const insertEditCode = (e) => { e.preventDefault(); applyEditFormat(e, 'formatBlock', 'PRE'); };
+  const insertEditMath = (e) => { e.preventDefault(); applyEditFormat(e, 'insertText', ' $$ equation $$ '); };
 
   const handleUpdatePost = async () => {
     if (editEditorRef.current && editHasText) {
@@ -348,7 +304,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
       try {
         await editPostAPI(postId, { content: newContent });
         toast.success('Đã cập nhật bài viết!');
-        setLocalContent(newContent);
+        setLocalContent(newContent);  // cập nhật shared localContent
         closeEditModal();
       } catch (error) {
         toast.error(error || 'Lỗi khi cập nhật bài viết');
@@ -356,26 +312,114 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     }
   };
 
+  // + DELETE POST (Xóa bài viết)
+
+  const handleDeletePost = async () => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa bài viết này?')) {
+      try {
+        await deletePostAPI(postId);
+        toast.success('Đã xóa bài viết!');
+        setIsDeleted(true);  // cập nhật shared isDeleted
+      } catch (error) {
+        toast.error(error || 'Lỗi khi xóa bài viết');
+      }
+    }
+  };
+
+  // + REPORT POST (Báo cáo bài viết)
+
+  const REPORT_REASONS = [
+    'Spam hoặc lừa đảo',
+    'Ngôn từ kích động thù địch',
+    'Quấy rối hoặc bắt nạt',
+    'Thông tin sai lệch',
+    'Ảnh khỏa thân hoặc nội dung tình dục',
+    'Khác',
+  ];
+
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
+  const openReportModal = () => {
+    setIsReportModalOpen(true);
+    setIsOptionOpen(false);
+    setIsModalOptionOpen(false);
+    setReportReason('');
+    setReportDescription('');
+  };
+
+  const closeReportModal = () => {
+    setIsReportModalOpen(false);
+    setReportReason('');
+    setReportDescription('');
+  };
+
+  const handleSubmitReport = async () => {
+    if (!reportReason) return;
+    setIsSubmittingReport(true);
+    try {
+      await reportPostAPI(postId, { 
+        reason: reportReason, 
+        description: reportDescription,
+        targetId: postId,
+        targetType: "POST"
+      });
+      toast.success('Đã gửi báo cáo. Cảm ơn bạn!');
+      closeReportModal();
+    } catch (error) {
+      toast.error(error || 'Lỗi khi gửi báo cáo');
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
+
+  // + RETURN
+
   return {
+    // Shared
+    localContent, isDeleted,
+    isOptionOpen, toggleOption, optionRef,
+    isModalOptionOpen, toggleModalOption, modalOptionRef,
+
+    // Reactions
     upvotesCount, downvotesCount, isLiked, isDisliked, handleLike, handleDislike,
-    comments, loadingComments, hasMoreComments, loadComments, handleCreateComment, handleReactionComment,
+
+    // Comments
     isCommentOpen, toggleComment,
     activeReplyId, setActiveReplyId,
-    isOptionOpen, toggleOption, optionRef,
+    comments, loadingComments, hasMoreComments, loadComments,
+    handleCreateComment, handleReactionComment,
+
+    // Post Detail Modal
+    isPostModalOpen, openPostModal, closePostModal,
+
+    // Share Modal
     isShareModalOpen, openShareModal, closeShareModal,
+    isSharing, handleSharePost,
     sharePrivacy, setSharePrivacy,
     isFocused, setIsFocused,
     hasText, setHasText,
     showFormatBar, setShowFormatBar,
     editorRef,
     handleInput, applyFormat, handleLink, insertQuote, insertCode, insertMath,
-    isPostModalOpen, openPostModal, closePostModal,
-    isModalOptionOpen, toggleModalOption, modalOptionRef,
-    localContent, isDeleted,
+
+    // Edit Post
     isEditModalOpen, openEditModal, closeEditModal,
     editEditorRef, editHasText, editShowFormatBar, setEditShowFormatBar,
     handleEditInput, applyEditFormat,
     handleEditLink, insertEditQuote, insertEditCode, insertEditMath,
-    handleDeletePost, handleUpdatePost
+    handleUpdatePost,
+
+    // Delete Post
+    handleDeletePost,
+
+    // Report Post
+    isReportModalOpen, openReportModal, closeReportModal,
+    REPORT_REASONS, reportReason, setReportReason,
+    reportDescription, setReportDescription,
+    isSubmittingReport, handleSubmitReport,
   };
 };

@@ -82,6 +82,7 @@ const HomeFeed = ({ avatarUrl }) => {
              const authorName = post.author?.authorName || 'Người dùng ẩn danh';
              const department = post.author?.department;
              const isOwnPost = Boolean(user && user.id && post.author && post.author.id === user.id);
+             const isOwnSharePost = Boolean(user && user.id && post.sharedPost && post.sharedPost.author.id === user.id);
              
              return (
               <div key={post.id} className="relative pt-2">
@@ -97,6 +98,8 @@ const HomeFeed = ({ avatarUrl }) => {
                   downvotes={post.dislikeCount || 0}
                   userReaction={post.userReaction}
                   isOwnPost={isOwnPost}
+                  sharedPost={post.sharedPost}
+                  isOwnSharePost={isOwnSharePost}
                 />
               </div>
             );

@@ -101,3 +101,21 @@ export const deletePostAPI = async (postId) => {
         method: 'DELETE',
     });
 };
+
+/**
+ * Reports a post or other content.
+ * @param {object} payload - { reason, description, targetId, targetType }
+ */
+export const reportPostAPI = async (postId, payload) => {
+    return apiFetch(`/users/posts/${postId}/report`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+};
+
+export const sharePostAPI = async (postId, payload) => {
+    return apiFetch(`/users/posts/${postId}/share`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}

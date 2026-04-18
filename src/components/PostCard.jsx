@@ -13,7 +13,7 @@ const formatTimeAgo = (dateString) => {
   return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
 };
 
-const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, createdAt, title, content, image, upvotes, downvotes, userReaction, isOwnPost }) => {
+const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, createdAt, title, content, image, upvotes, downvotes, userReaction, isOwnPost, sharedPost, isOwnSharePost }) => {
   const {
     upvotesCount, downvotesCount, isLiked, isDisliked, handleLike, handleDislike,
     comments, loadingComments, hasMoreComments, loadComments, handleCreateComment, handleReactionComment,
@@ -21,6 +21,7 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
     activeReplyId, setActiveReplyId,
     isOptionOpen, toggleOption, optionRef,
     isShareModalOpen, openShareModal, closeShareModal,
+    isSharing, handleSharePost,
     sharePrivacy,
     isFocused, setIsFocused,
     hasText,
@@ -34,7 +35,11 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
     editEditorRef, editHasText, editShowFormatBar, setEditShowFormatBar,
     handleEditInput, applyEditFormat,
     handleEditLink, insertEditQuote, insertEditCode, insertEditMath,
-    handleDeletePost, handleUpdatePost
+    handleDeletePost, handleUpdatePost,
+    isReportModalOpen, openReportModal, closeReportModal,
+    REPORT_REASONS, reportReason, setReportReason,
+    reportDescription, setReportDescription,
+    isSubmittingReport, handleSubmitReport,
   } = usePostCard({ postId, initialUpvotes: upvotes, initialDownvotes: downvotes, initialUserReaction: userReaction, initialContent: content });
 
   if (isDeleted) return null;
@@ -74,6 +79,39 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
         {image && (
           <div className="w-full rounded-md overflow-hidden mb-3 border border-gray-200 bg-gray-50">
             <img src={image} alt="Post attachment" className="w-full h-auto object-cover max-h-[300px] sm:max-h-[400px]" />
+          </div>
+        )}
+
+        {/* Quoted Shared Post */}
+        {sharedPost && (
+          <div className="border border-gray-200 rounded-lg p-3 sm:p-4 mt-1 mb-3 hover:bg-gray-50/50 transition-colors border-l-4 border-gray-200">
+            <div className="flex items-start gap-2 mb-2">
+              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                <img
+                  src={sharedPost.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(sharedPost.author.authorName)}&background=dfb9b9&color=6a2f30`}
+                  alt={sharedPost.author.authorName}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex flex-col">
+                <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
+                  <span className="cursor-pointer hover:underline">{sharedPost.author.authorName}</span>
+                  {!isOwnSharePost && (
+                    <>
+                      <span className="mx-1 font-normal text-gray-500">&middot;</span>
+                      <button className="text-[13px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
+                    </>
+                  )}
+                </div>
+                <div className="text-[13px] text-gray-500 line-clamp-1">
+                  {sharedPost.author.department} <span className="mx-1">&middot;</span> {formatTimeAgo(sharedPost.createdAt)}
+                </div>
+              </div>
+            </div>
+            <div
+              className="text-[14px] text-gray-700 line-clamp-3 leading-normal wysiwyg-editor"
+              dangerouslySetInnerHTML={{ __html: sharedPost.content }}
+            />
           </div>
         )}
       </div>
@@ -126,7 +164,7 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
             <div className="absolute right-0 bottom-full mt-1 bg-white border border-gray-200 rounded shadow-md w-48 z-10 overflow-hidden">
               {isOwnPost && <button onClick={openEditModal} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Chỉnh sửa bài viết</button>}
               {isOwnPost && <button onClick={handleDeletePost} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Xóa bài viết</button>}
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Báo cáo bài viết</button>
+              <button onClick={openReportModal} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Báo cáo bài viết</button>
             </div>
           )}
         </div>
@@ -243,7 +281,7 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
                   <span>{formatTimeAgo(createdAt)}</span>
                 </div>
                 <h4 className="text-[15px] font-bold text-gray-900 mb-1.5 leading-snug">{title}</h4>
-                <div 
+                <div
                   className="text-[14px] text-gray-700 line-clamp-3 leading-normal wysiwyg-editor"
                   dangerouslySetInnerHTML={{ __html: localContent }}
                 />
@@ -290,8 +328,13 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
               </div>
 
               {/* Share Button (Save) */}
-              <button className="px-6 py-2 text-[14px] font-bold text-white rounded-full transition-colors shadow-sm ml-2" style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}>
-                Share
+              <button
+                onClick={handleSharePost}
+                disabled={isSharing}
+                className={`px-6 py-2 text-[14px] font-bold text-white rounded-full transition-colors shadow-sm ml-2 ${isSharing ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-95'}`}
+                style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}
+              >
+                {isSharing ? 'Sharing...' : 'Share'}
               </button>
             </div>
           </div>
@@ -349,6 +392,39 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
                 </div>
               )}
 
+              {/* Quoted Shared Post (Detail) */}
+              {sharedPost && (
+                <div className="border border-gray-200 rounded-lg p-3 sm:p-4 mt-1 mb-4 hover:bg-gray-50/50 transition-colors border-l-4 border-gray-200">
+                  <div className="flex items-start gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                      <img
+                        src={sharedPost.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(sharedPost.author.authorName)}&background=dfb9b9&color=6a2f30`}
+                        alt={sharedPost.author.authorName}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
+                        <span className="cursor-pointer hover:underline">{sharedPost.author.authorName}</span>
+                        {!isOwnSharePost && (
+                          <>
+                            <span className="mx-1 font-normal text-gray-500">&middot;</span>
+                            <button className="text-[13px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
+                          </>
+                        )}
+                      </div>
+                      <div className="text-[13px] text-gray-500 line-clamp-1">
+                        {sharedPost.author.department} <span className="mx-1">&middot;</span> {formatTimeAgo(sharedPost.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    className="text-[14px] text-gray-700 leading-normal wysiwyg-editor"
+                    dangerouslySetInnerHTML={{ __html: sharedPost.content }}
+                  />
+                </div>
+              )}
+
               {/* Action Bar */}
               <div className="flex items-center justify-between text-gray-500 mt-2 mb-4 border-y border-gray-100 py-1">
                 <div className="flex items-center gap-2">
@@ -380,7 +456,7 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
                       <div className="absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded shadow-md w-48 z-10 overflow-hidden">
                         {isOwnPost && <button onClick={openEditModal} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Chỉnh sửa bài viết</button>}
                         {isOwnPost && <button onClick={handleDeletePost} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Xóa bài viết</button>}
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Báo cáo bài viết</button>
+                        <button onClick={openReportModal} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Báo cáo bài viết</button>
                       </div>
                     )}
                   </div>
@@ -501,10 +577,10 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
                 )}
               </div>
 
-              <button 
+              <button
                 onClick={handleUpdatePost}
                 disabled={!editHasText}
-                className={`px-6 py-2 text-[14px] font-bold text-white rounded-full transition-colors shadow-sm ml-2 ${editHasText ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}`} 
+                className={`px-6 py-2 text-[14px] font-bold text-white rounded-full transition-colors shadow-sm ml-2 ${editHasText ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
                 style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}>
                 Lưu
               </button>
@@ -512,7 +588,101 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
           </div>
         </div>
       )}
+
+      {/* Report Modal */}
+      {isReportModalOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[#242424]/80 backdrop-blur-[2px]">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[500px] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="relative flex items-center justify-center border-b border-gray-100 py-3.5 px-4 shrink-0">
+              <span className="font-bold text-[16px] text-gray-900">Báo cáo bài viết</span>
+              <button
+                onClick={closeReportModal}
+                className="absolute right-3 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="overflow-y-auto custom-scrollbar px-5 py-4 max-h-[70vh]">
+              <p className="text-[14px] text-gray-500 mb-4">
+                Vui lòng cho chúng tôi biết vấn đề bạn gặp phải với bài viết này. Báo cáo của bạn sẽ được xem xét và giữ bí mật.
+              </p>
+
+              {/* Reason list */}
+              <div className="flex flex-col gap-2">
+                {REPORT_REASONS.map((reason) => (
+                  <label
+                    key={reason}
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${reportReason === reason
+                      ? 'border-[#d09596] bg-[#fdf4f4]'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                  >
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${reportReason === reason ? 'border-[#c0606a]' : 'border-gray-300'
+                      }`}>
+                      {reportReason === reason && (
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-dusty-rose-600)' }} />
+                      )}
+                    </div>
+                    <input
+                      type="radio"
+                      name="reportReason"
+                      value={reason}
+                      checked={reportReason === reason}
+                      onChange={() => setReportReason(reason)}
+                      className="sr-only"
+                    />
+                    <span className="text-[14px] text-gray-800 leading-snug">{reason}</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Additional description - only show if "Khác" selected */}
+              {reportReason === 'Khác' && (
+                <div className="mt-4">
+                  <label className="block text-[13px] font-medium text-gray-600 mb-1.5">
+                    Mô tả thêm <span className="text-gray-400 font-normal">(tùy chọn)</span>
+                  </label>
+                  <textarea
+                    value={reportDescription}
+                    onChange={(e) => setReportDescription(e.target.value)}
+                    placeholder="Hãy mô tả vấn đề bạn gặp phải..."
+                    rows={3}
+                    maxLength={500}
+                    className="w-full text-[14px] text-gray-800 border border-gray-200 rounded-lg px-3 py-2.5 resize-none outline-none focus:border-[#d09596] transition-colors placeholder-gray-400"
+                  />
+                  <div className="text-right text-[12px] text-gray-400 mt-1">{reportDescription.length}/500</div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-gray-100 shrink-0">
+              <button
+                onClick={closeReportModal}
+                className="px-5 py-2 text-[14px] font-medium text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleSubmitReport}
+                disabled={!reportReason || isSubmittingReport}
+                className={`px-6 py-2 text-[14px] font-bold text-white rounded-full transition-all shadow-sm ${reportReason && !isSubmittingReport
+                  ? 'opacity-100 cursor-pointer hover:brightness-90'
+                  : 'opacity-50 cursor-not-allowed'
+                  }`}
+                style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}
+              >
+                {isSubmittingReport ? 'Đang gửi...' : 'Gửi báo cáo'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 };
 
