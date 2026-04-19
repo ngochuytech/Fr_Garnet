@@ -43,3 +43,16 @@ export const setupProfile = async (setupData) => {
         body: JSON.stringify(setupData),
     });
 };
+
+export const updateAvatar = async (formData) => {
+    return apiFetch('/users/profiles/avatar', {
+        method: 'PUT',
+        body: formData,
+    });
+};
+
+export const getProfilePosts = async () => {
+    return apiFetch(`/users/posts/me`, {
+        method: 'GET',
+    });
+};

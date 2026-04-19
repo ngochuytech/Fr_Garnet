@@ -5,11 +5,12 @@ import { usePostCard } from '../hooks/usePostCard';
 import { useSharedPostModal } from '../hooks/useSharedPostModal';
 import CommentInput from './CommentInput';
 import Comment from './Comment';
+import SharePostModal from './SharePostModal';
 
 // ─── Inner component dùng usePostCard sau khi đã có postId ─────────────────
 const SharedPostContent = ({ post, onClose }) => {
-  const { user } = useAuth();
-  const isOwnPost = Boolean(user && user.id && post.author && post.author.id === user.id);
+  const { user: currentUser } = useAuth();
+  const isOwnPost = Boolean(currentUser && currentUser.id && post.author && post.author.id === currentUser.id);
 
   const {
     upvotesCount, downvotesCount, commentAmount, shareAmount, isLiked, isDisliked, handleLike, handleDislike,
@@ -93,6 +94,42 @@ const SharedPostContent = ({ post, onClose }) => {
         className="text-[15px] text-gray-800 leading-relaxed mb-4 wysiwyg-editor whitespace-pre-wrap break-words"
         dangerouslySetInnerHTML={{ __html: localContent }}
       />
+      {/* Quoted Shared Post (bài viết gốc mà post này đang chia sẻ) */}
+      {post.sharedPost && (
+        <div className={`border border-gray-200 rounded-lg p-3 sm:p-4 mt-1 mb-4 border-l-4 border-gray-200 ${post.sharedPost.author ? 'hover:bg-gray-50 transition-colors cursor-default' : ''}`}>
+          {post.sharedPost.author ? (
+            <>
+              <div className="flex items-start gap-2 mb-2">
+                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                  <img
+                    src={post.sharedPost.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.sharedPost.author.authorName)}&background=dfb9b9&color=6a2f30`}
+                    alt={post.sharedPost.author.authorName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
+                    <span className="cursor-pointer hover:underline">{post.sharedPost.author.authorName}</span>
+                  </div>
+                  <div className="text-[13px] text-gray-500">
+                    {post.sharedPost.author.department && <span>{post.sharedPost.author.department}<span className="mx-1">&middot;</span></span>}
+                    {formatTimeAgo(post.sharedPost.createdAt)}
+                  </div>
+                </div>
+              </div>
+              <div
+                className="text-[14px] text-gray-700 leading-normal wysiwyg-editor"
+                dangerouslySetInnerHTML={{ __html: post.sharedPost.content }}
+              />
+            </>
+          ) : (
+            <div className="flex items-center gap-2 text-gray-500 py-1">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+              <span className="text-[14px] font-medium italic select-none">{post.sharedPost.content}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Action Bar */}
       <div className="flex items-center justify-between text-gray-500 mt-2 mb-4 border-y border-gray-100 py-1">
@@ -119,7 +156,7 @@ const SharedPostContent = ({ post, onClose }) => {
           </button>
         </div>
 
-        {/* Right: Share */}
+        {/* Right: Comment & Share */}
         <div className="flex items-center gap-1 sm:gap-2">
           {/* Comment */}
           <button
@@ -171,7 +208,7 @@ const SharedPostContent = ({ post, onClose }) => {
       {/* Comment Section */}
       <div className="mb-4">
         <CommentInput
-          avatarUrl="https://ui-avatars.com/api/?name=User&background=dfb9b9&color=6a2f30"
+          avatarUrl={currentUser.avatarUrl}
           placeholder="Viết bình luận..."
           bgClass="bg-gray-50/80"
           onSubmit={(content) => handleCreateComment(content)}
@@ -212,85 +249,30 @@ const SharedPostContent = ({ post, onClose }) => {
         </div>
       </div>
 
-      {/* Share Modal */}
-      {isShareModalOpen && (
-        <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-[#242424]/80 backdrop-blur-[2px]">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[620px] overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Header */}
-            <div className="relative flex items-center justify-center border-b border-gray-100 py-3 px-4">
-              <button onClick={closeShareModal} className="absolute left-4 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-              <span className="font-bold text-[16px] text-gray-900">Chia sẻ bài viết</span>
-            </div>
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 custom-scrollbar">
-              <div className="flex items-start gap-2 mb-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                  <img src="https://ui-avatars.com/api/?name=User&background=dfb9b9&color=6a2f30" alt="Current User" className="w-full h-full object-cover" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-[15px] text-gray-900 leading-tight">Bạn</span>
-                </div>
-              </div>
-              {/* Editor */}
-              <div className="relative mb-4">
-                {!hasText && !isFocused && (
-                  <div className="absolute top-0 left-0 w-full pointer-events-none text-gray-500 text-[15px] pt-1">Nói gì đó về bài viết này...</div>
-                )}
-                <div
-                  ref={editorRef}
-                  contentEditable
-                  onInput={handleInput}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  className="w-full min-h-[40px] max-h-[200px] text-[15px] text-gray-800 outline-none overflow-y-auto wysiwyg-editor break-words whitespace-pre-wrap pt-1"
-                />
-              </div>
-              {/* Quoted post preview */}
-              <div className="border-l-4 border-gray-200 p-3 mb-2 hover:bg-gray-50/50 transition-colors">
-                <div className="flex items-center gap-2 mb-1 text-gray-500 text-[12px]">
-                  <img src={post.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author.authorName)}&background=dfb9b9&color=6a2f30`} alt={post.author.authorName} className="w-4 h-4 rounded-full object-cover" />
-                  <span className="font-bold text-gray-900">{post.author.authorName}</span>
-                  <span>&middot;</span>
-                  <span>{formatTimeAgo(post.createdAt)}</span>
-                </div>
-                <div className="text-[14px] text-gray-700 line-clamp-3 wysiwyg-editor" dangerouslySetInnerHTML={{ __html: post.content }} />
-              </div>
-            </div>
-            {/* Footer */}
-            <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between bg-white">
-              <div className="flex items-center text-gray-500 overflow-x-auto no-scrollbar">
-                {!showFormatBar ? (
-                  <button onMouseDown={(e) => { e.preventDefault(); setShowFormatBar(true); }} className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors" title="Format">
-                    <span className="font-serif font-bold text-[16px] text-gray-600">Aa</span>
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-1 bg-gray-50 rounded-full px-1 py-1 border border-gray-200">
-                    <button onMouseDown={(e) => { e.preventDefault(); setShowFormatBar(false); }} className="w-7 h-7 flex items-center justify-center bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-colors shrink-0">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
-                    </button>
-                    <div className="w-px h-5 bg-gray-300 mx-0.5" />
-                    <button onMouseDown={(e) => applyFormat(e, 'bold')} className="hover:bg-gray-200 rounded-full font-serif font-bold text-[14px] w-7 h-7 flex items-center justify-center text-gray-700">B</button>
-                    <button onMouseDown={(e) => applyFormat(e, 'italic')} className="hover:bg-gray-200 rounded-full font-serif italic font-bold text-[14px] w-7 h-7 flex items-center justify-center text-gray-700">I</button>
-                    <button onMouseDown={handleLink} className="hover:bg-gray-200 rounded-full shrink-0 w-7 h-7 flex items-center justify-center text-gray-700">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
-                    </button>
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={handleSharePost}
-                disabled={isSharing}
-                className={`px-6 py-2 text-[14px] font-bold text-white rounded-full transition-colors shadow-sm ml-2 ${isSharing ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-95'}`}
-                style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}
-              >
-                {isSharing ? 'Đang chia sẻ...' : 'Share'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SharePostModal
+        isOpen={isShareModalOpen}
+        onClose={closeShareModal}
+        quotedPost={{
+          authorAvatar: post.author.authorAvatar,
+          authorName: post.author.authorName,
+          department: post.author.department,
+          createdAt: post.createdAt,
+          content: post.content,
+        }}
+        editorRef={editorRef}
+        hasText={hasText}
+        isFocused={isFocused}
+        setIsFocused={setIsFocused}
+        handleInput={handleInput}
+        applyFormat={applyFormat}
+        handleLink={handleLink}
+        showFormatBar={showFormatBar}
+        setShowFormatBar={setShowFormatBar}
+        isSharing={isSharing}
+        handleSharePost={handleSharePost}
+        zIndex="z-[140]"
+        formatTimeAgo={formatTimeAgo}
+      />
 
       {/* Edit Modal */}
       {isEditModalOpen && (

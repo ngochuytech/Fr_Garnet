@@ -79,28 +79,14 @@ const HomeFeed = ({ avatarUrl }) => {
           ) : posts.length === 0 ? (
              <div className="py-4 text-center text-gray-500">Chưa có bài viết nào</div>
           ) : posts.map((post) => {
-             const authorName = post.author?.authorName || 'Người dùng ẩn danh';
-             const department = post.author?.department;
              const isOwnPost = Boolean(user && user.id && post.author && post.author.id === user.id);
              const isOwnSharePost = Boolean(user && user.id && post.sharedPost && post.sharedPost.author && post.sharedPost.author.id === user.id);
              
              return (
               <div key={post.id} className="relative pt-2">
                 <PostCard
-                  postId={post.id}
-                  authorId={post.author?.id}
-                  author={authorName}
-                  avatarUrl={`https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=dfb9b9&color=6a2f30`}
-                  authorCredential={department ? `Khoa: ${department}` : 'Thành viên CampusHub'}
-                  createdAt={post.createdAt}
-                  content={post.content}
-                  upvotes={post.likeCount}
-                  downvotes={post.dislikeCount || 0}
-                  commentCount={post.commentCount || 0}
-                  shareCount={post.shareCount || 0}
-                  userReaction={post.userReaction}
+                  post={post}
                   isOwnPost={isOwnPost}
-                  sharedPost={post.sharedPost}
                   isOwnSharePost={isOwnSharePost}
                 />
               </div>

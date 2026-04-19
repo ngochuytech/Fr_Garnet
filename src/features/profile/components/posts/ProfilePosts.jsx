@@ -1,37 +1,13 @@
 import PostCard from '../../../../components/PostCard';
 import { useProfilePosts } from '../../hooks/posts/useProfilePosts';
 
-const mockPosts = [
-  {
-    id: 1,
-    author: 'Huy Nguyễn',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Huy+Nguyen&background=dfb9b9&color=6a2f30',
-    authorCredential: 'Sinh viên tại Đại học Công nghệ',
-    timeAgo: '1 năm trước',
-    title: 'Làm thế nào để cân bằng giữa việc học trên trường và tự học lập trình?',
-    content: 'Lên kế hoạch rõ ràng, phân bổ thời gian hợp lý và tránh sự trì hoãn. Khi đã quen với nhịp độ, bạn sẽ thấy việc học tập mượt mà hơn rất nhiều so với bạn nghĩ...',
-    upvotes: '24',
-    image: null
-  },
-  {
-    id: 2,
-    author: 'Huy Nguyễn',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Huy+Nguyen&background=dfb9b9&color=6a2f30',
-    authorCredential: 'Sinh viên tại Đại học Công nghệ',
-    timeAgo: '2 năm trước',
-    title: 'Những địa điểm thực tế nào có tên nghe giống trong tiểu thuyết hư cấu?',
-    content: 'Đảo Robinson Crusoe hoặc Isla Róbinson Crusoe, một phần của Chile. Nơi đây sở hữu cảnh vật thiên nhiên vô cùng kỳ vĩ... (xem thêm)',
-    upvotes: '12',
-    image: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=650&q=80'
-  }
-];
-
 const ProfilePosts = () => {
   const {
     dropdownRef,
     isOpenSort,
     selectedSort,
     sortOptions,
+    posts,
     handleSelect,
     setIsOpenSort
   } = useProfilePosts();
@@ -83,9 +59,18 @@ const ProfilePosts = () => {
       </div>
 
       <div className="flex flex-col mt-4">
-        {mockPosts.map((post) => (
-          <PostCard key={post.id} {...post} />
-        ))}
+        {Array.isArray(posts) && posts.length > 0 ? (
+          posts.map((post) => (
+            <PostCard key={post.id} post={post} isOwnPost={true} />
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-gray-500">
+            <svg className="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <p className="text-[15px]">Chưa có bài viết nào</p>
+          </div>
+        )}
       </div>
     </>
   );

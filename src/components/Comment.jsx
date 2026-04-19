@@ -1,5 +1,6 @@
 import CommentInput from './CommentInput';
 import { useComment } from '../hooks/useComment';
+import { useAuth } from '../context/AuthContext';
 
 const Comment = ({
   comment,
@@ -25,6 +26,8 @@ const Comment = ({
     isMaxDepth,
     isNested,
     containerClass } = useComment({ comment, handleReactionComment, depth });
+
+    const { user: currentUser } = useAuth();
 
   return (
     <div className={`${containerClass}`}>
@@ -95,7 +98,7 @@ const Comment = ({
           {activeReplyId === comment.id && (
             <div className="mt-2 ml-2">
               <CommentInput
-                avatarUrl="https://ui-avatars.com/api/?name=User&background=dfb9b9&color=6a2f30"
+                avatarUrl={currentUser.avatarUrl}
                 placeholder={`Viết phản hồi ${comment.user?.name}...`}
                 bgClass="bg-transparent"
                 toggleComment={() => setActiveReplyId(null)}

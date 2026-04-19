@@ -6,7 +6,7 @@ const Header = () => {
   const { user } = useAuth();
   const location = useLocation();
   const displayName = user?.fullname || 'User';
-  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30`;
+  const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30&size=128`;
 
   const isActive = (path) => location.pathname === path;
 
