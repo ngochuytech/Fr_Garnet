@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { usePostCard } from '../hooks/usePostCard';
 import CommentInput from './CommentInput';
 import Comment from './Comment';
+import SharedPostModal from './SharedPostModal';
 
 const formatTimeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -13,9 +15,9 @@ const formatTimeAgo = (dateString) => {
   return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
 };
 
-const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, createdAt, title, content, image, upvotes, downvotes, userReaction, isOwnPost, sharedPost, isOwnSharePost }) => {
+const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, createdAt, title, content, image, upvotes, downvotes, commentCount, shareCount, userReaction, isOwnPost, sharedPost, isOwnSharePost }) => {
   const {
-    upvotesCount, downvotesCount, isLiked, isDisliked, handleLike, handleDislike,
+    upvotesCount, downvotesCount, shareAmount, isLiked, isDisliked, handleLike, handleDislike,
     comments, loadingComments, hasMoreComments, loadComments, handleCreateComment, handleReactionComment,
     isCommentOpen, toggleComment,
     activeReplyId, setActiveReplyId,
@@ -40,7 +42,10 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
     REPORT_REASONS, reportReason, setReportReason,
     reportDescription, setReportDescription,
     isSubmittingReport, handleSubmitReport,
-  } = usePostCard({ postId, initialUpvotes: upvotes, initialDownvotes: downvotes, initialUserReaction: userReaction, initialContent: content });
+    sharedPostModalId, openSharedPostModal, setSharedPostModalId, commentAmount
+  } = usePostCard({ postId, initialUpvotes: upvotes, initialDownvotes: downvotes, initialCommentCount: commentCount, initialShareCount: shareCount, initialUserReaction: userReaction, initialContent: content });
+
+
 
   if (isDeleted) return null;
 
@@ -84,34 +89,46 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
 
         {/* Quoted Shared Post */}
         {sharedPost && (
-          <div className="border border-gray-200 rounded-lg p-3 sm:p-4 mt-1 mb-3 hover:bg-gray-50/50 transition-colors border-l-4 border-gray-200">
-            <div className="flex items-start gap-2 mb-2">
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
-                <img
-                  src={sharedPost.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(sharedPost.author.authorName)}&background=dfb9b9&color=6a2f30`}
-                  alt={sharedPost.author.authorName}
-                  className="w-full h-full object-cover"
+          <div
+            onClick={sharedPost.author ? (e) => openSharedPostModal(e, sharedPost.id) : undefined}
+            className={`border border-gray-200 rounded-lg p-3 sm:p-4 mt-1 mb-3 hover:bg-gray-50 transition-colors border-l-4 border-gray-200 ${sharedPost.author ? 'cursor-pointer' : ''}`}
+          >
+            {sharedPost.author ? (
+              <>
+                <div className="flex items-start gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                    <img
+                      src={sharedPost.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(sharedPost.author.authorName)}&background=dfb9b9&color=6a2f30`}
+                      alt={sharedPost.author.authorName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
+                      <span className="cursor-pointer hover:underline">{sharedPost.author.authorName}</span>
+                      {!isOwnSharePost && (
+                        <>
+                          <span className="mx-1 font-normal text-gray-500">&middot;</span>
+                          <button className="text-[13px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
+                        </>
+                      )}
+                    </div>
+                    <div className="text-[13px] text-gray-500 line-clamp-1">
+                      {sharedPost.author.department} <span className="mx-1">&middot;</span> {formatTimeAgo(sharedPost.createdAt)}
+                    </div>
+                  </div>
+                </div>
+                <div
+                  className="text-[14px] text-gray-700 line-clamp-3 leading-normal wysiwyg-editor"
+                  dangerouslySetInnerHTML={{ __html: sharedPost.content }}
                 />
+              </>
+            ) : (
+              <div className="flex items-center gap-2 text-gray-500 py-1">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                <span className="text-[14px] font-medium select-none italic">{sharedPost.content}</span>
               </div>
-              <div className="flex flex-col">
-                <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
-                  <span className="cursor-pointer hover:underline">{sharedPost.author.authorName}</span>
-                  {!isOwnSharePost && (
-                    <>
-                      <span className="mx-1 font-normal text-gray-500">&middot;</span>
-                      <button className="text-[13px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
-                    </>
-                  )}
-                </div>
-                <div className="text-[13px] text-gray-500 line-clamp-1">
-                  {sharedPost.author.department} <span className="mx-1">&middot;</span> {formatTimeAgo(sharedPost.createdAt)}
-                </div>
-              </div>
-            </div>
-            <div
-              className="text-[14px] text-gray-700 line-clamp-3 leading-normal wysiwyg-editor"
-              dangerouslySetInnerHTML={{ __html: sharedPost.content }}
-            />
+            )}
           </div>
         )}
       </div>
@@ -138,17 +155,19 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
           {/* Comment button */}
           <button
             onClick={toggleComment}
-            className={`flex items-center justify-center p-2 rounded-full hover:bg-[#f7edee] transition-colors flex-shrink-0 ${isCommentOpen ? 'bg-[#f7edee]' : ''}`}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-full hover:bg-[#f7edee] transition-colors flex-shrink-0 ${isCommentOpen ? 'bg-[#f7edee]' : ''}`}
             style={isCommentOpen ? { color: 'var(--color-dusty-rose-600)' } : {}}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+            <span className="text-[13px] font-medium">{commentAmount > 0 ? commentAmount : ''}</span>
           </button>
 
 
           {/* Share button */}
           <button
             onClick={openShareModal}
-            className="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0">
+            className="flex items-center justify-center gap-1.5 p-2 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+            {shareAmount > 0 && <span className="text-[13px] font-medium">{shareAmount}</span>}
           </button>
         </div>
         {/* Option button */}
@@ -394,34 +413,46 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
 
               {/* Quoted Shared Post (Detail) */}
               {sharedPost && (
-                <div className="border border-gray-200 rounded-lg p-3 sm:p-4 mt-1 mb-4 hover:bg-gray-50/50 transition-colors border-l-4 border-gray-200">
-                  <div className="flex items-start gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
-                      <img
-                        src={sharedPost.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(sharedPost.author.authorName)}&background=dfb9b9&color=6a2f30`}
-                        alt={sharedPost.author.authorName}
-                        className="w-full h-full object-cover"
+                <div
+                  onClick={sharedPost.author ? (e) => openSharedPostModal(e, sharedPost.id) : undefined}
+                  className={`border border-gray-200 rounded-lg p-3 sm:p-4 mt-1 mb-4 hover:bg-gray-50 transition-colors border-l-4 border-gray-200 ${sharedPost.author ? 'cursor-pointer' : ''}`}
+                >
+                  {sharedPost.author ? (
+                    <>
+                      <div className="flex items-start gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                          <img
+                            src={sharedPost.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(sharedPost.author.authorName)}&background=dfb9b9&color=6a2f30`}
+                            alt={sharedPost.author.authorName}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
+                            <span className="cursor-pointer hover:underline">{sharedPost.author.authorName}</span>
+                            {!isOwnSharePost && (
+                              <>
+                                <span className="mx-1 font-normal text-gray-500">&middot;</span>
+                                <button className="text-[13px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
+                              </>
+                            )}
+                          </div>
+                          <div className="text-[13px] text-gray-500 line-clamp-1">
+                            {sharedPost.author.department} <span className="mx-1">&middot;</span> {formatTimeAgo(sharedPost.createdAt)}
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        className="text-[14px] text-gray-700 leading-normal wysiwyg-editor"
+                        dangerouslySetInnerHTML={{ __html: sharedPost.content }}
                       />
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2 text-gray-500 py-1">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                      <span className="text-[14px] font-medium select-none italic">{sharedPost.content}</span>
                     </div>
-                    <div className="flex flex-col">
-                      <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
-                        <span className="cursor-pointer hover:underline">{sharedPost.author.authorName}</span>
-                        {!isOwnSharePost && (
-                          <>
-                            <span className="mx-1 font-normal text-gray-500">&middot;</span>
-                            <button className="text-[13px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
-                          </>
-                        )}
-                      </div>
-                      <div className="text-[13px] text-gray-500 line-clamp-1">
-                        {sharedPost.author.department} <span className="mx-1">&middot;</span> {formatTimeAgo(sharedPost.createdAt)}
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    className="text-[14px] text-gray-700 leading-normal wysiwyg-editor"
-                    dangerouslySetInnerHTML={{ __html: sharedPost.content }}
-                  />
+                  )}
                 </div>
               )}
 
@@ -430,7 +461,7 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
                 <div className="flex items-center gap-2">
                   <button onClick={handleLike} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${isLiked ? 'text-blue-600 bg-blue-50' : 'hover:bg-gray-100'}`}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                    <span className="text-[14px] font-medium">{upvotesCount > 0 ? upvotesCount : 'Thích'}</span>
+                    <span className="text-[14px] font-medium">{upvotesCount > 0 ? upvotesCount : ''}</span>
                   </button>
                   <button onClick={handleDislike} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${isDisliked ? 'text-blue-600 bg-blue-50' : 'hover:bg-gray-100'}`}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-180"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
@@ -439,9 +470,12 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
                 </div>
                 {/* Right side: Share & Option */}
                 <div className="flex items-center gap-1 sm:gap-2">
-                  <button onClick={openShareModal} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors">
+                  <button onClick={openShareModal} className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-                    <span className="text-[14px] font-medium hidden sm:inline">Chia sẻ</span>
+                    <span className="text-[14px] font-medium hidden sm:inline">
+                      {shareAmount > 0 && <span className="text-[13px] font-medium ml-1">{shareAmount}</span>}
+                      </span>
+
                   </button>
                   {/* Option button */}
                   <div className='relative' ref={modalOptionRef}>
@@ -680,6 +714,12 @@ const PostCard = ({ postId, authorId, author, avatarUrl, authorCredential, creat
             </div>
           </div>
         </div>
+      )}
+      {sharedPostModalId && (
+        <SharedPostModal
+          sharedPostId={sharedPostModalId}
+          onClose={() => setSharedPostModalId(null)}
+        />
       )}
     </div>
 

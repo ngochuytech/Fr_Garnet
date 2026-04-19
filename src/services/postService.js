@@ -1,6 +1,16 @@
 import { apiFetch } from '../utils/api';
 
 /**
+ * Gets a single post by ID.
+ * @param {string} postId
+ */
+export const getPostByIdAPI = async (postId) => {
+    return apiFetch(`/users/posts/${postId}`, {
+        method: 'GET',
+    });
+};
+
+/**
  * Likes a post.
  * @param {string|number} postId 
  */

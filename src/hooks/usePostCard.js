@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { likePostAPI, dislikePostAPI, getCommentsByPostId, createCommentAPI, likeCommentAPI, dislikeCommentAPI, editPostAPI, deletePostAPI, reportPostAPI, sharePostAPI } from '../services/postService';
 
-export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, initialUserReaction = null, initialContent = '' } = {}) => {
+export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, initialCommentCount = 0, initialShareCount = 0, initialUserReaction = null, initialContent = '' } = {}) => {
 
   // Nội dung bài viết (dùng chung: hiển thị card, modal xem, modal sửa)
   const [localContent, setLocalContent] = useState(initialContent);
@@ -57,6 +57,8 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
 
   const [upvotesCount, setUpvotesCount] = useState(initialUpvotes);
   const [downvotesCount, setDownvotesCount] = useState(initialDownvotes);
+  const [commentAmount, setCommentAmount] = useState(initialCommentCount);
+  const [shareAmount, setShareAmount] = useState(initialShareCount);
   const [isLiked, setIsLiked] = useState(initialUserReaction === 'LIKE');
   const [isDisliked, setIsDisliked] = useState(initialUserReaction === 'DISLIKE');
 
@@ -150,6 +152,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
       toast.success('Đã bình luận thành công!');
       await loadComments(true);
       if (parentId) setActiveReplyId(null);
+      setCommentAmount(prev => prev + 1);
     } catch (error) {
       toast.error(error || 'Không thể đăng bình luận');
     }
@@ -218,6 +221,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     setIsSharing(true);
     try {
       await sharePostAPI(postId, { content: sharedContent });
+      setShareAmount(prev => prev + 1);
       toast.success('Đã chia sẻ bài viết lên dòng thời gian của bạn!');
       closeShareModal();
       // Clear editor content
@@ -360,8 +364,8 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     if (!reportReason) return;
     setIsSubmittingReport(true);
     try {
-      await reportPostAPI(postId, { 
-        reason: reportReason, 
+      await reportPostAPI(postId, {
+        reason: reportReason,
         description: reportDescription,
         targetId: postId,
         targetType: "POST"
@@ -375,6 +379,14 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     }
   };
 
+  // + Shared Post Modal
+  const [sharedPostModalId, setSharedPostModalId] = useState(null);
+
+  const openSharedPostModal = (e, id) => {
+    e.stopPropagation();
+    closePostModal(); // đóng modal cha nếu đang mở 
+    setSharedPostModalId(id);
+  };
 
   // + RETURN
 
@@ -385,7 +397,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     isModalOptionOpen, toggleModalOption, modalOptionRef,
 
     // Reactions
-    upvotesCount, downvotesCount, isLiked, isDisliked, handleLike, handleDislike,
+    upvotesCount, downvotesCount, commentAmount, shareAmount, isLiked, isDisliked, handleLike, handleDislike,
 
     // Comments
     isCommentOpen, toggleComment,
@@ -421,5 +433,8 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     REPORT_REASONS, reportReason, setReportReason,
     reportDescription, setReportDescription,
     isSubmittingReport, handleSubmitReport,
+
+    // Shared Post Modal
+    sharedPostModalId, openSharedPostModal, setSharedPostModalId
   };
 };

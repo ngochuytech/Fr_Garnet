@@ -21,11 +21,18 @@ export const apiFetch = async (endpoint, options = {}) => {
     headers,
   });
 
-  const result = await response.json();
-
-  if (!response.ok || !result.success) {
-    throw new Error(result.error || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+  let result;
+  try {
+    result = await response.json();
+  } catch (e) {
+    throw new Error(e.message);
   }
 
-  return result.data;
+  if (!response.ok || (result && result.success === false)) {
+    const errorMsg = result?.error || 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+    throw errorMsg;
+  }
+
+  // Ưu tiên trả về result.data nếu có, nếu không trả về cả object result
+  return (result && result.data !== undefined && result.data !== null) ? result.data : result;
 };
