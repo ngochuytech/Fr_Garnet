@@ -32,16 +32,6 @@ const CredentialModal = ({ isOpen, onClose, type }) => {
 
   const getModalConfig = () => {
     switch (type) {
-      case 'profile-focus':
-        return {
-          title: 'Thêm sở thích, kỹ năng và ngành học',
-          icon: (
-            <svg className="w-5 h-5 text-[#8d3f41]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.5c1.5-2.1 5.4-1.1 5.4 2.1 0 1.8-1.2 3.2-2.7 4.5L12 16l-2.7-2.9C7.8 11.8 6.6 10.4 6.6 8.6c0-3.2 3.9-4.2 5.4-2.1z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 16h2m-5.5 3h9" />
-            </svg>
-          )
-        };
       case 'education':
         return {
           title: 'Thêm học vấn',

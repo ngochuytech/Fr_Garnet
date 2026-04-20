@@ -5,6 +5,7 @@ export const useProfileSidebar = () => {
   const [modalType, setModalType] = useState(null);
 
   const [isModalEditHighlightOpen, setIsModalEditHighlightOpen] = useState(false);
+  const [isTopicsModalOpen, setIsTopicsModalOpen] = useState(false);
 
   const openModal = (type) => {
     setModalType(type);
@@ -21,13 +22,24 @@ export const useProfileSidebar = () => {
     setTimeout(() => setModalType(null), 150);
   };
 
+  const openTopicsModal = () => {
+    setIsTopicsModalOpen(true);
+  };
+
+  const closeTopicsModal = () => {
+    setIsTopicsModalOpen(false);
+  };
+
   return {
     isModalOpen,
     modalType,
     isModalEditHighlightOpen,
+    isTopicsModalOpen,
     openModal,
     closeModal,
     setIsModalEditHighlightOpen,
-    closeModalEditHighlight
+    closeModalEditHighlight,
+    openTopicsModal,
+    closeTopicsModal
   };
 };

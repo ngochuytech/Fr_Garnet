@@ -1,5 +1,5 @@
 const ProfileTabs = ({ activeTab, onTabChange }) => {
-  const tabs = ['0 Bài đăng', '0 Người theo dõi', 'Đang theo dõi', 'Cài đặt'];
+  const tabs = ['Bài đăng', 'Người theo dõi', 'Đang theo dõi', 'Cài đặt'];
 
   return (
     <div className="flex items-center gap-1 border-b border-gray-200 overflow-x-auto no-scrollbar mb-4 mt-2">

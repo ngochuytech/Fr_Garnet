@@ -12,6 +12,13 @@ export const updateProfile = async (formdata) => {
     });
 };
 
+export const updateTopics = async (topics) => {
+    return apiFetch('/users/profiles/topic', {
+        method: 'PUT',
+        body: JSON.stringify(topics),
+    });
+};
+
 /**
  * Updates user password.
  * @param {Object} formdata - The password data (oldPassword, newPassword, etc.).

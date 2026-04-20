@@ -22,7 +22,7 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
   
   const { sharedPost } = post;
   const authorName = post.author?.authorName || 'Người dùng ẩn danh';
-  const authorCredential = post.author?.department ? `Khoa: ${post.author.department}` : 'Thành viên CampusHub';
+  const authorCredential = post.author?.department ? `${post.author.department}` : 'Thành viên CampusHub';
   const avatarUrl = post.author?.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=dfb9b9&color=6a2f30`;
 
   const {

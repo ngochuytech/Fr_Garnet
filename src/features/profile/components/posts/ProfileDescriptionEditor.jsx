@@ -1,6 +1,8 @@
+import { useAuth } from '../../../../context/AuthContext';
 import { useProfileDescriptionEditor } from '../../hooks/posts/useProfileDescriptionEditor';
 
-const ProfileDescriptionEditor = () => {
+const ProfileDescriptionEditor = ({ userProp }) => {
+  const { user: contextUser } = useAuth();
   const {
     editorRef,
     contentRef,
@@ -26,6 +28,9 @@ const ProfileDescriptionEditor = () => {
     openEditor,
     handleEditorInput,
     applyFormat, } = useProfileDescriptionEditor();
+
+  const user = userProp || contextUser;
+  const isOwnProfile = contextUser?.email === user?.email;
   return (
     <div className="mb-6">
       {isEditingDesc ? (
@@ -142,21 +147,25 @@ const ProfileDescriptionEditor = () => {
                     {isExpanded ? 'Thu gọn' : 'Xem thêm...'}
                   </button>
                 )}
-                <p
-                  onClick={openEditor}
-                  className="text-gray-500 text-sm cursor-pointer hover:underline inline-block opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  Chỉnh sửa
-                </p>
+                {isOwnProfile && (
+                  <p
+                    onClick={openEditor}
+                    className="text-gray-500 text-sm cursor-pointer hover:underline inline-block opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Chỉnh sửa
+                  </p>
+                )}
               </div>
             </div>
           ) : (
-            <p
-              onClick={openEditor}
-              className="text-gray-500 hover:text-gray-800 text-sm cursor-pointer hover:underline underline-offset-2 transition-colors font-medium"
-            >
-              Hãy viết mô tả về bản thân bạn
-            </p>
+            isOwnProfile ? (
+              <p
+                onClick={openEditor}
+                className="text-gray-500 hover:text-gray-800 text-sm cursor-pointer hover:underline underline-offset-2 transition-colors font-medium"
+              >
+                Hãy viết mô tả về bản thân bạn
+              </p>
+            ) : null
           )}
         </div>
       )}
