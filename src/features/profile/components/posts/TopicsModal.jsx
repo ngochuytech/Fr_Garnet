@@ -41,8 +41,8 @@ const TopicsModal = ({ isOpen, onClose }) => {
     }, []);
 
     const toggleTopic = (topic) => {
-        if (selectedTopics.includes(topic)) {
-            setSelectedTopics(prev => prev.filter(t => t !== topic));
+        if (selectedTopics.some(t => t.topicName === topic.topicName)) {
+            setSelectedTopics(prev => prev.filter(t => t.topicName !== topic.topicName));
         } else {
             setSelectedTopics(prev => [...prev, topic]);
         }
@@ -53,7 +53,7 @@ const TopicsModal = ({ isOpen, onClose }) => {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await updateTopics(selectedTopics);
+            await updateTopics(selectedTopics.map(t => t.topicName));
             updateUser({ topics: selectedTopics });
             toast.success("Đã cập nhật chủ đề quan tâm thành công!");
             onClose();
@@ -69,15 +69,15 @@ const TopicsModal = ({ isOpen, onClose }) => {
 
     // Filter topics: omit already selected ones and match search term
     const filteredTopics = availableTopics.filter(topic =>
-        topic.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !selectedTopics.includes(topic)
+        topic.topicName.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !selectedTopics.some(t => t.topicName === topic.topicName)
     );
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
             <div className="relative bg-white rounded-xl w-full max-w-lg shadow-2xl flex flex-col h-full max-h-[80vh] overflow-hidden">
-                
+
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
                     <h2 className="text-xl font-bold text-gray-800">Chủ đề bạn quan tâm</h2>
@@ -123,9 +123,16 @@ const TopicsModal = ({ isOpen, onClose }) => {
                                         <div
                                             key={index}
                                             onClick={() => toggleTopic(topic)}
-                                            className="px-4 py-2.5 text-[15px] hover:bg-blue-50 cursor-pointer text-gray-700 transition-colors"
+                                            className="px-4 py-2.5 flex items-center gap-3 hover:bg-blue-50 cursor-pointer text-gray-700 transition-colors"
                                         >
-                                            {topic}
+                                            {topic.imageUrl ? (
+                                                <img src={topic.imageUrl} alt={topic.topicName} className="w-6 h-6 rounded shrink-0 object-cover" />
+                                            ) : (
+                                                <div className="w-6 h-6 rounded bg-red-100 flex items-center justify-center font-bold text-red-700 text-[10px]">
+                                                    {topic.topicName.slice(0, 2).toUpperCase()}
+                                                </div>
+                                            )}
+                                            <span className="text-[15px]">{topic.topicName}</span>
                                         </div>
                                     ))
                                 ) : (
@@ -140,10 +147,14 @@ const TopicsModal = ({ isOpen, onClose }) => {
                         {selectedTopics.map((topic, index) => (
                             <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 group border border-transparent shadow-sm bg-white">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded bg-red-100 flex items-center justify-center font-bold text-red-700 text-xs shadow-inner">
-                                        {topic.slice(0, 2).toUpperCase()}
-                                    </div>
-                                    <span className="text-[15px] font-medium text-gray-800">{topic}</span>
+                                    {topic.imageUrl ? (
+                                        <img src={topic.imageUrl} alt={topic.topicName} className="w-8 h-8 rounded shrink-0 object-cover" />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded bg-red-100 flex items-center justify-center font-bold text-red-700 text-xs shadow-inner">
+                                            {topic.topicName.slice(0, 2).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <span className="text-[15px] font-medium text-gray-800">{topic.topicName}</span>
                                 </div>
                                 <button
                                     onClick={() => toggleTopic(topic)}

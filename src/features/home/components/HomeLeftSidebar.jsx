@@ -1,56 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-const spaces = [
-  {
-    id: 1,
-    name: 'Công nghệ thông tin',
-    icon: '💻',
-    bg: '#efdcdc',
-    color: '#6a2f30',
-    followers: '12.4K',
-  },
-  {
-    id: 2,
-    name: 'Khoa học dữ liệu',
-    icon: '📊',
-    bg: '#dfb9b9',
-    color: '#462020',
-    followers: '8.2K',
-  },
-  {
-    id: 3,
-    name: 'Lập trình Web',
-    icon: '🌐',
-    bg: '#f7edee',
-    color: '#8d3f41',
-    followers: '15.1K',
-  },
-  {
-    id: 4,
-    name: 'Trí tuệ nhân tạo',
-    icon: '🤖',
-    bg: '#efdcdc',
-    color: '#6a2f30',
-    followers: '9.7K',
-  },
-  {
-    id: 5,
-    name: 'An ninh mạng',
-    icon: '🔐',
-    bg: '#dfb9b9',
-    color: '#462020',
-    followers: '5.3K',
-  },
-  {
-    id: 6,
-    name: 'Điện tử - Viễn thông',
-    icon: '📡',
-    bg: '#f7edee',
-    color: '#8d3f41',
-    followers: '4.8K',
-  },
-];
+import { apiFetch } from '../../../utils/api';
 
 const topTopics = [
   { id: 1, tag: 'ReactJS', count: '2.1K bài' },
@@ -62,7 +12,21 @@ const topTopics = [
 
 const HomeLeftSidebar = () => {
   const [showAllSpaces, setShowAllSpaces] = useState(false);
-  const visibleSpaces = showAllSpaces ? spaces : spaces.slice(0, 4);
+  const [topics, setTopics] = useState([]);
+
+  useEffect(() => {
+    const fetchTopics = async () => {
+      try {
+        const data = await apiFetch('/users/topics');
+        setTopics(data);
+      } catch (error) {
+        console.error('Failed to fetch topics:', error);
+      }
+    };
+    fetchTopics();
+  }, []);
+
+  const visibleSpaces = showAllSpaces ? topics : topics.slice(0, 4);
 
   return (
     <aside className="w-[220px] flex-shrink-0 sticky top-[58px] self-start h-[calc(100vh-58px)] overflow-y-auto pb-6 pr-2 hide-scrollbar">
@@ -70,7 +34,7 @@ const HomeLeftSidebar = () => {
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2 px-1">
           <span className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
-            Spaces
+            Topics
           </span>
           <button className="text-[12px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>
             + Tạo mới
@@ -78,44 +42,44 @@ const HomeLeftSidebar = () => {
         </div>
 
         <nav className="flex flex-col gap-0.5">
-          {visibleSpaces.map((space) => (
-            <button
-              key={space.id}
-              className="flex items-center gap-2.5 w-full px-2 py-2 rounded-lg text-left transition-all hover:bg-[#f7edee] group"
-            >
-              <span
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[16px] flex-shrink-0 shadow-sm"
-                style={{ backgroundColor: space.bg }}
+          {visibleSpaces.map((topic) => {
+            return (
+              <Link
+                key={topic?.topicName}
+                to={`/topic/${encodeURIComponent(topic?.topicName || '')}`}
+                className="flex items-center gap-2.5 w-full px-2 py-2 rounded-lg text-left transition-all hover:bg-[#f7edee] group"
               >
-                {space.icon}
-              </span>
-              <div className="flex flex-col min-w-0">
-                <span className="text-[13px] font-medium text-gray-800 truncate leading-tight group-hover:text-[#6a2f30] transition-colors">
-                  {space.name}
-                </span>
-                <span className="text-[11px] text-gray-400">{space.followers} thành viên</span>
-              </div>
-            </button>
-          ))}
+                <img src={topic?.imageUrl || "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&q=80"} alt={topic.topicName} className="w-8 h-8 rounded-lg flex-shrink-0 object-cover" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[13px] font-medium text-gray-800 truncate leading-tight group-hover:text-[#6a2f30] transition-colors">
+                    {topic.topicName}
+                  </span>
+                  <span className="text-[11px] text-gray-400">{topic.followerCount} thành viên</span>
+                </div>
+              </Link>
+            );
+          })}
         </nav>
 
-        <button
-          onClick={() => setShowAllSpaces(!showAllSpaces)}
-          className="mt-1 w-full text-left px-2 py-1.5 text-[13px] font-medium rounded-lg hover:bg-[#f7edee] transition-colors flex items-center gap-1"
-          style={{ color: 'var(--color-dusty-rose-600)' }}
-        >
-          {showAllSpaces ? (
-            <>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
-              Thu gọn
-            </>
-          ) : (
-            <>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-              Xem thêm ({spaces.length - 4})
-            </>
-          )}
-        </button>
+        {topics.length > 4 && (
+          <button
+            onClick={() => setShowAllSpaces(!showAllSpaces)}
+            className="mt-1 w-full text-left px-2 py-1.5 text-[13px] font-medium rounded-lg hover:bg-[#f7edee] transition-colors flex items-center gap-1"
+            style={{ color: 'var(--color-dusty-rose-600)' }}
+          >
+            {showAllSpaces ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                Thu gọn
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                Xem thêm ({topics.length - 4})
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Divider */}

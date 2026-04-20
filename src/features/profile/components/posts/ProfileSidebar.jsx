@@ -91,11 +91,15 @@ const ProfileSidebar = ({ userProp }) => {
           {user?.topics?.length > 0 ? (
             user.topics.map((topic, index) => (
               <div key={index} className="flex items-center gap-3 p-1 rounded hover:bg-gray-50 cursor-pointer group">
-                <div className="w-8 h-8 rounded shrink-0 bg-red-100 flex items-center justify-center font-bold text-red-700 text-xs shadow-sm">
-                  {topic.slice(0, 2).toUpperCase()}
-                </div>
+                {topic.imageUrl ? (
+                  <img src={topic.imageUrl} alt={topic.topicName} className="w-8 h-8 rounded shrink-0 object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded shrink-0 bg-red-100 flex items-center justify-center font-bold text-red-700 text-xs shadow-sm">
+                    {topic.topicName.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
                 <div className="flex-1">
-                  <p className="text-[14px] font-semibold text-gray-800 hover:text-blue-600 transition-colors">{topic}</p>
+                  <p className="text-[14px] font-semibold text-gray-800 hover:text-blue-600 transition-colors">{topic.topicName}</p>
                 </div>
               </div>
             ))

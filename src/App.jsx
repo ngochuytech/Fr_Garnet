@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import HomePage from './pages/HomePage';
 import OnboardingPage from './pages/OnboardingPage';
+import TopicPage from './pages/TopicPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
             <Route element={<MainLayout />}>
               <Route path="/home" element={<HomePage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/topic/:topicName" element={<TopicPage />} />
             </Route>
           </Route>
 

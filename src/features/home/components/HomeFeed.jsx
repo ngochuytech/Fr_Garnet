@@ -37,7 +37,7 @@ const FeedFilter = ({ active, onChange }) => {
 
 
 const HomeFeed = ({ avatarUrl }) => {
-  const { activeFilter, setActiveFilter, posts, loading, error, refreshPosts, handleGetMorePost } = useHomeFeed();
+  const { activeFilter, setActiveFilter, posts, loading, error, isLast, refreshPosts, handleGetMorePost } = useHomeFeed();
   const { user } = useAuth();
 
   return (
@@ -95,18 +95,20 @@ const HomeFeed = ({ avatarUrl }) => {
         </div>
 
         {/* Load more */}
-        <div className="flex justify-center py-4 border-t border-gray-100">
-          <button
-            className="px-6 py-2 rounded-full text-[14px] font-medium border transition-all hover:shadow-md"
-            style={{
-              borderColor: 'var(--color-dusty-rose-300)',
-              color: 'var(--color-dusty-rose-700)',
-            }}
-            onClick={handleGetMorePost}
-          >
-            Tải thêm bài viết
-          </button>
-        </div>
+        {!isLast && posts.length > 0 && (
+          <div className="flex justify-center py-4 border-t border-gray-100">
+            <button
+              className="px-6 py-2 rounded-full text-[14px] font-medium border transition-all hover:shadow-md"
+              style={{
+                borderColor: 'var(--color-dusty-rose-300)',
+                color: 'var(--color-dusty-rose-700)',
+              }}
+              onClick={handleGetMorePost}
+            >
+              Tải thêm bài viết
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
