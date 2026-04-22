@@ -1,13 +1,8 @@
-import { useAuth } from '../../../context/AuthContext';
-import HomeFeed from './HomeFeed';
-import HomeLeftSidebar from './HomeLeftSidebar';
-import HomeRightSidebar from './HomeRightSidebar';
+import HomeLeftSidebar from '../../home/components/HomeLeftSidebar';
+import HomeRightSidebar from '../../home/components/HomeRightSidebar';
+import FollowingList from './FollowingList';
 
-const HomeView = () => {
-  const { user } = useAuth();
-  const displayName = user?.fullname || 'User';
-  const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30`;
-
+const FollowingView = () => {
   return (
     <div className="w-full min-h-[calc(100vh-50px)]" style={{ backgroundColor: '#faf7f7' }}>
       <div className="max-w-[1300px] mx-auto px-4 pt-5 pb-10">
@@ -17,9 +12,9 @@ const HomeView = () => {
             <HomeLeftSidebar />
           </div>
 
-          {/* Main Feed*/}
+          {/* Main List */}
           <div className="w-full lg:flex-1 max-w-[755px] mx-auto">
-            <HomeFeed avatarUrl={avatarUrl} />
+            <FollowingList />
           </div>
 
           {/* Right Sidebar */}
@@ -32,4 +27,4 @@ const HomeView = () => {
   );
 };
 
-export default HomeView;
+export default FollowingView;

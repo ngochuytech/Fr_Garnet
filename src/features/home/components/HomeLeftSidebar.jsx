@@ -29,7 +29,7 @@ const HomeLeftSidebar = () => {
   const visibleSpaces = showAllSpaces ? topics : topics.slice(0, 4);
 
   return (
-    <aside className="w-[220px] flex-shrink-0 sticky top-[58px] self-start h-[calc(100vh-58px)] overflow-y-auto pb-6 pr-2 hide-scrollbar">
+    <aside className="w-full pb-6 pr-2">
       {/* Spaces */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2 px-1">
@@ -113,14 +113,6 @@ const HomeLeftSidebar = () => {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Divider */}
-      <div className="h-px bg-gray-100 mx-1 mb-4" />
-
-      {/* Footer links */}
-      <div className="px-2">
-        <p className="text-[11px] text-gray-400 mt-1">© 2026 CampusHub</p>
       </div>
     </aside>
   );

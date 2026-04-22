@@ -8,6 +8,9 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import HomePage from './pages/HomePage';
+import FollowingPage from './pages/FollowingPage';
+import NotificationPage from './pages/NotificationPage';
+import SpacePage from './pages/SpacePage';
 import OnboardingPage from './pages/OnboardingPage';
 import TopicPage from './pages/TopicPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -31,6 +34,9 @@ function App() {
             {/* App main layout routes */}
             <Route element={<MainLayout />}>
               <Route path="/home" element={<HomePage />} />
+              <Route path="/following" element={<FollowingPage />} />
+              <Route path="/spaces" element={<SpacePage />} />
+              <Route path="/notifications" element={<NotificationPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/topic/:topicName" element={<TopicPage />} />
             </Route>
