@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePostCard } from '../hooks/usePostCard';
 import { useAuth } from '../context/AuthContext';
 import CommentInput from './CommentInput';
 import Comment from './Comment';
 import SharedPostModal from './SharedPostModal';
 import SharePostModal from './SharePostModal';
+import { ImagePreviewModal } from './ImagePreviewModal';
 
 const formatTimeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -19,6 +20,14 @@ const formatTimeAgo = (dateString) => {
 
 const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
   const { user: currentUser } = useAuth();
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [showContentToggle, setShowContentToggle] = useState(false);
+  const contentRef = useRef(null);
+  
+  const [isSharedContentExpanded, setIsSharedContentExpanded] = useState(false);
+  const [showSharedContentToggle, setShowSharedContentToggle] = useState(false);
+  const sharedContentRef = useRef(null);
   
   const { sharedPost } = post;
   const authorName = post.author?.authorName || 'Người dùng ẩn danh';
@@ -58,9 +67,29 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
     initialDownvotes: post.dislikeCount || 0,
     initialCommentCount: post.commentCount || 0,
     initialShareCount: post.shareCount || 0,
-    initialUserReaction: post.userReaction,
-    initialContent: post.content
+    initialUserReaction: post.userReaction || null,
+    initialContent: post.content,
   });
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setTimeout(() => {
+        if (contentRef.current && contentRef.current.scrollHeight > contentRef.current.clientHeight) {
+          setShowContentToggle(true);
+        }
+      }, 50);
+    }
+  }, [localContent]);
+
+  useEffect(() => {
+    if (sharedContentRef.current) {
+      setTimeout(() => {
+        if (sharedContentRef.current && sharedContentRef.current.scrollHeight > sharedContentRef.current.clientHeight) {
+          setShowSharedContentToggle(true);
+        }
+      }, 50);
+    }
+  }, [sharedPost?.content]);
 
   if (isDeleted) return null;
 
@@ -90,15 +119,37 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
       {/* Clickable Content */}
       <div className="cursor-pointer group" onClick={openPostModal}>
         {/*Content */}
-        <div
-          className="text-[14px] md:text-[15px] text-gray-800 leading-normal mb-3 wysiwyg-editor whitespace-pre-wrap break-words group-hover:text-gray-900 transition-colors"
-          dangerouslySetInnerHTML={{ __html: localContent }}
-        />
+        <div className="mb-3">
+          <div
+            ref={contentRef}
+            className={`text-[14px] md:text-[15px] text-gray-800 leading-normal wysiwyg-editor whitespace-pre-wrap break-words group-hover:text-gray-900 transition-colors ${!isContentExpanded ? 'line-clamp-7' : ''}`}
+            dangerouslySetInnerHTML={{ __html: localContent }}
+          />
+          {showContentToggle && (
+            <div className="mt-1">
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsContentExpanded(!isContentExpanded); }}
+                className="text-[14px] font-semibold hover:underline"
+                style={{ color: 'var(--color-dusty-rose-600)' }}
+              >
+                {isContentExpanded ? 'Thu gọn' : 'Xem thêm'}
+              </button>
+            </div>
+          )}
+        </div>
 
-        {/* Post Image (Optional) */}
-        {post.image && (
-          <div className="w-full rounded-md overflow-hidden mb-3 border border-gray-200 bg-gray-50">
-            <img src={post.image} alt="Post attachment" className="w-full h-auto object-cover max-h-[300px] sm:max-h-[400px]" />
+        {/* Post Images */}
+        {post.images && post.images.length > 0 && (
+          <div className={`grid gap-2 mb-3 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            {post.images.map((imgUrl, i) => (
+              <div 
+                key={i} 
+                className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
+              >
+                <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[300px] sm:max-h-[400px]" />
+              </div>
+            ))}
           </div>
         )}
 
@@ -134,9 +185,34 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                   </div>
                 </div>
                 <div
-                  className="text-[14px] text-gray-700 line-clamp-3 leading-normal wysiwyg-editor"
+                  ref={sharedContentRef}
+                  className={`text-[14px] text-gray-700 leading-normal wysiwyg-editor flex-1 ${!isSharedContentExpanded ? 'line-clamp-5' : ''}`}
                   dangerouslySetInnerHTML={{ __html: sharedPost.content }}
                 />
+                {showSharedContentToggle && (
+                  <div className="mt-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setIsSharedContentExpanded(!isSharedContentExpanded); }}
+                      className="text-[13px] font-semibold hover:underline"
+                      style={{ color: 'var(--color-dusty-rose-600)' }}
+                    >
+                      {isSharedContentExpanded ? 'Thu gọn' : 'Xem thêm'}
+                    </button>
+                  </div>
+                )}
+                {sharedPost.images && sharedPost.images.length > 0 && (
+                  <div className={`grid gap-1 mt-2 ${sharedPost.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                    {sharedPost.images.map((imgUrl, i) => (
+                      <div 
+                        key={i} 
+                        className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
+                        onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
+                      >
+                        <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[300px]" />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex items-center gap-2 text-gray-500 py-1">
@@ -264,6 +340,7 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
           department: sharedPost ? sharedPost.author.department : authorCredential,
           createdAt: sharedPost ? sharedPost.createdAt : post.createdAt,
           content: sharedPost ? sharedPost.content : post.content,
+          images: sharedPost ? sharedPost.images : post.images,
         }}
         editorRef={editorRef}
         hasText={hasText}
@@ -324,12 +401,20 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                 dangerouslySetInnerHTML={{ __html: localContent }}
               />
 
-              {/* Post Image (Optional) */}
-              {/* {image && (
-                <div className="w-full rounded-md overflow-hidden mb-4 border border-gray-200 bg-gray-50">
-                  <img src={image} alt="Post attachment" className="w-full h-auto object-cover" />
+              {/* Post Images */}
+              {post.images && post.images.length > 0 && (
+                <div className={`grid gap-2 mb-4 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {post.images.map((imgUrl, i) => (
+                    <div 
+                      key={i} 
+                      className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
+                      onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
+                    >
+                      <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover" />
+                    </div>
+                  ))}
                 </div>
-              )} */}
+              )}
 
               {/* Quoted Shared Post (Detail) */}
               {sharedPost && (
@@ -366,6 +451,19 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                         className="text-[14px] text-gray-700 leading-normal wysiwyg-editor"
                         dangerouslySetInnerHTML={{ __html: sharedPost.content }}
                       />
+                      {sharedPost.images && sharedPost.images.length > 0 && (
+                        <div className={`grid gap-1 mt-2 ${sharedPost.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                          {sharedPost.images.map((imgUrl, i) => (
+                            <div 
+                              key={i} 
+                              className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
+                              onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
+                            >
+                              <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[200px]" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="flex items-center gap-2 text-gray-500 py-1">
@@ -654,6 +752,12 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
           onClose={() => setSharedPostModalId(null)}
         />
       )}
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal 
+          imageUrl={previewImageUrl} 
+          onClose={() => setPreviewImageUrl(null)} 
+      />
     </div>
 
   );

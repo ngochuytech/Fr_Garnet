@@ -6,10 +6,12 @@ import { useSharedPostModal } from '../hooks/useSharedPostModal';
 import CommentInput from './CommentInput';
 import Comment from './Comment';
 import SharePostModal from './SharePostModal';
+import { ImagePreviewModal } from './ImagePreviewModal';
 
 // ─── Inner component dùng usePostCard sau khi đã có postId ─────────────────
 const SharedPostContent = ({ post, onClose }) => {
   const { user: currentUser } = useAuth();
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const isOwnPost = Boolean(currentUser && currentUser.id && post.author && post.author.id === currentUser.id);
 
   const {
@@ -94,6 +96,21 @@ const SharedPostContent = ({ post, onClose }) => {
         className="text-[15px] text-gray-800 leading-relaxed mb-4 wysiwyg-editor whitespace-pre-wrap break-words"
         dangerouslySetInnerHTML={{ __html: localContent }}
       />
+
+      {/* Post Images */}
+      {post.images && post.images.length > 0 && (
+        <div className={`grid gap-2 mb-4 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+          {post.images.map((imgUrl, i) => (
+            <div 
+              key={i} 
+              className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
+              onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
+            >
+              <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[300px] sm:max-h-[400px]" />
+            </div>
+          ))}
+        </div>
+      )}
       {/* Quoted Shared Post (bài viết gốc mà post này đang chia sẻ) */}
       {post.sharedPost && (
         <div className={`border border-gray-200 rounded-lg p-3 sm:p-4 mt-1 mb-4 border-l-4 border-gray-200 ${post.sharedPost.author ? 'hover:bg-gray-50 transition-colors cursor-default' : ''}`}>
@@ -121,6 +138,19 @@ const SharedPostContent = ({ post, onClose }) => {
                 className="text-[14px] text-gray-700 leading-normal wysiwyg-editor"
                 dangerouslySetInnerHTML={{ __html: post.sharedPost.content }}
               />
+              {post.sharedPost.images && post.sharedPost.images.length > 0 && (
+                <div className={`grid gap-1 mt-2 ${post.sharedPost.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {post.sharedPost.images.map((imgUrl, i) => (
+                    <div 
+                        key={i} 
+                        className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
+                        onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
+                    >
+                      <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[150px]" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           ) : (
             <div className="flex items-center gap-2 text-gray-500 py-1">
@@ -258,6 +288,7 @@ const SharedPostContent = ({ post, onClose }) => {
           department: post.author.department,
           createdAt: post.createdAt,
           content: post.content,
+          images: post.images,
         }}
         editorRef={editorRef}
         hasText={hasText}
@@ -445,6 +476,12 @@ const SharedPostContent = ({ post, onClose }) => {
           </div>
         </div>
       )}
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal 
+          imageUrl={previewImageUrl} 
+          onClose={() => setPreviewImageUrl(null)} 
+      />
     </>
   );
 };

@@ -47,23 +47,6 @@ const HomeFeed = ({ avatarUrl }) => {
         <div className="p-3">
           <CreatePostBar avatarUrl={avatarUrl} onPostCreated={refreshPosts} />
         </div>
-        <div className="flex items-center gap-1 px-3 pb-2 border-t border-gray-50 pt-2">
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] text-gray-500 hover:bg-[#f7edee] hover:text-[#8d3f41] font-medium transition-colors">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
-            Ảnh
-          </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] text-gray-500 hover:bg-[#f7edee] hover:text-[#8d3f41] font-medium transition-colors">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="23 7 16 12 23 17 23 7"/>
-              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-            </svg>
-            Video
-          </button>
-        </div>
       </div>
 
       {/* Feed Filter */}

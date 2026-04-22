@@ -29,10 +29,10 @@ const ProfilePage = () => {
 
   return (
     <div className="w-full flex justify-center py-6 px-4 bg-white">
-      <div className="flex flex-col md:flex-row w-full max-w-[1000px] gap-8">
+      <div className="flex flex-col md:flex-row w-full max-w-[1300px] gap-8">
 
         {/* Left Column - Main Content */}
-        <div className="flex-1 md:max-w-[650px] flex flex-col">
+        <div className="flex-1 md:max-w-[850px] flex flex-col">
           <ProfileHeader userProp={profileData} />
           <ProfileDescriptionEditor userProp={profileData} />
           <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />

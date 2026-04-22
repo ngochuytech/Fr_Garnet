@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'sonner';
-import { loginUser } from '../services/authService';
+import { loginUser, googleLogin } from '../services/authService';
 import {
   validateEmail,
   validatePassword,
@@ -58,6 +58,10 @@ export const useLoginForm = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    googleLogin();
+  }
+  
   return {
     formData,
     errors,
@@ -65,6 +69,7 @@ export const useLoginForm = () => {
     serverError,
     showPassword,
     setShowPassword,
+    handleGoogleLogin,
     handleChange,
     handleSubmit,
   };

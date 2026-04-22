@@ -130,6 +130,15 @@ const SharePostModal = ({
                 className="text-[14px] text-gray-700 line-clamp-3 wysiwyg-editor"
                 dangerouslySetInnerHTML={{ __html: quotedPost.content }}
               />
+              {quotedPost.images && quotedPost.images.length > 0 && (
+                <div className={`grid gap-1 mt-2 ${quotedPost.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {quotedPost.images.map((imgUrl, i) => (
+                    <div key={i} className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50">
+                      <img src={imgUrl} alt={`Quoted post attachment ${i}`} className="w-full h-auto object-cover max-h-[150px]" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

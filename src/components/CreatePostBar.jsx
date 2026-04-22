@@ -2,14 +2,19 @@ import { useCreatePostBar } from '../hooks/useCreatePostBar'
 export const CreatePostBar = ({ avatarUrl, onPostCreated }) => {
     const { isExpanded,
         editorRef,
+        fileInputRef,
         isFocused,
         hasText,
         showFormatBar,
+        previewImages,
+        isSubmitting,
         setIsFocused,
         applyFormat,
         handleLink,
         setShowFormatBar,
         handleInput,
+        handleImageChange,
+        removeImage,
         handleSubmit,
         insertQuote,
         insertCode,
@@ -50,6 +55,33 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated }) => {
                             maxHeight: '400px'
                         }}
                     />
+                    
+                    {previewImages && previewImages.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {previewImages.map((preview, index) => (
+                                <div key={index} className="relative rounded-md overflow-hidden bg-gray-50 border border-gray-200 w-24 h-24 flex-shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => removeImage(index)}
+                                        className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-gray-800/60 hover:bg-gray-800/80 text-white rounded-full transition-colors z-10"
+                                        title="Xóa ảnh"
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                    </button>
+                                    <img src={preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    
+                    <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        ref={fileInputRef}
+                        onChange={handleImageChange}
+                        className="hidden"
+                    />
                 </div>
 
                 {/* Khi chưa expand, hiển thị nút Đăng thu nhỏ */}
@@ -57,11 +89,21 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated }) => {
                     <div className="flex items-center gap-1 flex-shrink-0">
                         <button
                             onClick={handleSubmit}
-                            disabled={!hasText}
-                            className="px-3 py-1.5 text-[13px] font-semibold rounded-full text-white transition-colors shadow-sm cursor-not-allowed opacity-60"
+                            disabled={isSubmitting || (!hasText && previewImages.length === 0)}
+                            className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold rounded-full text-white transition-colors shadow-sm ${(hasText || previewImages.length > 0) && !isSubmitting ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-60'}`}
                             style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}
                         >
-                            Đăng
+                            {isSubmitting ? (
+                                <>
+                                    <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span>...</span>
+                                </>
+                            ) : (
+                                "Đăng"
+                            )}
                         </button>
                     </div>
                 )}
@@ -75,7 +117,7 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated }) => {
                                 <button onMouseDown={(e) => { e.preventDefault(); setShowFormatBar(true); }} className="p-1.5 hover:bg-gray-100 rounded-md transition-colors" title="Format">
                                     <span className="font-serif font-bold text-[15px] px-1 text-gray-600">Aa</span>
                                 </button>
-                                <button onMouseDown={(e) => e.preventDefault()} className="p-1.5 hover:bg-gray-100 rounded-md transition-colors" title="Thêm ảnh">
+                                <button onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} onMouseDown={(e) => e.preventDefault()} className="p-1.5 hover:bg-gray-100 rounded-md transition-colors" title="Thêm ảnh">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
                                 </button>
                             </>
@@ -108,11 +150,21 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated }) => {
                     </div>
                     <button
                         onClick={handleSubmit}
-                        disabled={!hasText}
-                        className={`px-6 py-1.5 text-[14px] font-semibold rounded-full text-white transition-colors shadow-sm ${hasText ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-60'}`}
+                        disabled={isSubmitting || (!hasText && previewImages.length === 0)}
+                        className={`min-w-[80px] flex items-center justify-center gap-1.5 px-6 py-1.5 text-[14px] font-semibold rounded-full text-white transition-colors shadow-sm ${(hasText || previewImages.length > 0) && !isSubmitting ? 'cursor-pointer opacity-100 hover:brightness-95' : 'cursor-not-allowed opacity-60'}`}
                         style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}
                     >
-                        Đăng
+                        {isSubmitting ? (
+                            <>
+                                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>...</span>
+                            </>
+                        ) : (
+                            "Đăng"
+                        )}
                     </button>
                 </div>
             )}

@@ -11,7 +11,7 @@ const ProfileSidebar = ({ userProp }) => {
   const { isModalOpen, modalType, isModalEditHighlightOpen, isTopicsModalOpen, openModal, closeModal, setIsModalEditHighlightOpen, closeModalEditHighlight, openTopicsModal, closeTopicsModal } = useProfileSidebar();
 
   return (
-    <div className="w-full md:w-[320px] flex-shrink-0 flex flex-col gap-6">
+    <div className="w-full md:w-[380px] flex-shrink-0 flex flex-col gap-6">
 
       {/* Credentials & Highlights */}
       <div>

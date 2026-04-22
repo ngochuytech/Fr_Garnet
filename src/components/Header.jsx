@@ -12,7 +12,7 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] h-[50px] w-full flex justify-center">
-      <div className="flex items-center justify-between w-full max-w-[1100px] h-full px-4">
+      <div className="flex items-center justify-between w-full max-w-[1300px] h-full px-4">
 
         {/* Logo */}
         <div className="flex-shrink-0 cursor-pointer">
