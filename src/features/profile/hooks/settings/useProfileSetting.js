@@ -15,7 +15,7 @@ export const useProfileSetting = () => {
         fullname: '',
         phone: '',
         gender: null,
-        birthday: '',
+        dateOfBirth: '',
         email: ''
     })
 
@@ -26,7 +26,7 @@ export const useProfileSetting = () => {
                 setFormDataInformation({
                     fullname: data.fullname || '',
                     phone: data.phone || '',
-                    birthday: data.birthday ? data.birthday.split('T')[0] : '', // Format date for input[type=date]
+                    dateOfBirth: data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '', // Format date for input[type=date]
                     email: data.email || '',
                     bio: data.bio || '',
                 });

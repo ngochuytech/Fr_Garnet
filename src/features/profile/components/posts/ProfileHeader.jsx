@@ -45,9 +45,9 @@ const ProfileHeader = ({ userProp }) => {
       <div className="flex-1 pt-2">
         <h1 className="text-3xl font-bold text-gray-900 mb-1">{displayName}</h1>
         <div className="text-gray-500 text-sm mt-1">
-          <span className="hover:underline cursor-pointer">0 followers</span>
+          <span className="hover:underline cursor-pointer">{user?.followersCount} Theo dõi</span>
           <span className="mx-1">&middot;</span>
-          <span className="hover:underline cursor-pointer">0 following</span>
+          <span className="hover:underline cursor-pointer">{user?.followingCount} Đang theo dõi</span>
         </div>
       </div>
     </div>

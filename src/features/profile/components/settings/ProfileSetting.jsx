@@ -96,13 +96,13 @@ const SettingsTab = () => {
               {isEditingInformation ? (
                 <input
                   type="date"
-                  name="birthday"
+                  name="dateOfBirth"
                   className="w-auto px-3 py-1.5 border border-gray-300 rounded focus:border-[#b04f51] outline-none text-sm transition-all"
-                  value={formDataInformation.birthday}
+                  value={formDataInformation.dateOfBirth}
                   onChange={handleChange}
                 />
               ) : (
-                <span className="text-sm font-medium">{formDataInformation.birthday || "Chưa cập nhật"}</span>
+                <span className="text-sm font-medium">{formDataInformation.dateOfBirth || "Chưa cập nhật"}</span>
               )}
             </div>
           </div>

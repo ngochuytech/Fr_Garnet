@@ -47,8 +47,13 @@ export const useProfileDescriptionEditor = () => {
 
     useEffect(() => {
         if (description) {
-            const cleanHTML = DOMPurify.sanitize(description, { ALLOWED_TAGS: ['b', 'i', 'u', 'a', 'blockquote', 'pre', 'code', 'span'], ALLOWED_ATTR: ['href', 'target', 'rel'] });
-            setDescription(cleanHTML);
+            const cleanHTML = DOMPurify.sanitize(description, { 
+                ALLOWED_TAGS: ['b', 'i', 'u', 'a', 'blockquote', 'pre', 'code', 'span', 'div', 'p', 'br'], 
+                ALLOWED_ATTR: ['href', 'target', 'rel'] 
+            });
+            if (cleanHTML !== description) {
+                setDescription(cleanHTML);
+            }
         }
     }, [description]);
 

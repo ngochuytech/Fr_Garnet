@@ -34,7 +34,7 @@ export const updatePassword = async (formdata) => {
 export const updateBio = async (description) => {
     return apiFetch('/users/profiles/bio', {
         method: 'PUT',
-        body: JSON.stringify(description),
+        body: description,
     });
 };
 

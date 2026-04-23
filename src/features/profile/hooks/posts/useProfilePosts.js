@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { getProfilePosts } from '../../services/profileSerivce';
+import { fetchPostsByUser } from '../../../user/services/userProfileService';
 
-export const useProfilePosts = () => {
+export const useProfilePosts = (userId = null) => {
     const dropdownRef = useRef(null);
 
     const [posts, setPosts] = useState([]);
@@ -22,7 +23,7 @@ export const useProfilePosts = () => {
 
     useEffect(() => {
         fetchPosts();
-    }, []);
+    }, [userId]);
 
     const handleSelect = (option) => {
         setSelectedSort(option);
@@ -31,7 +32,13 @@ export const useProfilePosts = () => {
 
     const fetchPosts = async () => {
         try {
-            const response = await getProfilePosts();
+            let response;
+            if (userId) {
+                response = await fetchPostsByUser(userId);
+            } else {
+                response = await getProfilePosts();
+            }
+
             const postsData = response?.items || (Array.isArray(response) ? response : []);
             setPosts(postsData);
         } catch (error) {

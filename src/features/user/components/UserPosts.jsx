@@ -1,11 +1,8 @@
-import PostCard from '../../../../components/PostCard';
-import { useProfilePosts } from '../../hooks/posts/useProfilePosts';
-import { useAuth } from '../../../../context/AuthContext';
+import React from 'react';
+import PostCard from '../../../components/PostCard';
+import { useProfilePosts } from '../../profile/hooks/posts/useProfilePosts'; // Reusing the hook but it's parameterized
 
-const ProfilePosts = ({ userId = null }) => {
-  const { user: currentUser } = useAuth();
-  const isOwnProfile = !userId || (currentUser && (currentUser.id === userId || currentUser.userId === userId));
-
+const UserPosts = ({ userId }) => {
   const {
     dropdownRef,
     isOpenSort,
@@ -18,7 +15,6 @@ const ProfilePosts = ({ userId = null }) => {
 
   return (
     <>
-      {/* ... (phần code Sub Header & Search Content giữ nguyên) */}
       <div className="flex items-center justify-between mb-4 mt-2">
         <h2 className="text-[15px] font-bold text-gray-900">Bài đăng</h2>
         <div className='relative' ref={dropdownRef}>
@@ -34,7 +30,7 @@ const ProfilePosts = ({ userId = null }) => {
                 <button
                   key={option}
                   onClick={() => handleSelect(option)}
-                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${selectedSort === option ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-700'
+                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${selectedSort === option ? 'font-semibold text-[#b04f51] bg-red-50' : 'text-gray-700'
                     }`}
                 >
                   {option}
@@ -45,27 +41,12 @@ const ProfilePosts = ({ userId = null }) => {
         </div>
       </div>
 
-      {/* Divider */}
       <hr className="mb-4 border-gray-200" />
-
-      {/* Content Space & Empty State */}
-      <div className="flex items-center w-full max-w-[400px] h-10 border border-gray-300 rounded overflow-hidden hover:border-blue-500 hover:shadow-[0_0_0_2px_rgba(59,130,246,0.2)] transition-shadow">
-        <input
-          type="text"
-          placeholder="Search content"
-          className="w-full h-full px-3 text-sm outline-none text-gray-800 placeholder-gray-500"
-        />
-        <button className="w-10 h-10 flex items-center justify-center text-gray-400">
-          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
-      </div>
 
       <div className="flex flex-col mt-4">
         {Array.isArray(posts) && posts.length > 0 ? (
           posts.map((post) => (
-            <PostCard key={post.id} post={post} isOwnPost={isOwnProfile} />
+            <PostCard key={post.id} post={post} isOwnPost={false} />
           ))
         ) : (
           <div className="flex flex-col items-center justify-center py-10 text-gray-500">
@@ -80,4 +61,4 @@ const ProfilePosts = ({ userId = null }) => {
   );
 };
 
-export default ProfilePosts;
+export default UserPosts;

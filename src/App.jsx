@@ -13,7 +13,16 @@ import NotificationPage from './pages/NotificationPage';
 import SpacePage from './pages/SpacePage';
 import OnboardingPage from './pages/OnboardingPage';
 import TopicPage from './pages/TopicPage';
+import UserPage from './pages/UserPage';
 import ProtectedRoute from './components/ProtectedRoute';
+
+import { useAuth } from './context/AuthContext';
+
+// Component điều hướng thông minh cho đường dẫn không tồn tại
+const NotFoundRedirect = () => {
+  const { isAuthenticated } = useAuth();
+  return <Navigate to={isAuthenticated ? "/home" : "/login"} replace />;
+};
 
 function App() {
   return (
@@ -38,13 +47,14 @@ function App() {
               <Route path="/spaces" element={<SpacePage />} />
               <Route path="/notifications" element={<NotificationPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/user/:id" element={<UserPage />} />
               <Route path="/topic/:topicName" element={<TopicPage />} />
             </Route>
           </Route>
 
           {/* Fallback */}
           <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<NotFoundRedirect />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

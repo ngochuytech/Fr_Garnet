@@ -9,9 +9,7 @@ export const useOAuth2Callback = ({code}) => {
     const navigate = useNavigate();
     const { login } = useAuth();
 
-    useEffect(() => {
-        console.log("Code = ", code);
-        
+    useEffect(() => {        
         const fetchGoogleUser = async () => {
             try {
                 const { user, token } = await googleCallback({ code });

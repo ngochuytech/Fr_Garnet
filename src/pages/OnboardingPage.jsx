@@ -42,10 +42,11 @@ const OnboardingPage = () => {
     }, []);
 
     const toggleTag = (tag) => {
-        if (selectedTags.includes(tag)) {
-            setSelectedTags(selectedTags.filter((t) => t !== tag));
+        const tagName = tag.topicName || tag;
+        if (selectedTags.includes(tagName)) {
+            setSelectedTags(selectedTags.filter((t) => t !== tagName));
         } else {
-            setSelectedTags([...selectedTags, tag]);
+            setSelectedTags([...selectedTags, tagName]);
         }
     };
 
@@ -73,7 +74,7 @@ const OnboardingPage = () => {
             await setupProfile(payload);
             toast.success('Hồ sơ đã được thiết lập thành công!');
             updateUser({ department: selectedMajor });
-            navigate('/dashboard', { replace: true });
+            navigate('/home', { replace: true });
         } catch (error) {
             console.error(error);
             toast.error('Có lỗi xảy ra. Vui lòng thử lại sau.');
@@ -162,10 +163,11 @@ const OnboardingPage = () => {
                             
                             <div className="flex flex-wrap gap-3 max-h-[350px] overflow-y-auto p-4 border border-slate-100 rounded-2xl bg-slate-50 relative">
                                 {tags.map((tag) => {
-                                    const isSelected = selectedTags.includes(tag);
+                                    const tagName = tag.topicName || tag;
+                                    const isSelected = selectedTags.includes(tagName);
                                     return (
                                         <button
-                                            key={tag}
+                                            key={tagName}
                                             type="button"
                                             onClick={() => toggleTag(tag)}
                                             className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 
@@ -174,7 +176,7 @@ const OnboardingPage = () => {
                                                 : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-300 hover:bg-blue-50 hover:shadow-sm'
                                             }`}
                                         >
-                                            {tag}
+                                            {tagName}
                                         </button>
                                     );
                                 })}
