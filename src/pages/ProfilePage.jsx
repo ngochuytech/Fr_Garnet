@@ -5,13 +5,14 @@ import ProfileTabs from '../features/profile/components/ProfileTabs';
 import ProfilePosts from '../features/profile/components/posts/ProfilePosts';
 import ProfileSidebar from '../features/profile/components/posts/ProfileSidebar';
 import SettingsTab from '../features/profile/components/settings/ProfileSetting';
+import ProfileConnectionList from '../features/profile/components/follows/ProfileConnectionList';
 import { getProfile } from '../features/profile/services/profileSerivce';
 import { useAuth } from '../context/AuthContext';
 
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState('Bài đăng');
   const [profileData, setProfileData] = useState(null);
-  const { updateUser } = useAuth();
+  const { updateUser, user: currentUser } = useAuth();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -37,7 +38,10 @@ const ProfilePage = () => {
           <ProfileDescriptionEditor userProp={profileData} />
           <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
           
-          {activeTab === 'Cài đặt' ? <SettingsTab /> : <ProfilePosts />}
+          {activeTab === 'Bài đăng' && <ProfilePosts />}
+          {activeTab === 'Người theo dõi' && <ProfileConnectionList type="followers" userId={profileData?.id || currentUser?.id || currentUser?.userId} />}
+          {activeTab === 'Đang theo dõi' && <ProfileConnectionList type="following" userId={profileData?.id || currentUser?.id || currentUser?.userId} />}
+          {activeTab === 'Cài đặt' && <SettingsTab />}
         </div>
 
         {/* Right Column - Sidebar */}

@@ -1,11 +1,5 @@
 import { apiFetch } from '../../../utils/api';
 
-export const fetchPostsByUser = (userId, page = 0, size = 10, sortBy = 'createdAt', sortDir = 'desc') => {
-    return apiFetch(`/users/posts/by-user/${userId}?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`, {
-        method: 'GET',
-    });
-};
-
 export const fetchFollowers = (userId, page = 0, size = 20) => {
     return apiFetch(`/users/${userId}/followers?page=${page}&size=${size}`, {
         method: 'GET',

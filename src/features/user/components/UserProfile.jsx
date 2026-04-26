@@ -7,6 +7,7 @@ import UserBio from './UserBio';
 import UserTab from './UserTab';
 import UserPosts from './UserPosts';
 import UserSidebar from './UserSidebar';
+import UserConnectionList from './UserConnectionList';
 
 const UserProfile = () => {
     const { id } = useParams();
@@ -73,8 +74,8 @@ const UserProfile = () => {
                     <UserTab activeTab={activeTab} onTabChange={setActiveTab} isOtherUser={true} />
 
                     {activeTab === 'Bài đăng' && <UserPosts userId={id} />}
-                    {activeTab === 'Người theo dõi' && <div className="py-10 text-center text-gray-500">Chưa có người theo dõi</div>}
-                    {activeTab === 'Đang theo dõi' && <div className="py-10 text-center text-gray-500">Chưa theo dõi ai</div>}
+                    {activeTab === 'Người theo dõi' && <UserConnectionList type="followers" userId={id} />}
+                    {activeTab === 'Đang theo dõi' && <UserConnectionList type="following" userId={id} />}
                 </div>
 
                 {/* Right Column - Sidebar */}
