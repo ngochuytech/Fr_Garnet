@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { createPostBarService } from '../services/createPostBarService';
+import { createPostBarService, fetchUserTopics } from '../services/createPostBarService';
 
 export const useCreatePostBar = (onPostCreated) => {
     const [isFocused, setIsFocused] = useState(false);
@@ -9,10 +9,68 @@ export const useCreatePostBar = (onPostCreated) => {
     const [selectedImages, setSelectedImages] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [previewImages, setPreviewImages] = useState([]);
+    
+    // Tag state
+    const [userTopics, setUserTopics] = useState([]);
+    const [selectedTags, setSelectedTags] = useState([]);
+    const [tagSearchQuery, setTagSearchQuery] = useState('');
+    const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
+    
     const editorRef = useRef(null);
     const fileInputRef = useRef(null);
+    const dropdownRef = useRef(null);
 
-    const isExpanded = isFocused || hasText || selectedImages.length > 0;
+    const isExpanded = isFocused || hasText || selectedImages.length > 0 || tagSearchQuery.length > 0 || selectedTags.length > 0;
+
+    useEffect(() => {
+        const loadTopics = async () => {
+            try {
+                const data = await fetchUserTopics();
+                setUserTopics(data || []);
+            } catch (error) {
+                console.error('Failed to load user topics:', error);
+            }
+        };
+        loadTopics();
+    }, []);
+
+    // Handle clicking outside to close topic dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsTagDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Helper to safely extract string from topic (if it's an object or string)
+    const getTopicNameStr = (t) => {
+        if (!t) return '';
+        if (typeof t === 'string') return t;
+        return t.topicName || t.name || '';
+    };
+
+    const filteredTopics = userTopics.filter(topic => {
+        const topicStr = getTopicNameStr(topic);
+        if (!topicStr) return false;
+        
+        const matchesQuery = topicStr.toLowerCase().includes(tagSearchQuery.toLowerCase());
+        const isNotSelected = !selectedTags.some(t => getTopicNameStr(t) === topicStr);
+        
+        return matchesQuery && isNotSelected;
+    });
+
+    const handleAddTag = (topic) => {
+        setSelectedTags([...selectedTags, topic]);
+        setTagSearchQuery('');
+        setIsTagDropdownOpen(false);
+    };
+
+    const handleRemoveTag = (topicStrToRemove) => {
+        setSelectedTags(selectedTags.filter(t => getTopicNameStr(t) !== topicStrToRemove));
+    };
 
     const handleInput = () => {
         if (editorRef.current) {
@@ -85,14 +143,13 @@ export const useCreatePostBar = (onPostCreated) => {
             setIsSubmitting(true);
             const content = editorRef.current ? editorRef.current.innerHTML : '';
             try {
-                let postData;
-                if (selectedImages.length > 0) {
-                    postData = new FormData();
-                    postData.append('content', content === '<br>' ? '' : content);
-                    selectedImages.forEach(img => postData.append('images', img));
-                } else {
-                    postData = { content: content === '<br>' ? '' : content };
-                }
+                let postData = new FormData();
+                postData.append('content', content === '<br>' ? '' : content);
+                
+                selectedImages.forEach(img => postData.append('images', img));
+                selectedTags.forEach(tag => {
+                    postData.append('tags', getTopicNameStr(tag));
+                });
 
                 await createPostBarService(postData);
                 toast.success('Đăng bài viết thành công!');
@@ -104,6 +161,8 @@ export const useCreatePostBar = (onPostCreated) => {
                 setShowFormatBar(false);
                 setSelectedImages([]);
                 setPreviewImages([]);
+                setSelectedTags([]);
+                setTagSearchQuery('');
                 if (fileInputRef.current) {
                     fileInputRef.current.value = null;
                 }
@@ -122,9 +181,12 @@ export const useCreatePostBar = (onPostCreated) => {
         isFocused, setIsFocused,
         hasText, setHasText,
         showFormatBar, setShowFormatBar,
-        editorRef, fileInputRef,
+        editorRef, fileInputRef, dropdownRef,
         isExpanded,
         selectedImages, previewImages, isSubmitting,
+        selectedTags, tagSearchQuery, isTagDropdownOpen,
+        userTopics, filteredTopics,
+        setTagSearchQuery, setIsTagDropdownOpen, handleAddTag, handleRemoveTag,
         handleInput, applyFormat, handleLink, insertQuote, insertCode, insertMath,
         handleImageChange, removeImage,
         handleSubmit

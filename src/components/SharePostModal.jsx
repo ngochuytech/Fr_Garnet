@@ -47,6 +47,15 @@ const SharePostModal = ({
   setShowFormatBar,
   isSharing,
   handleSharePost,
+  dropdownRef,
+  selectedTags,
+  tagSearchQuery,
+  isTagDropdownOpen,
+  filteredTopics,
+  setTagSearchQuery,
+  setIsTagDropdownOpen,
+  handleAddTag,
+  handleRemoveTag,
   zIndex = 'z-[110]',
   formatTimeAgo = formatTimeAgoDefault,
 }) => {
@@ -104,6 +113,66 @@ const SharePostModal = ({
             />
           </div>
 
+          {/* Tag section */}
+          <div className="pb-2">
+            <div className="relative mb-2 w-full max-w-sm" ref={dropdownRef}>
+              <div className="flex items-center bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 focus-within:border-[#d09596] focus-within:bg-white transition-colors">
+                <span className="text-gray-400 mr-1">#</span>
+                <input
+                  type="text"
+                  placeholder="Thêm chủ đề (Tags)..."
+                  value={tagSearchQuery}
+                  onChange={(e) => {
+                    setTagSearchQuery(e.target.value);
+                    setIsTagDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsTagDropdownOpen(true)}
+                  className="w-full text-[13px] bg-transparent border-none outline-none text-gray-700"
+                />
+              </div>
+              {isTagDropdownOpen && tagSearchQuery && filteredTopics.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto no-scrollbar py-1">
+                  {filteredTopics.map((topic, index) => {
+                    const topicStr = typeof topic === 'string' ? topic : (topic.topicName || topic.name || '');
+                    return (
+                      <div
+                        key={index}
+                        onClick={() => handleAddTag(topicStr)}
+                        className="px-4 py-2 text-[14px] text-gray-700 hover:bg-gray-50 cursor-pointer"
+                      >
+                        #{topicStr}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {isTagDropdownOpen && tagSearchQuery && filteredTopics.length === 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-3 text-[13px] text-gray-500 text-center">
+                  Không tìm thấy chủ đề nào
+                </div>
+              )}
+            </div>
+            {selectedTags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {selectedTags.map((tag, index) => {
+                  const tagStr = typeof tag === 'string' ? tag : (tag.topicName || tag.name || '');
+                  return (
+                    <span key={index} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#fdf2f2] text-xs font-semibold text-[#8d3f41] border border-[#f5dcdc]">
+                      #{tagStr}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tagStr)}
+                        className="hover:text-red-500 transition-colors bg-black/5 hover:bg-black/10 rounded-full w-4 h-4 flex items-center justify-center -mr-1"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Quoted post preview */}
           {quotedPost && (
             <div className="border-l-4 border-gray-200 p-3 mb-2 hover:bg-gray-50/50 transition-colors rounded-r-md">
@@ -142,6 +211,8 @@ const SharePostModal = ({
             </div>
           )}
         </div>
+
+
 
         {/* Footer */}
         <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between bg-white mt-auto">

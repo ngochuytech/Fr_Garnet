@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { likePostAPI, dislikePostAPI, getCommentsByPostId, createCommentAPI, likeCommentAPI, dislikeCommentAPI, editPostAPI, deletePostAPI, reportPostAPI, sharePostAPI } from '../services/postService';
+import { fetchUserTopics } from '../services/createPostBarService';
 
 export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, initialCommentCount = 0, initialShareCount = 0, initialUserReaction = null, initialContent = '' } = {}) => {
 
@@ -208,9 +209,75 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
   const [hasText, setHasText] = useState(false);
   const [showFormatBar, setShowFormatBar] = useState(false);
   const editorRef = useRef(null);
+  const dropdownRef = useRef(null);
 
-  const openShareModal = () => setIsShareModalOpen(true);
-  const closeShareModal = () => setIsShareModalOpen(false);
+  // Tag state for Share Modal
+  const [userTopics, setUserTopics] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
+  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
+
+  // Handle clicking outside to close topic dropdown
+  useEffect(() => {
+      const handleClickOutside = (event) => {
+          if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+              setIsTagDropdownOpen(false);
+          }
+      };
+      if (isTagDropdownOpen) {
+          document.addEventListener('mousedown', handleClickOutside);
+      }
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isTagDropdownOpen]);
+
+  // Helper for topic str
+  const getTopicNameStr = (t) => {
+      if (!t) return '';
+      if (typeof t === 'string') return t;
+      return t.topicName || t.name || '';
+  };
+
+  const filteredTopics = userTopics.filter(topic => {
+      const topicStr = getTopicNameStr(topic);
+      if (!topicStr) return false;
+      
+      const matchesQuery = topicStr.toLowerCase().includes(tagSearchQuery.toLowerCase());
+      const isNotSelected = !selectedTags.some(t => getTopicNameStr(t) === topicStr);
+      
+      return matchesQuery && isNotSelected;
+  });
+
+  const handleAddTag = (topic) => {
+      setSelectedTags([...selectedTags, topic]);
+      setTagSearchQuery('');
+      setIsTagDropdownOpen(false);
+  };
+
+  const handleRemoveTag = (topicStrToRemove) => {
+      setSelectedTags(selectedTags.filter(t => getTopicNameStr(t) !== topicStrToRemove));
+  };
+
+  const openShareModal = () => {
+    setIsShareModalOpen(true);
+    const loadTopics = async () => {
+        try {
+            const data = await fetchUserTopics();
+            setUserTopics(data || []);
+        } catch (error) {
+            console.error('Failed to load user topics:', error);
+        }
+    };
+    if (userTopics.length === 0) {
+        loadTopics();
+    }
+  };
+  
+  const closeShareModal = () => {
+    setIsShareModalOpen(false);
+    setSelectedTags([]);
+    setTagSearchQuery('');
+    setIsTagDropdownOpen(false);
+  };
 
   const [isSharing, setIsSharing] = useState(false);
 
@@ -220,7 +287,10 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
 
     setIsSharing(true);
     try {
-      await sharePostAPI(postId, { content: sharedContent });
+      await sharePostAPI(postId, { 
+          content: sharedContent === '<br>' ? '' : sharedContent,
+          tags: selectedTags.map(t => getTopicNameStr(t))
+      });
       setShareAmount(prev => prev + 1);
       toast.success('Đã chia sẻ bài viết lên dòng thời gian của bạn!');
       closeShareModal();
@@ -415,7 +485,9 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     isFocused, setIsFocused,
     hasText, setHasText,
     showFormatBar, setShowFormatBar,
-    editorRef,
+    editorRef, dropdownRef,
+    selectedTags, tagSearchQuery, isTagDropdownOpen, filteredTopics,
+    setTagSearchQuery, setIsTagDropdownOpen, handleAddTag, handleRemoveTag,
     handleInput, applyFormat, handleLink, insertQuote, insertCode, insertMath,
 
     // Edit Post

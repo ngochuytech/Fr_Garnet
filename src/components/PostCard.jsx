@@ -46,7 +46,9 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
     isFocused, setIsFocused,
     hasText,
     showFormatBar, setShowFormatBar,
-    editorRef,
+    editorRef, dropdownRef,
+    selectedTags, tagSearchQuery, isTagDropdownOpen, filteredTopics,
+    setTagSearchQuery, setIsTagDropdownOpen, handleAddTag, handleRemoveTag,
     handleInput, applyFormat, handleLink,
     isPostModalOpen, openPostModal, closePostModal,
     isModalOptionOpen, toggleModalOption, modalOptionRef,
@@ -103,12 +105,6 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
         <div className="flex flex-col">
           <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
             <span className="cursor-pointer hover:underline">{authorName}</span>
-            {!isOwnPost && (
-              <>
-                <span className="mx-1 font-normal text-gray-500">&middot;</span>
-                <button className="text-[13px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
-              </>
-            )}
           </div>
           <div className="text-[13px] text-gray-500 line-clamp-1">
             {authorCredential} <span className="mx-1">&middot;</span> {formatTimeAgo(post.createdAt)}
@@ -172,12 +168,6 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                   <div className="flex flex-col">
                     <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
                       <span className="cursor-pointer hover:underline">{sharedPost.author.authorName}</span>
-                      {!isOwnSharePost && (
-                        <>
-                          <span className="mx-1 font-normal text-gray-500">&middot;</span>
-                          <button className="text-[13px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
-                        </>
-                      )}
                     </div>
                     <div className="text-[13px] text-gray-500 line-clamp-1">
                       {sharedPost.author.department} <span className="mx-1">&middot;</span> {formatTimeAgo(sharedPost.createdAt)}
@@ -220,6 +210,17 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                 <span className="text-[14px] font-medium select-none italic">{sharedPost.content}</span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Post Tags */}
+        {post.tags && post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-2 mt-1">
+            {post.tags.map((tag, index) => (
+              <span key={index} className="px-2.5 py-1 bg-gray-100 text-gray-600 text-[12px] font-medium rounded-full cursor-pointer hover:bg-gray-200 transition-colors">
+                #{tag}
+              </span>
+            ))}
           </div>
         )}
       </div>
@@ -353,6 +354,15 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
         setShowFormatBar={setShowFormatBar}
         isSharing={isSharing}
         handleSharePost={handleSharePost}
+        dropdownRef={dropdownRef}
+        selectedTags={selectedTags}
+        tagSearchQuery={tagSearchQuery}
+        isTagDropdownOpen={isTagDropdownOpen}
+        filteredTopics={filteredTopics}
+        setTagSearchQuery={setTagSearchQuery}
+        setIsTagDropdownOpen={setIsTagDropdownOpen}
+        handleAddTag={handleAddTag}
+        handleRemoveTag={handleRemoveTag}
         zIndex="z-[110]"
       />
 
@@ -382,12 +392,6 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                 <div className="flex flex-col">
                   <div className="flex items-center text-[14px] text-gray-900 font-bold flex-wrap">
                     <span className="hover:underline cursor-pointer">{authorName}</span>
-                    {!isOwnPost && (
-                      <>
-                        <span className="mx-1 font-normal text-gray-500">&middot;</span>
-                        <button className="text-[14px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
-                      </>
-                    )}
                   </div>
                   <div className="text-[13px] text-gray-500 line-clamp-1">
                     {authorCredential} <span className="mx-1">&middot;</span> {formatTimeAgo(post.createdAt)}
@@ -416,6 +420,17 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                 </div>
               )}
 
+              {/* Post Tags (Main Post Tags) */}
+              {post.tags && post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3 mt-1">
+                  {post.tags.map((tag, index) => (
+                    <span key={index} className="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-full cursor-pointer hover:bg-gray-200 transition-colors">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {/* Quoted Shared Post (Detail) */}
               {sharedPost && (
                 <div
@@ -435,12 +450,6 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                         <div className="flex flex-col">
                           <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
                             <span className="cursor-pointer hover:underline">{sharedPost.author.authorName}</span>
-                            {!isOwnSharePost && (
-                              <>
-                                <span className="mx-1 font-normal text-gray-500">&middot;</span>
-                                <button className="text-[13px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
-                              </>
-                            )}
                           </div>
                           <div className="text-[13px] text-gray-500 line-clamp-1">
                             {sharedPost.author.department} <span className="mx-1">&middot;</span> {formatTimeAgo(sharedPost.createdAt)}
@@ -464,6 +473,16 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                           ))}
                         </div>
                       )}
+                      {/* Shared Post Tags */}
+                      {sharedPost.tags && sharedPost.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {sharedPost.tags.map((tag, index) => (
+                            <span key={index} className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[11px] font-medium rounded-full">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="flex items-center gap-2 text-gray-500 py-1">
@@ -473,6 +492,8 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                   )}
                 </div>
               )}
+
+
 
               {/* Action Bar */}
               <div className="flex items-center justify-between text-gray-500 mt-2 mb-4 border-y border-gray-100 py-1">

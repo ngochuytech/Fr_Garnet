@@ -111,6 +111,17 @@ const SharedPostContent = ({ post, onClose }) => {
           ))}
         </div>
       )}
+      {/* Post Tags */}
+      {post.tags && post.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-3 mt-1">
+          {post.tags.map((tag, index) => (
+            <span key={index} className="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-full cursor-pointer hover:bg-gray-200 transition-colors">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Quoted Shared Post (bài viết gốc mà post này đang chia sẻ) */}
       {post.sharedPost && (
         <div className={`border border-gray-200 rounded-lg p-3 sm:p-4 mt-1 mb-4 border-l-4 border-gray-200 ${post.sharedPost.author ? 'hover:bg-gray-50 transition-colors cursor-default' : ''}`}>
@@ -148,6 +159,18 @@ const SharedPostContent = ({ post, onClose }) => {
                     >
                       <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[150px]" />
                     </div>
+                  ))}
+                </div>
+              )}
+
+
+              {/* Shared Post Tags */}
+              {post.sharedPost.tags && post.sharedPost.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {post.sharedPost.tags.map((tag, index) => (
+                    <span key={index} className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[11px] font-medium rounded-full">
+                      #{tag}
+                    </span>
                   ))}
                 </div>
               )}

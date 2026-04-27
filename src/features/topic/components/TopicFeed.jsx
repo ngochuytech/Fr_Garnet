@@ -1,10 +1,39 @@
-import { useHomeFeed } from '../../home/hooks/useHomeFeed';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import PostCard from '../../../components/PostCard';
+import { getPostsByTopic } from '../services/topicService';
 
 const TopicFeed = ({ topicName }) => {
-  const { posts, loading, error, isLast, handleGetMorePost } = useHomeFeed(); // using home feed for mock data
   const { user } = useAuth();
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isLast, setIsLast] = useState(true); 
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getPostsByTopic(topicName);
+        setPosts(data.items || []);
+        setIsLast(data.isLast || true);        
+      } catch (err) {
+        console.error("Error fetching topic posts:", err);
+        setError("Không thể tải bài viết của chủ đề này.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (topicName) {
+      fetchPosts();
+    }
+  }, [topicName]);
+
+  const handleGetMorePost = () => {
+      // Pagination logic can be added here if needed in the future
+  };
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 mb-4 shadow-sm overflow-hidden">

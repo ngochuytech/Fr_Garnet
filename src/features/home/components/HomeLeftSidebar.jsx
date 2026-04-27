@@ -36,9 +36,6 @@ const HomeLeftSidebar = () => {
           <span className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
             Topics
           </span>
-          <button className="text-[12px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>
-            + Tạo mới
-          </button>
         </div>
 
         <nav className="flex flex-col gap-0.5">
