@@ -1,19 +1,13 @@
-import { useState } from 'react';
-
 const filters = [
   { id: 'all', label: 'Tất cả thông báo' },
-  { id: 'stories', label: 'Bài viết' },
-  { id: 'spaces', label: 'Hội nhóm' },
+  { id: 'posts', label: 'Bài viết' },
   { id: 'comments', label: 'Bình luận và nhắc đến' },
   { id: 'upvotes', label: 'Lượt thích' },
-  { id: 'content', label: 'Nội dung của bạn' },
   { id: 'profile', label: 'Hồ sơ của bạn' },
-  { id: 'announcements', label: 'Thông báo hệ thống' },
+  { id: 'systems', label: 'Thông báo hệ thống' },
 ];
 
-const NotificationFilter = () => {
-  const [active, setActive] = useState('all');
-
+const NotificationFilter = ({ active, setActive }) => {
   return (
     <aside className="w-full">
       <h3 className="font-semibold text-[15px] mb-2 px-3 text-gray-800">Bộ lọc</h3>

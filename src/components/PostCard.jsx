@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePostCard } from '../hooks/usePostCard';
 import { useAuth } from '../context/AuthContext';
 import CommentInput from './CommentInput';
@@ -19,6 +20,7 @@ const formatTimeAgo = (dateString) => {
 };
 
 const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
@@ -29,6 +31,13 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
   const [showSharedContentToggle, setShowSharedContentToggle] = useState(false);
   const sharedContentRef = useRef(null);
   
+  const handleNavigateToUser = (e, userId) => {
+    if (e) e.stopPropagation();
+    if (userId) {
+      navigate(`/user/${userId}`);
+    }
+  };
+
   const { sharedPost } = post;
   const authorName = post.author?.authorName || 'Người dùng ẩn danh';
   const authorCredential = post.author?.department ? `${post.author.department}` : 'Thành viên CampusHub';
@@ -99,12 +108,20 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
     <div className="py-4 border-b border-gray-200">
       {/* Post Header */}
       <div className="flex items-start gap-2 mb-2">
-        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+        <div 
+          className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
+          onClick={(e) => handleNavigateToUser(e, post.author?.id)}
+        >
           <img src={avatarUrl} alt={`${authorName}'s Avatar`} className="w-full h-full object-cover" />
         </div>
         <div className="flex flex-col">
           <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
-            <span className="cursor-pointer hover:underline">{authorName}</span>
+            <span 
+              className="cursor-pointer hover:underline"
+              onClick={(e) => handleNavigateToUser(e, post.author?.id)}
+            >
+              {authorName}
+            </span>
           </div>
           <div className="text-[13px] text-gray-500 line-clamp-1">
             {authorCredential} <span className="mx-1">&middot;</span> {formatTimeAgo(post.createdAt)}
@@ -158,7 +175,10 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
             {sharedPost.author ? (
               <>
                 <div className="flex items-start gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                  <div 
+                    className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
+                    onClick={(e) => handleNavigateToUser(e, sharedPost.author?.id)}
+                  >
                     <img
                       src={sharedPost.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(sharedPost.author.authorName)}&background=dfb9b9&color=6a2f30`}
                       alt={sharedPost.author.authorName}
@@ -167,7 +187,12 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
-                      <span className="cursor-pointer hover:underline">{sharedPost.author.authorName}</span>
+                      <span 
+                        className="cursor-pointer hover:underline"
+                        onClick={(e) => handleNavigateToUser(e, sharedPost.author?.id)}
+                      >
+                        {sharedPost.author.authorName}
+                      </span>
                     </div>
                     <div className="text-[13px] text-gray-500 line-clamp-1">
                       {sharedPost.author.department} <span className="mx-1">&middot;</span> {formatTimeAgo(sharedPost.createdAt)}
@@ -386,12 +411,20 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 relative">
               {/* Post Header */}
               <div className="flex items-start gap-2 mb-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                <div 
+                  className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
+                  onClick={(e) => handleNavigateToUser(e, post.author?.id)}
+                >
                   <img src={avatarUrl} alt={`${authorName}'s Avatar`} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center text-[14px] text-gray-900 font-bold flex-wrap">
-                    <span className="hover:underline cursor-pointer">{authorName}</span>
+                    <span 
+                      className="hover:underline cursor-pointer"
+                      onClick={(e) => handleNavigateToUser(e, post.author?.id)}
+                    >
+                      {authorName}
+                    </span>
                   </div>
                   <div className="text-[13px] text-gray-500 line-clamp-1">
                     {authorCredential} <span className="mx-1">&middot;</span> {formatTimeAgo(post.createdAt)}
@@ -440,7 +473,10 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                   {sharedPost.author ? (
                     <>
                       <div className="flex items-start gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+                        <div 
+                          className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
+                          onClick={(e) => handleNavigateToUser(e, sharedPost.author?.id)}
+                        >
                           <img
                             src={sharedPost.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(sharedPost.author.authorName)}&background=dfb9b9&color=6a2f30`}
                             alt={sharedPost.author.authorName}
@@ -449,7 +485,12 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                         </div>
                         <div className="flex flex-col">
                           <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
-                            <span className="cursor-pointer hover:underline">{sharedPost.author.authorName}</span>
+                            <span 
+                              className="cursor-pointer hover:underline"
+                              onClick={(e) => handleNavigateToUser(e, sharedPost.author?.id)}
+                            >
+                              {sharedPost.author.authorName}
+                            </span>
                           </div>
                           <div className="text-[13px] text-gray-500 line-clamp-1">
                             {sharedPost.author.department} <span className="mx-1">&middot;</span> {formatTimeAgo(sharedPost.createdAt)}
@@ -551,7 +592,7 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
               {/* Comments inside Modal (Always open) */}
               <div className="mt-2">
                 <CommentInput
-                  avatarUrl="https://ui-avatars.com/api/?name=User&background=dfb9b9&color=6a2f30"
+                  avatarUrl={avatarUrl}
                   placeholder="Viết bình luận..."
                   bgClass="bg-gray-50/80"
                   toggleComment={() => { }}

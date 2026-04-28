@@ -1,4 +1,5 @@
 import CommentInput from './CommentInput';
+import { useNavigate } from 'react-router-dom';
 import { useComment } from '../hooks/useComment';
 import { useAuth } from '../context/AuthContext';
 
@@ -28,11 +29,22 @@ const Comment = ({
     containerClass } = useComment({ comment, handleReactionComment, depth });
 
     const { user: currentUser } = useAuth();
+    const navigate = useNavigate();
+
+    const handleNavigateToUser = (e, userId) => {
+      if (e) e.stopPropagation();
+      if (userId) {
+        navigate(`/user/${userId}`);
+      }
+    };
 
   return (
     <div className={`${containerClass}`}>
       <div className="flex items-start gap-2">
-        <div className={`${isNested ? 'w-6 h-6 mt-0.5' : 'w-8 h-8'} rounded-full overflow-hidden flex-shrink-0`}>
+        <div 
+          className={`${isNested ? 'w-6 h-6 mt-0.5' : 'w-8 h-8'} rounded-full overflow-hidden flex-shrink-0 cursor-pointer`}
+          onClick={(e) => handleNavigateToUser(e, comment.user?.id)}
+        >
           <img
             src={comment.user?.avatar || `https://ui-avatars.com/api/?name=${comment.user?.name || 'User'}&background=random`}
             alt={comment.user?.name}
@@ -44,7 +56,12 @@ const Comment = ({
             className={`flex items-center text-[13px] text-gray-900 ${!isNested ? 'border-l-[2px] pl-2' : ''}`}
             style={!isNested ? { borderColor: 'var(--color-dusty-rose-500)' } : {}}
           >
-            <span className="font-bold hover:underline cursor-pointer">{comment.user?.name}</span>
+            <span 
+              className="font-bold hover:underline cursor-pointer"
+              onClick={(e) => handleNavigateToUser(e, comment.user?.id)}
+            >
+              {comment.user?.name}
+            </span>
             {comment.user?.id === authorId && (
               <span
                 className="text-[11px] font-bold px-1 rounded ml-1"

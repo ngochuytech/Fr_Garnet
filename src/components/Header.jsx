@@ -1,12 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getUnreadCount } from '../features/notification/services/NotificationService';
 
 const Header = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
+
   const displayName = user?.fullname || 'User';
   const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30&size=128`;
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (!user) return;
+      try {
+        const count = await getUnreadCount();
+        setUnreadCount(typeof count === 'number' ? count : count?.count || 0);
+      } catch (error) {
+        console.error("Error fetching unread count:", error);
+      }
+    };
+    
+    fetchUnreadCount();
+    
+    // Optionally poll or listen to events here, for now just fetch once
+  }, [user, location.pathname]); // refetch when user changes or location changes (e.g. after reading notifications)
 
   const isActive = (path) => location.pathname === path;
 
@@ -15,11 +34,11 @@ const Header = () => {
       <div className="flex items-center justify-between w-full max-w-[1300px] h-full px-4">
 
         {/* Logo */}
-        <div className="flex-shrink-0 cursor-pointer">
+        <Link to="/home" className="flex-shrink-0 cursor-pointer">
           <span className="text-[28px] font-bold font-display" style={{ color: 'var(--color-dusty-rose-600)' }}>
             CampusHub
           </span>
-        </div>
+        </Link>
 
         {/* Navigation Icons */}
         <nav className="flex items-center ml-4 space-x-5">
@@ -64,7 +83,11 @@ const Header = () => {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9zM13.73 21a2 2 0 01-3.46 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] text-white" style={{ backgroundColor: 'var(--color-dusty-rose-500)' }}>4</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] text-white" style={{ backgroundColor: 'var(--color-dusty-rose-500)' }}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </div>
             {isActive('/notifications') && (
               <span className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ backgroundColor: 'var(--color-dusty-rose-600)' }} />

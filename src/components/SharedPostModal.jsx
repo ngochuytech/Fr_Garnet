@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getPostByIdAPI } from '../services/postService';
 import { useAuth } from '../context/AuthContext';
 import { usePostCard } from '../hooks/usePostCard';
@@ -10,9 +11,18 @@ import { ImagePreviewModal } from './ImagePreviewModal';
 
 // ─── Inner component dùng usePostCard sau khi đã có postId ─────────────────
 const SharedPostContent = ({ post, onClose }) => {
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const isOwnPost = Boolean(currentUser && currentUser.id && post.author && post.author.id === currentUser.id);
+
+  const handleNavigateToUser = (e, userId) => {
+    if (e) e.stopPropagation();
+    if (userId) {
+      navigate(`/user/${userId}`);
+      onClose();
+    }
+  };
 
   const {
     upvotesCount, downvotesCount, commentAmount, shareAmount, isLiked, isDisliked, handleLike, handleDislike,
@@ -68,7 +78,10 @@ const SharedPostContent = ({ post, onClose }) => {
     <>
       {/* Post Header */}
       <div className="flex items-start gap-2 mb-3">
-        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+        <div 
+          className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
+          onClick={(e) => handleNavigateToUser(e, post.author?.id)}
+        >
           <img
             src={post.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author.authorName)}&background=dfb9b9&color=6a2f30`}
             alt={post.author.authorName}
@@ -77,7 +90,12 @@ const SharedPostContent = ({ post, onClose }) => {
         </div>
         <div className="flex flex-col">
           <div className="flex items-center text-[14px] text-gray-900 font-bold flex-wrap">
-            <span className="hover:underline cursor-pointer">{post.author.authorName}</span>
+            <span 
+              className="hover:underline cursor-pointer"
+              onClick={(e) => handleNavigateToUser(e, post.author?.id)}
+            >
+              {post.author.authorName}
+            </span>
             {!isOwnPost && (
               <>
                 <span className="mx-1 font-normal text-gray-500">&middot;</span>
@@ -128,7 +146,10 @@ const SharedPostContent = ({ post, onClose }) => {
           {post.sharedPost.author ? (
             <>
               <div className="flex items-start gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                <div 
+                  className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
+                  onClick={(e) => handleNavigateToUser(e, post.sharedPost.author?.id)}
+                >
                   <img
                     src={post.sharedPost.author.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.sharedPost.author.authorName)}&background=dfb9b9&color=6a2f30`}
                     alt={post.sharedPost.author.authorName}
@@ -137,7 +158,12 @@ const SharedPostContent = ({ post, onClose }) => {
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
-                    <span className="cursor-pointer hover:underline">{post.sharedPost.author.authorName}</span>
+                    <span 
+                      className="cursor-pointer hover:underline"
+                      onClick={(e) => handleNavigateToUser(e, post.sharedPost.author?.id)}
+                    >
+                      {post.sharedPost.author.authorName}
+                    </span>
                   </div>
                   <div className="text-[13px] text-gray-500">
                     {post.sharedPost.author.department && <span>{post.sharedPost.author.department}<span className="mx-1">&middot;</span></span>}
