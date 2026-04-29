@@ -13,7 +13,6 @@ const CommentInput = ({ avatarUrl, placeholder = "Viết bình luận...", bgCla
     handleLink,
     insertQuote,
     insertCode,
-    insertMath,
     setIsFocused,
     setShowFormatBar,
   } = useCommentInput({ onSubmit });
@@ -79,7 +78,6 @@ const CommentInput = ({ avatarUrl, placeholder = "Viết bình luận...", bgCla
                     </button>
                     <button type="button" onMouseDown={insertQuote} className="hover:bg-gray-100 rounded-md transition-colors font-serif font-bold text-[18px] shrink-0 w-7 h-7 flex items-center justify-center" title="Quote"><span className="leading-none mt-2">”</span></button>
                     <button type="button" onMouseDown={insertCode} className="hover:bg-gray-100 rounded-md transition-colors font-mono font-bold text-[14px] shrink-0 w-7 h-7 flex items-center justify-center" title="Code"><span className="leading-none">{`{}`}</span></button>
-                    <button type="button" onMouseDown={insertMath} className="hover:bg-gray-100 rounded-md transition-colors font-serif font-bold text-[15px] shrink-0 w-7 h-7 flex items-center justify-center" title="Math"><span className="leading-none">Σ</span></button>
                     <button type="button" onMouseDown={(e) => applyFormat(e, 'undo')} className="hover:bg-gray-100 rounded-md transition-colors shrink-0 w-7 h-7 flex items-center justify-center" title="Undo">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" /></svg>
                     </button>

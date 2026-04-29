@@ -65,7 +65,7 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
     isEditModalOpen, openEditModal, closeEditModal,
     editEditorRef, editHasText, editShowFormatBar, setEditShowFormatBar,
     handleEditInput, applyEditFormat,
-    handleEditLink, insertEditQuote, insertEditCode, insertEditMath,
+    handleEditLink, insertEditQuote, insertEditCode,
     handleDeletePost, handleUpdatePost,
     isReportModalOpen, openReportModal, closeReportModal,
     REPORT_REASONS, reportReason, setReportReason,
@@ -695,7 +695,6 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                     </button>
                     <button onMouseDown={insertEditQuote} className="hover:bg-gray-200 rounded-full transition-colors font-serif font-bold text-[18px] shrink-0 w-7 h-7 flex items-center justify-center text-gray-700" title="Quote"><span className="leading-none mt-2">”</span></button>
                     <button onMouseDown={insertEditCode} className="hover:bg-gray-200 rounded-full transition-colors font-mono font-bold text-[14px] shrink-0 w-7 h-7 flex items-center justify-center text-gray-700" title="Code"><span className="leading-none">{`{}`}</span></button>
-                    <button onMouseDown={insertEditMath} className="hover:bg-gray-200 rounded-full transition-colors font-serif font-bold text-[15px] shrink-0 w-7 h-7 flex items-center justify-center text-gray-700" title="Math"><span className="leading-none">Σ</span></button>
                     <button onMouseDown={(e) => applyEditFormat(e, 'undo')} className="hover:bg-gray-200 rounded-full transition-colors shrink-0 w-7 h-7 flex items-center justify-center text-gray-700" title="Undo">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" /></svg>
                     </button>

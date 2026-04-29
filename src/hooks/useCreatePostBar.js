@@ -132,10 +132,7 @@ export const useCreatePostBar = (onPostCreated) => {
         applyFormat(e, 'formatBlock', 'PRE');
     };
 
-    const insertMath = (e) => {
-        e.preventDefault();
-        applyFormat(e, 'insertText', ' $$ equation $$ ');
-    };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -187,7 +184,7 @@ export const useCreatePostBar = (onPostCreated) => {
         selectedTags, tagSearchQuery, isTagDropdownOpen,
         userTopics, filteredTopics,
         setTagSearchQuery, setIsTagDropdownOpen, handleAddTag, handleRemoveTag,
-        handleInput, applyFormat, handleLink, insertQuote, insertCode, insertMath,
+        handleInput, applyFormat, handleLink, insertQuote, insertCode,
         handleImageChange, removeImage,
         handleSubmit
     }

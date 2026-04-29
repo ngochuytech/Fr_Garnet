@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { likePostAPI, dislikePostAPI, getCommentsByPostId, createCommentAPI, likeCommentAPI, dislikeCommentAPI, editPostAPI, deletePostAPI, reportPostAPI, sharePostAPI } from '../services/postService';
 import { fetchUserTopics } from '../services/createPostBarService';
@@ -55,7 +55,6 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
   }, [isModalOptionOpen]);
 
   // + REACTIONS (Like / Dislike bài viết)
-
   const [upvotesCount, setUpvotesCount] = useState(initialUpvotes);
   const [downvotesCount, setDownvotesCount] = useState(initialDownvotes);
   const [commentAmount, setCommentAmount] = useState(initialCommentCount);
@@ -63,46 +62,71 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
   const [isLiked, setIsLiked] = useState(initialUserReaction === 'LIKE');
   const [isDisliked, setIsDisliked] = useState(initialUserReaction === 'DISLIKE');
 
-  const handleLike = async () => {
+  // Ref để theo dõi trạng thái cuối cùng đã đồng bộ với server
+  const serverReactionRef = useRef(initialUserReaction);
+  const debounceTimerRef = useRef(null);
+
+  // Hàm đồng bộ trạng thái Reaction lên server (đã được debounce)
+  const syncReaction = useCallback(async (currentReaction) => {
+    if (!postId || currentReaction === serverReactionRef.current) return;
+
+    try {
+      if (currentReaction === 'LIKE') {
+        await likePostAPI(postId);
+      } else if (currentReaction === 'DISLIKE') {
+        await dislikePostAPI(postId);
+      } else {
+        // Nếu hiện tại là NULL (bỏ like/dislike), ta gọi lại API của trạng thái cũ để toggle nó về off
+        if (serverReactionRef.current === 'LIKE') await likePostAPI(postId);
+        else if (serverReactionRef.current === 'DISLIKE') await dislikePostAPI(postId);
+      }
+      // Cập nhật trạng thái đã đồng bộ
+      serverReactionRef.current = currentReaction;
+    } catch (error) {
+      console.error('[Reaction Sync Error]', error);
+      toast.error('Không thể đồng bộ lượt thích. Vui lòng thử lại.');
+      // Không revert ở đây để tránh giật lag UI, user có thể nhấn lại
+    }
+  }, [postId]);
+
+  const handleLike = () => {
     if (!postId) return;
     const wasLiked = isLiked;
     const wasDisliked = isDisliked;
-    // Optimistic update
+
+    // 1. Cập nhật UI ngay lập tức (Optimistic UI)
     setIsLiked(!wasLiked);
     if (wasDisliked) setIsDisliked(false);
     setUpvotesCount(prev => prev + (wasLiked ? -1 : 1));
     if (wasDisliked) setDownvotesCount(prev => prev - 1);
-    try {
-      await likePostAPI(postId);
-    } catch (error) {
-      // Revert on error
-      setIsLiked(wasLiked);
-      if (wasDisliked) setIsDisliked(true);
-      setUpvotesCount(prev => prev - (wasLiked ? -1 : 1));
-      if (wasDisliked) setDownvotesCount(prev => prev + 1);
-      toast.error(error || 'Lỗi kết nối máy chủ');
-    }
+
+    // 2. Debounce việc gọi API
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    const nextReaction = !wasLiked ? 'LIKE' : null;
+    
+    debounceTimerRef.current = setTimeout(() => {
+      syncReaction(nextReaction);
+    }, 1000);
   };
 
-  const handleDislike = async () => {
+  const handleDislike = () => {
     if (!postId) return;
     const wasDisliked = isDisliked;
     const wasLiked = isLiked;
-    // Optimistic update
+
+    // 1. Cập nhật UI ngay lập tức (Optimistic UI)
     setIsDisliked(!wasDisliked);
     if (wasLiked) setIsLiked(false);
     setDownvotesCount(prev => prev + (wasDisliked ? -1 : 1));
     if (wasLiked) setUpvotesCount(prev => prev - 1);
-    try {
-      await dislikePostAPI(postId);
-    } catch (error) {
-      // Revert on error
-      setIsDisliked(wasDisliked);
-      if (wasLiked) setIsLiked(true);
-      setDownvotesCount(prev => prev - (wasDisliked ? -1 : 1));
-      if (wasLiked) setUpvotesCount(prev => prev + 1);
-      toast.error(error || 'Lỗi kết nối máy chủ');
-    }
+
+    // 2. Debounce việc gọi API
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    const nextReaction = !wasDisliked ? 'DISLIKE' : null;
+
+    debounceTimerRef.current = setTimeout(() => {
+      syncReaction(nextReaction);
+    }, 1000);
   };
 
   // + COMMENTS (Bình luận & Phản hồi)
@@ -328,7 +352,6 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
 
   const insertQuote = (e) => { e.preventDefault(); applyFormat(e, 'formatBlock', 'BLOCKQUOTE'); };
   const insertCode = (e) => { e.preventDefault(); applyFormat(e, 'formatBlock', 'PRE'); };
-  const insertMath = (e) => { e.preventDefault(); applyFormat(e, 'insertText', ' $$ equation $$ '); };
 
 
   // + EDIT POST (Chỉnh sửa bài viết)
@@ -370,7 +393,6 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
 
   const insertEditQuote = (e) => { e.preventDefault(); applyEditFormat(e, 'formatBlock', 'BLOCKQUOTE'); };
   const insertEditCode = (e) => { e.preventDefault(); applyEditFormat(e, 'formatBlock', 'PRE'); };
-  const insertEditMath = (e) => { e.preventDefault(); applyEditFormat(e, 'insertText', ' $$ equation $$ '); };
 
   const handleUpdatePost = async () => {
     if (editEditorRef.current && editHasText) {
@@ -488,13 +510,13 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     editorRef, dropdownRef,
     selectedTags, tagSearchQuery, isTagDropdownOpen, filteredTopics,
     setTagSearchQuery, setIsTagDropdownOpen, handleAddTag, handleRemoveTag,
-    handleInput, applyFormat, handleLink, insertQuote, insertCode, insertMath,
+    handleInput, applyFormat, handleLink, insertQuote, insertCode,
 
     // Edit Post
     isEditModalOpen, openEditModal, closeEditModal,
     editEditorRef, editHasText, editShowFormatBar, setEditShowFormatBar,
     handleEditInput, applyEditFormat,
-    handleEditLink, insertEditQuote, insertEditCode, insertEditMath,
+    handleEditLink, insertEditQuote, insertEditCode,
     handleUpdatePost,
 
     // Delete Post

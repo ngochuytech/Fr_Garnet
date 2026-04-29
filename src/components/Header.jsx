@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadCount } from '../features/notification/services/NotificationService';
+import useNotificationSocket from '../features/notification/hooks/useNotificationSocket';
 
 const Header = () => {
   const { user } = useAuth();
@@ -11,21 +12,31 @@ const Header = () => {
   const displayName = user?.fullname || 'User';
   const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30&size=128`;
 
+  // Khởi tạo WebSocket kết nối Global
+  useNotificationSocket(user, setUnreadCount);
+
+  // Bước 1: lần đầu load lấy count từ REST API
   useEffect(() => {
-    const fetchUnreadCount = async () => {
+    const fetchInitialCount = async () => {
       if (!user) return;
       try {
         const count = await getUnreadCount();
         setUnreadCount(typeof count === 'number' ? count : count?.count || 0);
       } catch (error) {
-        console.error("Error fetching unread count:", error);
+        console.error('Error fetching unread count:', error);
       }
     };
-    
-    fetchUnreadCount();
-    
-    // Optionally poll or listen to events here, for now just fetch once
-  }, [user, location.pathname]); // refetch when user changes or location changes (e.g. after reading notifications)
+    fetchInitialCount();
+  }, [user]);
+
+  // Bước 3: lắng nghe event từ useNotifications hook để cập nhật badge realtime
+  useEffect(() => {
+    const handleUnreadChange = (e) => {
+      setUnreadCount(e.detail?.count ?? 0);
+    };
+    window.addEventListener('unread-count-changed', handleUnreadChange);
+    return () => window.removeEventListener('unread-count-changed', handleUnreadChange);
+  }, []);
 
   const isActive = (path) => location.pathname === path;
 

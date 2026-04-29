@@ -69,10 +69,7 @@ export const useCommentInput = ({ onSubmit }) => {
         applyFormat(e, 'formatBlock', 'PRE');
     };
 
-    const insertMath = (e) => {
-        e.preventDefault();
-        applyFormat(e, 'insertText', ' $$ equation $$ ');
-    };
+
 
     return {
         isOpen,
@@ -87,7 +84,6 @@ export const useCommentInput = ({ onSubmit }) => {
         handleLink,
         insertQuote,
         insertCode,
-        insertMath,
         setIsOpen,
         setIsFocused,
         setHasText,

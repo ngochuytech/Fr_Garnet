@@ -14,6 +14,7 @@ import SpacePage from './pages/SpacePage';
 import OnboardingPage from './pages/OnboardingPage';
 import TopicPage from './pages/TopicPage';
 import UserPage from './pages/UserPage';
+import PostPage from './pages/PostPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import { useAuth } from './context/AuthContext';
@@ -49,6 +50,7 @@ function App() {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/user/:id" element={<UserPage />} />
               <Route path="/topic/:topicName" element={<TopicPage />} />
+              <Route path="/post/:id" element={<PostPage />} />
             </Route>
           </Route>
 
