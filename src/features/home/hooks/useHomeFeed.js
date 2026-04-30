@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { getMyPosts, getPostsForHome } from '../services/homeService';
 
 export const useHomeFeed = () => {
-  const [activeFilter, setActiveFilter] = useState('forYou');
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,8 +37,6 @@ export const useHomeFeed = () => {
   };
 
   return {
-    activeFilter,
-    setActiveFilter,
     posts,
     loading,
     error,

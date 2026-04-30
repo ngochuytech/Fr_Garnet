@@ -1,19 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadCount } from '../features/notification/services/NotificationService';
 import useNotificationSocket from '../features/notification/hooks/useNotificationSocket';
 
 const Header = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const displayName = user?.fullname || 'User';
   const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30&size=128`;
 
   // Khởi tạo WebSocket kết nối Global
   useNotificationSocket(user, setUnreadCount);
+
+  // Click outside listener
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isDropdownOpen]);
 
   // Bước 1: lần đầu load lấy count từ REST API
   useEffect(() => {
@@ -39,6 +55,11 @@ const Header = () => {
   }, []);
 
   const isActive = (path) => location.pathname === path;
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] h-[50px] w-full flex justify-center">
@@ -74,8 +95,6 @@ const Header = () => {
             )}
             <div className="absolute top-10 hidden group-hover:block bg-gray-800 text-white text-xs px-2 py-1 rounded">Following</div>
           </Link>
-
-
 
           {/* Spaces */}
           <Link to="/spaces" className={`p-2 cursor-pointer rounded hover:bg-gray-100 flex items-center justify-center relative group ${isActive('/spaces') ? 'text-[#8d3f41]' : 'text-gray-500 hover:text-gray-800'}`}>
@@ -122,30 +141,89 @@ const Header = () => {
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center space-x-3 flex-shrink-0">
+        <div className="flex items-center space-x-3 flex-shrink-0 relative" ref={dropdownRef}>
 
-          <Link to="/profile" className="w-8 h-8 flex items-center justify-center rounded-full overflow-hidden border border-gray-200 cursor-pointer">
+          <button 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="w-8 h-8 flex items-center justify-center rounded-full overflow-hidden border border-gray-200 cursor-pointer hover:border-gray-400 transition-all shadow-sm"
+          >
             <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-          </Link>
-
-          <button className="text-gray-500 hover:text-gray-800 cursor-pointer">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
           </button>
 
-          <div className="flex rounded-full overflow-hidden border border-transparent" style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}>
-            <button className="px-4 py-1.5 text-sm font-semibold text-white cursor-pointer hover:bg-white/10 transition-colors">
-              Post
-            </button>
-            <button className="px-2 py-1.5 flex items-center justify-center text-white cursor-pointer border-l border-white/20 hover:bg-white/10 transition-colors">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-          </div>
+          {/* User Dropdown Menu */}
+          {isDropdownOpen && (
+            <div className="absolute top-10 right-0 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 duration-200 z-[100]">
+              {/* User Info Section */}
+              <Link 
+                to="/profile" 
+                onClick={() => setIsDropdownOpen(false)}
+                className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                    <img src={avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover border border-gray-100" />
+                    <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 leading-tight">{displayName}</span>
+                    </div>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 group-hover:text-gray-600 transition-colors">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </Link>
+
+              <div className="h-px bg-gray-100 mx-2 my-1" />
+
+              {/* Menu Items */}
+              <div className="flex flex-col">
+                <Link to="/messages" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition-colors text-[14.5px]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Messages</span>
+                </Link>
+                <Link to="/bookmarks" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition-colors text-[14.5px]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Bookmarks</span>
+                </Link>
+              </div>
+
+              <div className="flex flex-col">
+                <Link to="/stats" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition-colors text-[14.5px]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Your content & stats</span>
+                </Link>
+              </div>
+
+              <div className="h-px bg-gray-100 mx-2 my-1" />
+
+              <div className="flex flex-col">
+                <Link to="/settings" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition-colors text-[14.5px]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span>Settings</span>
+                </Link>
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-red-600 transition-colors text-[14.5px] w-full text-left"
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Sign out</span>
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </header>

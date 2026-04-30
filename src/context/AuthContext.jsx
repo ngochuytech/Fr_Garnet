@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { getProfile } from '../features/profile/services/profileSerivce';
+import {logoutService} from '../services/authContextService';
 
 const AuthContext = createContext(null);
 
@@ -53,7 +54,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem(USER_KEY, JSON.stringify(userData));
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await logoutService();
     setUser(null);
     setToken(null);
     localStorage.removeItem(TOKEN_KEY);

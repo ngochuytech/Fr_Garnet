@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { followUser, unfollowUser } from '../../following/services/followingService';
 
@@ -8,34 +8,57 @@ const UserHeader = ({ user }) => {
   const [followersCount, setFollowersCount] = useState(user?.followersCount || 0);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Refs để quản lý debounce
+  const debounceTimerRef = useRef(null);
+  const lastSyncedStateRef = useRef(user?.following || false);
+
   // Đồng bộ state nếu prop user thay đổi
   useEffect(() => {
     setIsFollowing(user?.following || false);
     setFollowersCount(user?.followersCount || 0);
+    lastSyncedStateRef.current = user?.following || false;
   }, [user]);
 
   const isOwnProfile = currentUser && (currentUser.id === user?.id || currentUser.userId === user?.id);
   const displayName = user?.fullname || 'User';
   const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30&size=128`;
 
-  const handleFollowToggle = async () => {
-    if (!user?.id || isLoading) return;
+  const handleFollowToggle = () => {
+    if (!user?.id) return;
 
-    setIsLoading(true);
-    try {
-      if (isFollowing) {
-        await unfollowUser(user.id);
-        setFollowersCount(prev => Math.max(0, prev - 1));
-      } else {
-        await followUser(user.id);
-        setFollowersCount(prev => prev + 1);
-      }
-      setIsFollowing(!isFollowing);
-    } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái theo dõi:", error);
-    } finally {
-      setIsLoading(false);
+    // 1. Cập nhật UI ngay lập tức (Optimistic Update)
+    const nextState = !isFollowing;
+    setIsFollowing(nextState);
+    setFollowersCount(prev => Math.max(0, prev + (nextState ? 1 : -1)));
+
+    // 2. Debounce việc gọi API
+    if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
     }
+
+    debounceTimerRef.current = setTimeout(async () => {
+        // Chỉ gọi API nếu trạng thái hiện tại khác với trạng thái đã đồng bộ cuối cùng
+        if (nextState === lastSyncedStateRef.current) {
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            if (nextState) {
+                await followUser(user.id);
+            } else {
+                await unfollowUser(user.id);
+            }
+            lastSyncedStateRef.current = nextState;
+        } catch (error) {
+            console.error("Lỗi khi cập nhật trạng thái theo dõi:", error);
+            // Revert UI nếu lỗi
+            setIsFollowing(!nextState);
+            setFollowersCount(prev => Math.max(0, prev + (!nextState ? 1 : -1)));
+        } finally {
+            setIsLoading(false);
+        }
+    }, 1000);
   };
 
   return (

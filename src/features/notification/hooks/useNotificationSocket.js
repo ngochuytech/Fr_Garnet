@@ -69,8 +69,8 @@ const useNotificationSocket = (user, setUnreadCount) => {
                   const postId = newNotif.postId || newNotif.targetId;
                   if (postId && newNotif.type !== 'NEW_FOLLOWER') {
                     window.location.href = `/post/${postId}`;
-                  } else if (newNotif.type === 'NEW_FOLLOWER' && newNotif.sender) {
-                    window.location.href = `/user/${newNotif.sender.id || newNotif.sender._id}`;
+                  } else if (newNotif.type === 'NEW_FOLLOWER' && newNotif.actor) {
+                    window.location.href = `/user/${newNotif.actor.id}`;
                   } else {
                     window.location.href = '/notifications';
                   }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getSuggestedUsers, searchUsers, followUser, unfollowUser } from '../services/followingService';
 
 export const useFollowList = () => {
@@ -11,6 +11,10 @@ export const useFollowList = () => {
     const [isSearching, setIsSearching] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
     const [actionLoadingIds, setActionLoadingIds] = useState([]);
+
+    // Refs cho debounce
+    const debounceTimersRef = useRef({});
+    const lastSyncedStatesRef = useRef({});
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -27,6 +31,15 @@ export const useFollowList = () => {
 
         fetchUsers();
     }, []);
+
+    // Khởi tạo/Cập nhật lastSyncedStatesRef khi users hoặc searchResults thay đổi
+    useEffect(() => {
+        [...users, ...searchResults].forEach(u => {
+            if (lastSyncedStatesRef.current[u.id] === undefined) {
+                lastSyncedStatesRef.current[u.id] = u.isFollowing;
+            }
+        });
+    }, [users, searchResults]);
 
     // Debounce effect cho chức năng search
     useEffect(() => {
@@ -54,34 +67,55 @@ export const useFollowList = () => {
         return () => clearTimeout(delayDebounceFn);
     }, [searchQuery]);
 
-    // Hàm follow chung cho cả gợi ý lẫn kết quả tìm kiếm
-    const toggleFollow = async (userId, isFollowing) => {
-        try {
-            setActionLoadingIds((prev) => [...prev, userId]);
-            // Gọi API tương ứng với trạng thái hiện tại
-            if (isFollowing) {
-                await unfollowUser(userId);
-            } else {
-                await followUser(userId);
-            }
-            
-            // Cập nhật state sau khi gọi API thành công
-            setUsers((prevUsers) =>
-                prevUsers.map((user) =>
-                    user.id === userId ? { ...user, isFollowing: !isFollowing } : user
-                )
+    // Hàm follow chung cho cả gợi ý lẫn kết quả tìm kiếm (đã debounce)
+    const toggleFollow = (userId, currentFollowingState) => {
+        // 1. Cập nhật UI ngay lập tức (Optimistic Update)
+        const nextState = !currentFollowingState;
+        
+        const updateState = (prevUsers) =>
+            prevUsers.map((user) =>
+                user.id === userId ? { ...user, isFollowing: nextState } : user
             );
-            
-            setSearchResults((prevUsers) =>
-                prevUsers.map((user) =>
-                    user.id === userId ? { ...user, isFollowing: !isFollowing } : user
-                )
-            );
-        } catch (error) {
-            console.error("Lỗi khi cập nhật trạng thái theo dõi:", error);
-        } finally {
-            setActionLoadingIds((prev) => prev.filter((id) => id !== userId));
+
+        setUsers(updateState);
+        setSearchResults(updateState);
+
+        // 2. Debounce việc gọi API
+        if (debounceTimersRef.current[userId]) {
+            clearTimeout(debounceTimersRef.current[userId]);
         }
+
+        debounceTimersRef.current[userId] = setTimeout(async () => {
+            // Chỉ gọi API nếu trạng thái hiện tại khác với trạng thái đã đồng bộ cuối cùng
+            if (nextState === lastSyncedStatesRef.current[userId]) {
+                delete debounceTimersRef.current[userId];
+                return;
+            }
+
+            try {
+                setActionLoadingIds(prev => [...prev, userId]);
+                
+                if (nextState) {
+                    await followUser(userId);
+                } else {
+                    await unfollowUser(userId);
+                }
+                
+                lastSyncedStatesRef.current[userId] = nextState;
+            } catch (error) {
+                console.error("Lỗi khi cập nhật trạng thái theo dõi:", error);
+                // Revert UI nếu lỗi
+                const revertState = (prevUsers) =>
+                    prevUsers.map((user) =>
+                        user.id === userId ? { ...user, isFollowing: currentFollowingState } : user
+                    );
+                setUsers(revertState);
+                setSearchResults(revertState);
+            } finally {
+                delete debounceTimersRef.current[userId];
+                setActionLoadingIds(prev => prev.filter(id => id !== userId));
+            }
+        }, 1000);
     };
 
     return {

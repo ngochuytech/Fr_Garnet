@@ -19,8 +19,8 @@ const NotificationList = ({
     
     if (postId && notif.type !== 'NEW_FOLLOWER') {
       navigate(`/post/${postId}`);
-    } else if (notif.type === 'NEW_FOLLOWER' && notif.sender) {
-      navigate(`/user/${notif.sender.id || notif.sender._id}`);
+    } else if (notif.type === 'NEW_FOLLOWER' && notif.actor) {
+      navigate(`/user/${notif.actor.id}`);
     }
   };
 

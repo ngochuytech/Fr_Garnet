@@ -3,41 +3,8 @@ import PostCard from '../../../components/PostCard';
 import { useHomeFeed } from '../hooks/useHomeFeed';
 import { useAuth } from '../../../context/AuthContext';
 
-const FeedFilter = ({ active, onChange }) => {
-  const filters = [
-    { key: 'following', label: 'Đang theo dõi' },
-    { key: 'forYou', label: 'Dành cho bạn' },
-    { key: 'newest', label: 'Mới nhất' },
-  ];
-
-  return (
-    <div className="flex items-center gap-0 border-b border-gray-100">
-      {filters.map((f) => (
-        <button
-          key={f.key}
-          onClick={() => onChange(f.key)}
-          className={`px-4 py-3 text-[14px] font-medium transition-all relative ${
-            active === f.key
-              ? 'text-[#8d3f41] font-semibold'
-              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
-          }`}
-        >
-          {f.label}
-          {active === f.key && (
-            <span
-              className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-t-sm"
-              style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}
-            />
-          )}
-        </button>
-      ))}
-    </div>
-  );
-};
-
-
 const HomeFeed = ({ avatarUrl }) => {
-  const { activeFilter, setActiveFilter, posts, loading, error, isLast, refreshPosts, handleGetMorePost } = useHomeFeed();
+  const { posts, loading, error, isLast, refreshPosts, handleGetMorePost } = useHomeFeed();
   const { user } = useAuth();
 
   return (
@@ -51,7 +18,6 @@ const HomeFeed = ({ avatarUrl }) => {
 
       {/* Feed Filter */}
       <div className="bg-white rounded-xl border border-gray-200 mb-4 shadow-sm overflow-hidden">
-        <FeedFilter active={activeFilter} onChange={setActiveFilter} />
 
         {/* Post List */}
         <div className="px-4 divide-y divide-gray-100">

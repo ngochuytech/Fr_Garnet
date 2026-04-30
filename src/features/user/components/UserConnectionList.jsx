@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchFollowers, fetchFollowing } from '../services/userProfileService';
 import { followUser, unfollowUser } from '../../following/services/followingService';
@@ -14,8 +14,12 @@ const UserConnectionList = ({ type, userId }) => {
     const { user: currentUser } = useAuth();
     const navigate = useNavigate();
 
+    // Refs để quản lý debounce cho từng user trong danh sách
+    const debounceTimersRef = useRef({});
+    const lastSyncedStatesRef = useRef({}); // { [userId]: boolean }
+
     useEffect(() => {
-        // Reset state when changing tab or user
+        // Reset state khi đổi tab hoặc đổi user
         setPage(0);
         setUsers([]);
         setIsLast(true);
@@ -50,26 +54,59 @@ const UserConnectionList = ({ type, userId }) => {
         fetchUsers();
     }, [userId, type, page]);
 
-    const handleFollowToggle = async (targetId, currentFollowingState) => {
-        try {
-            setActionLoadingIds((prev) => [...prev, targetId]);
-            if (currentFollowingState) {
-                await unfollowUser(targetId);
-            } else {
-                await followUser(targetId);
+    // Khởi tạo lastSyncedStatesRef khi users thay đổi
+    useEffect(() => {
+        users.forEach(u => {
+            if (lastSyncedStatesRef.current[u.id] === undefined) {
+                lastSyncedStatesRef.current[u.id] = u.following;
             }
-            
-            // Update state
-            setUsers((prevUsers) =>
-                prevUsers.map((u) =>
-                    u.id === targetId ? { ...u, following: !currentFollowingState } : u
-                )
-            );
-        } catch (error) {
-            console.error("Lỗi khi cập nhật trạng thái theo dõi:", error);
-        } finally {
-            setActionLoadingIds((prev) => prev.filter((id) => id !== targetId));
+        });
+    }, [users]);
+
+    const handleFollowToggle = (targetId, currentFollowingState) => {
+        // 1. Cập nhật UI ngay lập tức (Optimistic Update)
+        const nextState = !currentFollowingState;
+        setUsers((prevUsers) =>
+            prevUsers.map((u) =>
+                u.id === targetId ? { ...u, following: nextState } : u
+            )
+        );
+
+        // 2. Debounce việc gọi API
+        if (debounceTimersRef.current[targetId]) {
+            clearTimeout(debounceTimersRef.current[targetId]);
         }
+
+        debounceTimersRef.current[targetId] = setTimeout(async () => {
+            // Chỉ gọi API nếu trạng thái hiện tại khác với trạng thái đã đồng bộ cuối cùng
+            if (nextState === lastSyncedStatesRef.current[targetId]) {
+                delete debounceTimersRef.current[targetId];
+                return;
+            }
+
+            try {
+                setActionLoadingIds(prev => [...prev, targetId]);
+                
+                if (nextState) {
+                    await followUser(targetId);
+                } else {
+                    await unfollowUser(targetId);
+                }
+                
+                lastSyncedStatesRef.current[targetId] = nextState;
+            } catch (error) {
+                console.error("Lỗi khi cập nhật trạng thái theo dõi:", error);
+                // Revert UI nếu lỗi
+                setUsers((prevUsers) =>
+                    prevUsers.map((u) =>
+                        u.id === targetId ? { ...u, following: currentFollowingState } : u
+                    )
+                );
+            } finally {
+                delete debounceTimersRef.current[targetId];
+                setActionLoadingIds(prev => prev.filter(id => id !== targetId));
+            }
+        }, 1000);
     };
 
     if (loading) {
