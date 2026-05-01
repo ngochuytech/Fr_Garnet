@@ -18,6 +18,10 @@ import PostPage from './pages/PostPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import { useAuth } from './context/AuthContext';
+import ReportManagement from './features/admin/components/ReportManagement';
+import UserManagement from './features/admin/components/UserManagement';
+import UserDetailPage from './features/admin/components/UserDetailPage';
+import AdminLayout from './layouts/AdminLayout';
 
 // Component điều hướng thông minh cho đường dẫn không tồn tại
 const NotFoundRedirect = () => {
@@ -38,9 +42,18 @@ function App() {
             <Route path="/oauth2/callback/google" element={<OAuth2Callback />} />
           </Route>
 
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="/admin/reports" replace />} />
+            <Route path="reports" element={<ReportManagement />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="users/:userId" element={<UserDetailPage />} />
+            {/* Thêm các trang quản trị khác ở đây */}
+          </Route>
+
+
           {/* Protected routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/onboarding" element={<OnboardingPage />} />            
+          <Route element={<ProtectedRoute />}>
+            <Route path="/onboarding" element={<OnboardingPage />} />
             {/* App main layout routes */}
             <Route element={<MainLayout />}>
               <Route path="/home" element={<HomePage />} />
