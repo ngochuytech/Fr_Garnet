@@ -122,20 +122,34 @@ const AdminLayout = () => {
                 </>
               )}
 
-              {location.pathname === '/admin/reports' && (
+              {(location.pathname === '/admin/reports' || location.pathname.startsWith('/admin/reports/')) && (
                 <>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
-                  <span className="text-gray-900">Báo cáo vi phạm</span>
+                  <Link to="/admin/reports" className={`${location.pathname === '/admin/reports' ? 'text-gray-900' : 'hover:text-gray-900 transition-colors'}`}>Báo cáo vi phạm</Link>
+                </>
+              )}
+
+              {location.pathname.startsWith('/admin/reports/') && location.pathname !== '/admin/reports' && (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
+                  <span className="text-gray-900" id="breadcrumb-report-id">Chi tiết</span>
+                </>
+              )}
+
+              {(location.pathname === '/admin/posts' || location.pathname.startsWith('/admin/posts/')) && (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
+                  <Link to="/admin/posts" className={`${location.pathname === '/admin/posts' ? 'text-gray-900' : 'hover:text-gray-900 transition-colors'}`}>Bài viết</Link>
+                </>
+              )}
+
+              {location.pathname.startsWith('/admin/posts/') && location.pathname !== '/admin/posts' && (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
+                  <span className="text-gray-900" id="breadcrumb-post-id">{location.pathname.split('/').pop().substring(0, 8)}</span>
                 </>
               )}
               
-              {/* Fallback for other menu items if not caught above */}
-              {!location.pathname.includes('/admin/users') && location.pathname !== '/admin/reports' && (
-                <>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
-                  <span className="text-gray-900">{menuItems.flatMap(s => s.items).find(i => i.path === location.pathname)?.label || 'Hệ thống'}</span>
-                </>
-              )}
             </div>
            <div className="flex items-center gap-4">
               <button className="p-2 text-gray-400 hover:text-gray-900 transition-colors">

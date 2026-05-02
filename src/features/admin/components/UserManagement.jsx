@@ -115,6 +115,7 @@ const UserManagement = () => {
   const navigate = useNavigate();
   const {
     users,
+    loading,
     search,
     setSearch,
     statusFilter,
@@ -124,6 +125,8 @@ const UserManagement = () => {
     filteredUsers,
     totalActive,
     totalBanned,
+    pagination,
+    fetchUsers,
     handleToggleBan
   } = useUserManagement();
 
@@ -135,16 +138,6 @@ const UserManagement = () => {
         <div>
           <h1 className="text-2xl font-black tracking-tight text-gray-900">Người dùng</h1>
           <p className="text-sm font-medium text-gray-500 mt-0.5">Quản lý tài khoản sinh viên và người dùng CampusHub.</p>
-        </div>
-        <div className="flex gap-3">
-          <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2 text-center">
-            <p className="text-lg font-black text-emerald-600">{totalActive}</p>
-            <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Hoạt động</p>
-          </div>
-          <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-2 text-center">
-            <p className="text-lg font-black text-red-500">{totalBanned}</p>
-            <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider">Đã khóa</p>
-          </div>
         </div>
       </div>
 
@@ -178,16 +171,16 @@ const UserManagement = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="appearance-none bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl px-4 py-2.5 pr-9 focus:outline-none focus:ring-2 focus:ring-gray-200 shadow-sm cursor-pointer"
           >
-            <option value="ALL">Tất cả ({users.length})</option>
-            <option value="ACTIVE">Hoạt động ({totalActive})</option>
-            <option value="BANNED">Đã khóa ({totalBanned})</option>
+            <option value="ALL">Tất cả</option>
+            <option value="ACTIVE">Hoạt động</option>
+            <option value="BANNED">Đã khóa</option>
           </select>
           <svg className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
@@ -198,7 +191,15 @@ const UserManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredUsers.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="py-20 text-center">
+                    <div className="flex justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-2 text-gray-400">
@@ -215,14 +216,14 @@ const UserManagement = () => {
                   <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <Avatar src={user.avatar} name={user.full_name} />
+                        <Avatar src={user.avatarUrl} name={user.fullName} />
                         <div>
-                          <p className="font-semibold text-gray-900 leading-tight">{user.full_name}</p>
+                          <p className="font-semibold text-gray-900 leading-tight">{user.fullName}</p>
                           <p className="text-[11px] text-gray-400 mt-0.5">{user.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-gray-500 text-xs whitespace-nowrap font-medium">{formatDate(user.joined_at)}</td>
+                    <td className="px-5 py-4 text-gray-500 text-xs whitespace-nowrap font-medium">{formatDate(user.createdAt)}</td>
                     <td className="px-5 py-4"><StatusBadge status={user.status} /></td>
                     <td className="px-5 py-4 text-right">
                       <div className="flex items-center gap-2">
@@ -254,13 +255,29 @@ const UserManagement = () => {
           </table>
         </div>
 
-        {/* Footer */}
-        {filteredUsers.length > 0 && (
+        {/* Footer / Pagination */}
+        {!loading && pagination.totalElements > 0 && (
           <div className="px-6 py-4 border-t border-gray-50 flex items-center justify-between bg-gray-50/30">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              Hiển thị <span className="text-gray-900">{filteredUsers.length}</span> / {users.length} người dùng
+              Tổng cộng: <span className="text-gray-900">{pagination.totalElements}</span> người dùng
             </p>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Trang 1 / 1</p>
+            <div className="flex items-center gap-2">
+               <button 
+                disabled={pagination.page === 0}
+                onClick={() => fetchUsers(pagination.page - 1)}
+                className="p-2 rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-colors bg-white shadow-sm"
+               >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+               </button>
+               <span className="text-xs font-bold text-gray-700 px-3">Trang {pagination.page + 1} / {pagination.totalPages || 1}</span>
+               <button 
+                disabled={pagination.page >= pagination.totalPages - 1}
+                onClick={() => fetchUsers(pagination.page + 1)}
+                className="p-2 rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-colors bg-white shadow-sm"
+               >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+               </button>
+            </div>
           </div>
         )}
       </div>
@@ -268,7 +285,7 @@ const UserManagement = () => {
       {/* Modals */}
       {confirmUser && (
         <ConfirmDialog
-          user={users.find((u) => u.id === confirmUser.id)}
+          user={confirmUser}
           onConfirm={handleToggleBan}
           onCancel={() => setConfirmUser(null)}
         />

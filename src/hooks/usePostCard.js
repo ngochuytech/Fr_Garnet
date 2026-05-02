@@ -152,7 +152,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     try {
       const lastId = refresh || comments.length === 0 ? '' : comments[comments.length - 1].id;
       const res = await getCommentsByPostId(postId, lastId, 10);
-      const fetchedComments = res || [];
+      const fetchedComments = res.items || [];
       if (refresh) {
         setComments(fetchedComments);
       } else {

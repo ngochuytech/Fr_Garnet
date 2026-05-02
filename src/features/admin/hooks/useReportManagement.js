@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { 
-  getReportAPI, 
-  resolveReportAPI, 
+import {
+  getReportAPI,
+  resolveReportAPI,
   closeReportAPI,
   searchReportsAPI
 } from '../services/reportService';
@@ -24,7 +24,7 @@ export const useReportManagement = () => {
 
   // ── Constants ───────────────────────────────────────────────────────────────
   const statusTabs = useMemo(() => [
-    { key: 'OPEN',  label: 'Chờ xử lý' },
+    { key: 'OPEN', label: 'Chờ xử lý' },
     { key: 'RESOLVED', label: 'Đã xử lý' },
     { key: 'CLOSED', label: 'Đã từ chối' },
   ], []);
@@ -39,8 +39,8 @@ export const useReportManagement = () => {
         sortBy: 'id',
         sortDir: 'desc'
       };
-      
-      const response = query.trim() 
+
+      const response = query.trim()
         ? await searchReportsAPI(query, pageable)
         : await getReportAPI(status, type, pageable);
 

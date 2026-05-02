@@ -19,9 +19,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import { useAuth } from './context/AuthContext';
 import ReportManagement from './features/admin/components/ReportManagement';
+import ReportDetailPage from './features/admin/components/ReportDetailPage';
 import UserManagement from './features/admin/components/UserManagement';
 import UserDetailPage from './features/admin/components/UserDetailPage';
+import ContentModeration from './features/admin/components/ContentModeration';
 import AdminLayout from './layouts/AdminLayout';
+import ContentDetailPage from './features/admin/components/ContentDetailPage';
 
 // Component điều hướng thông minh cho đường dẫn không tồn tại
 const NotFoundRedirect = () => {
@@ -45,8 +48,11 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="/admin/reports" replace />} />
             <Route path="reports" element={<ReportManagement />} />
+            <Route path="reports/:reportId" element={<ReportDetailPage />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="users/:userId" element={<UserDetailPage />} />
+            <Route path="posts" element={<ContentModeration />} />
+            <Route path="posts/:postId" element={<ContentDetailPage />} />
             {/* Thêm các trang quản trị khác ở đây */}
           </Route>
 

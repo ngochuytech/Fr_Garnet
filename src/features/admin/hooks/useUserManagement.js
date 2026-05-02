@@ -1,95 +1,98 @@
-import { useState, useMemo, useCallback } from 'react';
-
-// ── Mock Data ─────────────────────────────────────────────────────────────────
-const MOCK_USERS = [
-  {
-    id: "u1",
-    avatar: "https://i.pravatar.cc/150?u=1",
-    full_name: "Nguyễn Hải Đăng",
-    email: "dang.nguyen@campushub.edu.vn",
-    student_id: "IT2022001",
-    department: "Công nghệ Thông tin",
-    joined_at: "2024-09-05",
-    status: "ACTIVE",
-    stats: { total_posts: 45, total_comments: 120, reported_count: 0 },
-  },
-  {
-    id: "u2",
-    avatar: "https://i.pravatar.cc/150?u=2",
-    full_name: "Trần Thị Bé",
-    email: "be.tran@campushub.edu.vn",
-    student_id: "BA2021099",
-    department: "Quản trị Kinh doanh",
-    joined_at: "2023-10-12",
-    status: "BANNED",
-    stats: { total_posts: 12, total_comments: 8, reported_count: 5 },
-  },
-  {
-    id: "u3",
-    avatar: "https://i.pravatar.cc/150?u=3",
-    full_name: "Lê Minh Khoa",
-    email: "khoa.le@campushub.edu.vn",
-    student_id: "EN2023056",
-    department: "Kỹ thuật Điện tử",
-    joined_at: "2025-02-18",
-    status: "ACTIVE",
-    stats: { total_posts: 8, total_comments: 31, reported_count: 1 },
-  },
-  {
-    id: "u4",
-    avatar: "https://i.pravatar.cc/150?u=4",
-    full_name: "Phạm Thị Lan",
-    email: "lan.pham@campushub.edu.vn",
-    student_id: "AC2022034",
-    department: "Kế toán",
-    joined_at: "2024-01-20",
-    status: "ACTIVE",
-    stats: { total_posts: 23, total_comments: 56, reported_count: 0 },
-  },
-];
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
+import { getUsersAPI, banUserAPI, unbanUserAPI } from '../services/userService';
 
 export const useUserManagement = () => {
   // ── States ──────────────────────────────────────────────────────────────────
-  const [users, setUsers] = useState(MOCK_USERS);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [detailUser, setDetailUser] = useState(null);
   const [confirmUser, setConfirmUser] = useState(null);
-
-  // ── Computed ────────────────────────────────────────────────────────────────
-  const filteredUsers = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    return users.filter((u) => {
-      const matchStatus = statusFilter === 'ALL' || u.status === statusFilter;
-      const matchSearch = !q || u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
-      return matchStatus && matchSearch;
-    });
-  }, [users, search, statusFilter]);
-
-  const totalActive = useMemo(() => users.filter((u) => u.status === 'ACTIVE').length, [users]);
-  const totalBanned = useMemo(() => users.filter((u) => u.status === 'BANNED').length, [users]);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 10,
+    totalPages: 0,
+    totalElements: 0,
+    totalActive: 0,
+    totalBanned: 0
+  });
 
   // ── Actions ─────────────────────────────────────────────────────────────────
-  const handleToggleBan = useCallback((userId) => {
-    setUsers((prev) =>
-      prev.map((u) => u.id === userId ? { ...u, status: u.status === 'ACTIVE' ? 'BANNED' : 'ACTIVE' } : u)
-    );
-    setConfirmUser(null);
-  }, []);
+  const fetchUsers = useCallback(async (page = 0) => {
+    setLoading(true);
+    try {
+      const pageable = {
+        page,
+        size: pagination.size,
+        sortBy: 'createdAt',
+        sortDir: 'desc'
+      };
+      
+      const statusParam = statusFilter === 'ALL' ? null : statusFilter;
+      const queryParam = search.trim() || null;
+
+      const response = await getUsersAPI(queryParam, statusParam, pageable);
+      
+      setUsers(response.items || []);
+      setPagination(prev => ({
+        ...prev,
+        page: response.pageNumber,
+        totalPages: response.totalPages,
+        totalElements: response.totalElements,
+        totalActive: response.totalActive || 0,
+        totalBanned: response.totalBanned || 0
+      }));
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Không thể tải danh sách người dùng');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, statusFilter, pagination.size]);
+
+  const handleToggleBan = useCallback(async (userId) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    try {
+      if (user.status === 'ACTIVE') {
+        await banUserAPI(userId);
+        toast.success('Đã khóa tài khoản người dùng');
+      } else {
+        await unbanUserAPI(userId);
+        toast.success('Đã mở khóa tài khoản người dùng');
+      }
+      fetchUsers(pagination.page);
+    } catch (error) {
+      toast.error('Thao tác thất bại');
+    } finally {
+      setConfirmUser(null);
+    }
+  }, [users, pagination.page, fetchUsers]);
+
+  // ── Effects ─────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers(0);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search, statusFilter, fetchUsers]);
 
   return {
     users,
+    loading,
     search,
     setSearch,
     statusFilter,
     setStatusFilter,
-    detailUser,
-    setDetailUser,
     confirmUser,
     setConfirmUser,
-    filteredUsers,
-    totalActive,
-    totalBanned,
+    filteredUsers: users, // Server-side filtered
+    totalActive: pagination.totalActive,
+    totalBanned: pagination.totalBanned,
+    pagination,
+    fetchUsers,
     handleToggleBan
   };
 };
