@@ -11,7 +11,8 @@ const Comment = ({
   handleReactionComment,
   handleCreateComment,
   formatTimeAgo,
-  depth = 0
+  depth = 0,
+  showActions = true
 }) => {
   const { showReplies,
     replies,
@@ -79,60 +80,70 @@ const Comment = ({
           />
 
           {/* Actions */}
-          <div className={`flex items-center gap-2 mt-1 ${!isNested ? 'pl-2' : ''}`}>
-            <div className="flex items-center rounded-full overflow-hidden border border-gray-100 bg-gray-50/50 flex-shrink-0">
-              <button
-                onClick={() => handleLocalReaction('LIKE')}
-                className={`flex items-center gap-1 px-2 py-0.5 transition-colors ${userReaction === 'LIKE' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'
-                  }`}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                </svg>
-                <span className="text-[12px] font-medium">{likeCount || 0}</span>
-              </button>
-              <button
-                onClick={() => handleLocalReaction('DISLIKE')}
-                className={`flex items-center px-2 py-0.5 border-l border-gray-200 transition-colors ${userReaction === 'DISLIKE' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'
-                  }`}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="rotate-180">
-                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                </svg>
-              </button>
-            </div>
+          {showActions && (
+            <>
+              <div className={`flex items-center gap-2 mt-1 ${!isNested ? 'pl-2' : ''}`}>
+                <div className="flex items-center rounded-full overflow-hidden border border-gray-100 bg-gray-50/50 flex-shrink-0">
+                  <button
+                    onClick={() => handleLocalReaction('LIKE')}
+                    className={`flex items-center gap-1 px-2 py-0.5 transition-colors ${userReaction === 'LIKE' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'
+                      }`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                    </svg>
+                    <span className="text-[12px] font-medium">{likeCount || 0}</span>
+                  </button>
+                  <button
+                    onClick={() => handleLocalReaction('DISLIKE')}
+                    className={`flex items-center px-2 py-0.5 border-l border-gray-200 transition-colors ${userReaction === 'DISLIKE' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'
+                      }`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="rotate-180">
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                    </svg>
+                  </button>
+                </div>
 
-            <button
-              onClick={() => setActiveReplyId(activeReplyId === comment.id ? null : comment.id)}
-              className={`px-3 py-1 text-[13px] font-medium text-gray-500 rounded transition-colors ${activeReplyId === comment.id ? 'bg-gray-200' : 'hover:bg-gray-100'
-                }`}
-            >
-              Phản hồi
-            </button>
-          </div>
+                <button
+                  onClick={() => setActiveReplyId(activeReplyId === comment.id ? null : comment.id)}
+                  className={`px-3 py-1 text-[13px] font-medium text-gray-500 rounded transition-colors ${activeReplyId === comment.id ? 'bg-gray-200' : 'hover:bg-gray-100'
+                    }`}
+                >
+                  Phản hồi
+                </button>
+              </div>
 
-          {/* Reply Input */}
-          {activeReplyId === comment.id && (
-            <div className="mt-2 ml-2">
-              <CommentInput
-                avatarUrl={currentUser.avatarUrl}
-                placeholder={`Viết phản hồi ${comment.user?.name}...`}
-                bgClass="bg-transparent"
-                toggleComment={() => setActiveReplyId(null)}
-                onSubmit={(content) => {
-                  handleCreateComment(content, comment.id);
-                  // Giả lập đưa bình luận con vào danh sách
-                  const newReplyInfo = {
-                    id: Date.now().toString(),
-                    content: content,
-                    user: { name: 'You' }, // Cần thông tin thực tế từ auth, tạm giả lập nếu component cha chưa xử lý tốt state
-                    createdAt: new Date().toISOString(),
-                  };
-                  setReplies([newReplyInfo, ...replies]);
-                  setShowReplies(true);
-                }}
-              />
-            </div>
+              {/* Reply Input */}
+              {activeReplyId === comment.id && (
+                <div className="mt-2 ml-2">
+                  <CommentInput
+                    avatarUrl={currentUser.avatarUrl}
+                    placeholder={`Viết phản hồi ${comment.user?.name}...`}
+                    bgClass="bg-transparent"
+                    toggleComment={() => setActiveReplyId(null)}
+                    onSubmit={(content) => {
+                      handleCreateComment(content, comment.id);
+                      const newReplyInfo = {
+                        id: Date.now().toString(),
+                        content: content,
+                        user: { 
+                          id: currentUser.id, 
+                          name: currentUser.fullname, 
+                          avatar: currentUser.avatarUrl 
+                        },
+                        likeCount: 0,
+                        dislikeCount: 0,
+                        replyCount: 0,
+                        createdAt: new Date().toISOString(),
+                      };
+                      setReplies([newReplyInfo, ...replies]);
+                      setShowReplies(true);
+                    }}
+                  />
+                </div>
+              )}
+            </>
           )}
 
           {/* Show Replies Button */}
@@ -163,6 +174,7 @@ const Comment = ({
               handleCreateComment={handleCreateComment}
               formatTimeAgo={formatTimeAgo}
               depth={depth + 1}
+              showActions={showActions}
             />
           ))}
         </div>

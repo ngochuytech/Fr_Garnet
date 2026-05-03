@@ -47,7 +47,7 @@ const AdminLayout = () => {
       {/* Sidebar */}
       <aside className="w-72 bg-white border-r border-gray-100 flex flex-col flex-shrink-0 z-20">
         <div className="p-8 border-b border-gray-50">
-          <Link to="/admin/reports" className="flex items-center gap-3">
+          <Link to="/admin/dashboard" className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center text-white shadow-lg shadow-gray-200">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -106,8 +106,14 @@ const AdminLayout = () => {
         {/* Simple Top Bar */}
         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] text-gray-400 uppercase">
-              <Link to="/admin/reports" className="hover:text-gray-900 transition-colors">Trang quản trị</Link>
+              <Link to="/admin/dashboard" className="hover:text-gray-900 transition-colors">Trang quản trị</Link>
               
+              {location.pathname === '/admin/dashboard' && (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
+                  <span className="text-gray-900">Tổng quan</span>
+                </>
+              )}
               {location.pathname.includes('/admin/users') && (
                 <>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>

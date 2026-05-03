@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
-import { getPostsAPI } from '../services/postService';
+import { getPostsAPI, reportPostAPI } from '../services/postService';
 
 export const useContentModeration = () => {
   // ── States ──────────────────────────────────────────────────────────────────
@@ -59,19 +59,24 @@ export const useContentModeration = () => {
 
   const handleToggleStatus = useCallback(async (contentId) => {
     try {
-      // Note: Assuming there will be a hide/restore API in postService or reuse existing logic
-      // For now, if the user hasn't provided the toggle API, we might need to implement it 
-      // but based on the request, I should focus on the fetching first.
-      // Assuming toggle logic will be added to postService or handled via a generic update API.
-      
-      // Let's assume we need to call an update status API
-      // await updatePostStatusAPI(contentId, newStatus);
-      
+      // Logic for generic toggle (restore/hide) if needed
       toast.info('Tính năng cập nhật trạng thái đang được kết nối...');
-      // After update, refresh list
       fetchContents(pagination.page);
     } catch (error) {
       toast.error('Thao tác thất bại');
+    }
+  }, [fetchContents, pagination.page]);
+
+  const handleReportPost = useCallback(async (postId, reason, adminNotes = '') => {
+    try {
+      await reportPostAPI(postId, { reason, adminNotes });
+      toast.success('Đã gỡ bài viết vi phạm');
+      fetchContents(pagination.page);
+      return true;
+    } catch (error) {
+      console.error('Error reporting post:', error);
+      toast.error('Không thể gỡ bài viết');
+      return false;
     }
   }, [fetchContents, pagination.page]);
 
@@ -83,5 +88,6 @@ export const useContentModeration = () => {
     pagination,
     fetchContents,
     handleToggleStatus,
+    handleReportPost,
   };
 };

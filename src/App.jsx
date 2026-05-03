@@ -25,6 +25,7 @@ import UserDetailPage from './features/admin/components/UserDetailPage';
 import ContentModeration from './features/admin/components/ContentModeration';
 import AdminLayout from './layouts/AdminLayout';
 import ContentDetailPage from './features/admin/components/ContentDetailPage';
+import Dashboard from './features/admin/components/Dashboard';
 
 // Component điều hướng thông minh cho đường dẫn không tồn tại
 const NotFoundRedirect = () => {
@@ -46,7 +47,8 @@ function App() {
           </Route>
 
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/reports" replace />} />
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="reports" element={<ReportManagement />} />
             <Route path="reports/:reportId" element={<ReportDetailPage />} />
             <Route path="users" element={<UserManagement />} />

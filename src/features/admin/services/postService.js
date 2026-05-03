@@ -31,3 +31,25 @@ export const getCommentByPostIdAPI = async (postId) => {
         method: 'GET'
     });
 }
+
+/**
+ * Report a post.
+ * @param {string} postId 
+ * @param {object} payload - reason: The items in the REPORT_REASONS array, adminNotes: String
+ */
+export const reportPostAPI = async (postId, payload) => {
+    return apiFetch(`/admin/posts/${postId}/report`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    });
+}
+
+/**
+ * Active a post.
+ * @param {string} postId 
+ */
+export const activePostAPI = async (postId) => {
+    return apiFetch(`/admin/posts/${postId}/active`, {
+        method: 'PUT'
+    });
+}

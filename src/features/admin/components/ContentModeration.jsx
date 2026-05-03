@@ -13,6 +13,8 @@ const StatusBadge = ({ status }) => {
   const cfg = {
     ACTIVE: { label: 'HIỂN THỊ', cls: 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200', dot: 'bg-emerald-500' },
     HIDDEN: { label: 'ĐÃ ẨN',   cls: 'bg-amber-50 text-amber-600 ring-1 ring-amber-200',     dot: 'bg-amber-500' },
+    REPORTED: { label: 'ĐÃ GỠ', cls: 'bg-red-50 text-red-600 ring-1 ring-red-200', dot: 'bg-red-500' },
+    DELETED: { label: 'ĐÃ XÓA', cls: 'bg-gray-50 text-gray-600 ring-1 ring-gray-200', dot: 'bg-gray-500' },
   };
   const { label, cls, dot } = cfg[status] || { label: status, cls: 'bg-gray-50 text-gray-500 ring-1 ring-gray-200', dot: 'bg-gray-400' };
   return (
@@ -47,16 +49,6 @@ const ContentModeration = () => {
         <div>
           <h1 className="text-2xl font-black tracking-tight text-gray-900">Quản lý bài viết</h1>
           <p className="text-sm font-medium text-gray-500 mt-0.5">Kiểm duyệt bài viết trên nền tảng CampusHub.</p>
-        </div>
-        <div className="flex gap-3">
-          <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2 text-center">
-            <p className="text-lg font-black text-emerald-600">{pagination.totalActive}</p>
-            <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Hiển thị</p>
-          </div>
-          <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-2 text-center">
-            <p className="text-lg font-black text-amber-600">{pagination.totalHidden}</p>
-            <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">Đã ẩn</p>
-          </div>
         </div>
       </div>
 
@@ -93,6 +85,8 @@ const ContentModeration = () => {
             <option value="ALL">Tất cả trạng thái</option>
             <option value="ACTIVE">Hiển thị</option>
             <option value="HIDDEN">Đã ẩn</option>
+            <option value="REPORTED">Đã gỡ bài</option>
+            <option value="DELETED">Đã xóa</option>
           </select>
           <svg className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
@@ -189,22 +183,7 @@ const ContentModeration = () => {
                           onClick={() => navigate(`/admin/posts/${item.id}`)}
                           className="px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider bg-gray-900 text-white hover:bg-black transition-all flex items-center gap-1.5 shadow-sm"
                         >
-                          Xem chi tiết
-                        </button>
-                        <button
-                          onClick={() => handleToggleStatus(item.id)}
-                          className={`p-1.5 rounded-lg transition-all ${
-                            item.status === 'ACTIVE'
-                              ? 'text-red-400 hover:bg-red-50 hover:text-red-600'
-                              : 'text-emerald-400 hover:bg-emerald-50 hover:text-emerald-600'
-                          }`}
-                          title={item.status === 'ACTIVE' ? 'Ẩn nội dung' : 'Khôi phục nội dung'}
-                        >
-                          {item.status === 'ACTIVE' ? (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                          ) : (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                          )}
+                          Xem
                         </button>
                       </div>
                     </td>
