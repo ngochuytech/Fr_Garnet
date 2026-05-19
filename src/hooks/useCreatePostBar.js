@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { createPostBarService, fetchUserTopics } from '../services/createPostBarService';
 
-export const useCreatePostBar = (onPostCreated) => {
+export const useCreatePostBar = (onPostCreated, options = {}) => {
     const [isFocused, setIsFocused] = useState(false);
     const [hasText, setHasText] = useState(false);
     const [showFormatBar, setShowFormatBar] = useState(false);
@@ -147,6 +147,9 @@ export const useCreatePostBar = (onPostCreated) => {
                 selectedTags.forEach(tag => {
                     postData.append('tags', getTopicNameStr(tag));
                 });
+                if (options.groupId) {
+                    postData.append('groupId', options.groupId);
+                }
 
                 await createPostBarService(postData);
                 toast.success('Đăng bài viết thành công!');

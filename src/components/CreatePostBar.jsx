@@ -1,5 +1,5 @@
 import { useCreatePostBar } from '../hooks/useCreatePostBar'
-export const CreatePostBar = ({ avatarUrl, onPostCreated }) => {
+export const CreatePostBar = ({ avatarUrl, onPostCreated, placeholder = "Bạn đang nghĩ gì? Hỏi hoặc chia sẻ với cộng đồng...", groupId }) => {
     const { isExpanded,
         editorRef,
         fileInputRef,
@@ -27,7 +27,7 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated }) => {
         handleSubmit,
         insertQuote,
         insertCode,
-    } = useCreatePostBar(onPostCreated);
+    } = useCreatePostBar(onPostCreated, { groupId });
     return (
         <div
             className={`flex flex-col gap-2 p-3 rounded-xl border transition-all cursor-text ${isExpanded
@@ -48,7 +48,7 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated }) => {
                 <div className="flex-1 min-w-0 relative">
                     {(!hasText && !isFocused) && (
                         <div className="absolute top-0 left-0 w-full h-full pointer-events-none text-gray-400 text-[14px] mt-1.5">
-                            Bạn đang nghĩ gì? Hỏi hoặc chia sẻ với cộng đồng...
+                            {placeholder}
                         </div>
                     )}
                     <div

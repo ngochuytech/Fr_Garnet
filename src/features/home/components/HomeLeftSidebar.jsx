@@ -81,36 +81,6 @@ const HomeLeftSidebar = () => {
 
       {/* Divider */}
       <div className="h-px bg-gray-100 mx-1 mb-4" />
-
-      {/* Top Topics */}
-      <div className="mb-5">
-        <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
-            Chủ đề hot
-          </span>
-        </div>
-        <div className="flex flex-col gap-1">
-          {topTopics.map((topic, idx) => (
-            <button
-              key={topic.id}
-              className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-[#f7edee] transition-colors group text-left w-full"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span
-                  className="text-[12px] font-bold w-5 text-center flex-shrink-0"
-                  style={{ color: 'var(--color-dusty-rose-400)' }}
-                >
-                  {idx + 1}
-                </span>
-                <span className="text-[13px] text-gray-700 group-hover:text-[#6a2f30] font-medium truncate transition-colors">
-                  #{topic.tag}
-                </span>
-              </div>
-              <span className="text-[11px] text-gray-400 flex-shrink-0 ml-1">{topic.count}</span>
-            </button>
-          ))}
-        </div>
-      </div>
     </aside>
   );
 };

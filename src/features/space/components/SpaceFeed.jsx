@@ -1,115 +1,138 @@
-// Dummy Post Card component cho feed nhóm
-const GroupPostCard = ({ author, time, content, likes }) => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 relative group">
-    <div className="flex items-center gap-3 mb-3">
-      <img
-        src={`https://ui-avatars.com/api/?name=${author}&background=random&size=128`}
-        alt="Avatar"
-        className="w-10 h-10 object-cover rounded-full"
-      />
-      <div>
-        <h3 className="font-bold text-[14.5px] text-gray-900 leading-tight">
-          {author}
-        </h3>
-        <p className="text-[12px] text-gray-500">{time}</p>
-      </div>
-    </div>
-    <p className="text-[14.5px] text-gray-800 leading-relaxed break-words whitespace-pre-wrap">
-      {content}
-    </p>
-    <div className="flex items-center justify-between border-t border-gray-50 mt-4 pt-3 pb-1">
-      <button className="flex items-center gap-1.5 text-gray-500 hover:text-[#8d3f41] text-sm font-medium transition-colors">
-         <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-         </svg>
-         {likes} Thích
-      </button>
-      <button className="flex items-center gap-1.5 text-gray-500 hover:text-[#8d3f41] text-sm font-medium transition-colors">
-         Bình luận
-      </button>
-      <button className="flex items-center gap-1.5 text-gray-500 hover:text-[#8d3f41] text-sm font-medium transition-colors">
-         Chia sẻ
-      </button>
-    </div>
-  </div>
-);
+import PostCard from '../../../components/PostCard';
+import { CreatePostBar } from '../../../components/CreatePostBar';
+import { useAuth } from '../../../context/AuthContext';
+import { useSpacePosts } from '../hooks/useSpacePosts';
 
-const SpaceFeed = ({ space, onBack }) => {
+const canCreateGroupPost = (space) => {
+  return Boolean(
+    space?.isMember
+    || space?.memberStatus === 'APPROVED'
+    || space?.isLeader
+    || space?.memberRole === 'LEADER'
+    || space?.role === 'LEADER'
+  );
+};
+
+const SpaceFeed = ({ space, detailLoading, onBack }) => {
+  const { user } = useAuth();
+  const displayName = user?.fullname || 'User';
+  const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30`;
+  const {
+    posts,
+    loading,
+    loadingMore,
+    error,
+    isLast,
+    refreshPosts,
+    handleGetMorePosts,
+  } = useSpacePosts(space?.id);
+
+  if (!space) {
+    return (
+      <main className="w-full flex-1">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center">
+          <p className="text-sm font-semibold text-gray-700">
+            {detailLoading ? 'Đang tải thông tin nhóm...' : 'Không tìm thấy nhóm'}
+          </p>
+          <button
+            type="button"
+            onClick={onBack}
+            className="mt-4 px-4 py-2 rounded-lg bg-[#8d3f41] text-white text-sm font-bold hover:bg-[#6a2f30] transition-colors"
+          >
+            Quay lại danh sách
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  const canCreatePost = canCreateGroupPost(space);
+
   return (
     <main className="w-full flex-1">
-      {/* Top Banner/Header Feedback */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 p-4 flex items-center justify-between sticky top-[78px] z-10">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 p-4 flex items-center justify-between top-[78px] z-10">
         <div className="flex items-center gap-4">
-           {/* Back Button */}
-           <button 
-             onClick={onBack}
-             className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 transition-colors border border-gray-200"
-           >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                 <line x1="19" y1="12" x2="5" y2="12"></line>
-                 <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
-           </button>
+          <button
+            type="button"
+            onClick={onBack}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 transition-colors border border-gray-200"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
 
-           <div className="flex flex-col">
-              <h1 className="text-[17px] font-bold text-gray-900 leading-tight">
-                Hội {space.name}
-              </h1>
-              <p className="text-[13px] text-gray-500 font-medium">Bảng tin</p>
-           </div>
-        </div>
-
-        <button className="bg-[#8d3f41] hover:bg-[#6a2f30] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors">
-           Tạo bài viết
-        </button>
-      </div>
-
-      {/* Main Feed */}
-      <div className="flex flex-col gap-4">
-        {/* Placeholder input (Giả lập thanh tạo post nhanh) */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex gap-3 items-center">
-            <img src="https://ui-avatars.com/api/?name=ME&background=dfb9b9&color=fff&size=128" alt="Me" className="w-10 h-10 rounded-full border border-gray-200" />
-            <div className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 pt-2.5 pb-2 text-[14px] text-gray-500 cursor-text hover:bg-gray-100 transition-colors">
-               Bạn muốn chia sẻ thông tin gì tới hội này?
-            </div>
+          <div className="flex flex-col">
+            <h1 className="text-[17px] font-bold text-gray-900 leading-tight">
+              Hội {space.name}
+            </h1>
+            <p className="text-[13px] text-gray-500 font-medium">Bảng tin</p>
           </div>
         </div>
+      </div>
 
-        {/* Dummy list posts */}
-        <GroupPostCard 
-          author="Nguyễn Duy Phương" 
-          time="3 giờ trước" 
-          content="Xin chào mọi người! Mình mới bắt đầu học ReactJS, không biết nên theo docs hay học qua video khóa học sẽ tốt hơn nhỉ? Gần đây hooks thay mới nhiều quá." 
-          likes={24} 
-        />
-        <GroupPostCard 
-          author="Trần Anh Khoa" 
-          time="14 giờ trước" 
-          content="Chào cả nhà, CLB mình có tổ chức buổi workshop cuối tuần này về ứng dụng AI vào thiết kế UI/UX trên Figma. Anh em nhớ check mail để xem thời gian địa điểm nha!" 
-          likes={156} 
-        />
-        <GroupPostCard 
-          author="Lan Hương" 
-          time="Hôm qua vào 14:02" 
-          content="Có bác nào chung nhóm môn Kỹ Thuật Lập Trình (Thầy Hải P21) không 🥲 Nhóm em có 1 slot rút môn nên đang tìm thêm thành viên gấp!!" 
-          likes={8} 
-        />
-        <GroupPostCard 
-          author="System Admin" 
-          time="2 ngày trước" 
-          content={`NỘI QUY HOẠT ĐỘNG:
-1. Tuân thủ nguyên tắc tôn trọng trên không gian ảo
-2. Không spam link lừa đảo
-3. Đăng bài phải chọn đúng hashtag
-Mong mọi người chia sẻ tri thức xây dựng cộng đồng trong sạch vững mạnh! ❤️`} 
-          likes={320} 
-        />
+      <div className="flex flex-col gap-4">
+        {canCreatePost && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+            <div className="p-3">
+              <CreatePostBar
+                avatarUrl={avatarUrl}
+                onPostCreated={refreshPosts}
+                groupId={space.id}
+                placeholder={`Bạn muốn chia sẻ thông tin gì tới hội ${space.name}?`}
+              />
+            </div>
+          </div>
+        )}
 
-        {/* Trạng thái load thêm */}
-        <div className="py-6 text-center text-gray-500 font-medium text-sm">
-           Đã xem hết tin mới nhất
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-4 divide-y divide-gray-100">
+            {loading ? (
+              <div className="py-6 text-center text-gray-500">Đang tải bài viết...</div>
+            ) : error ? (
+              <div className="py-6 text-center text-red-500">{error}</div>
+            ) : posts.length === 0 ? (
+              <div className="py-6 text-center text-gray-500">Chưa có bài viết nào trong nhóm</div>
+            ) : posts.map((post) => {
+              const isOwnPost = Boolean(user && user.id && post.author && post.author.id === user.id);
+              const isOwnSharePost = Boolean(user && user.id && post.sharedPost && post.sharedPost.author && post.sharedPost.author.id === user.id);
+
+              return (
+                <div key={post.id} className="relative pt-2">
+                  <PostCard
+                    post={post}
+                    isOwnPost={isOwnPost}
+                    isOwnSharePost={isOwnSharePost}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {!loading && !isLast && posts.length > 0 && (
+            <div className="flex justify-center py-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={handleGetMorePosts}
+                disabled={loadingMore}
+                className="px-6 py-2 rounded-full text-[14px] font-medium border transition-all hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{
+                  borderColor: 'var(--color-dusty-rose-300)',
+                  color: 'var(--color-dusty-rose-700)',
+                }}
+              >
+                {loadingMore ? 'Đang tải...' : 'Tải thêm bài viết'}
+              </button>
+            </div>
+          )}
         </div>
+
+        {isLast && posts.length > 0 && (
+          <div className="py-6 text-center text-gray-500 font-medium text-sm">
+            Đã xem hết tin mới nhất
+          </div>
+        )}
       </div>
     </main>
   );
