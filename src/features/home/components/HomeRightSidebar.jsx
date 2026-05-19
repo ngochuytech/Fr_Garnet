@@ -57,7 +57,7 @@ const HomeRightSidebar = () => {
                         <div className="text-sm text-center text-gray-500 py-2">Không có gợi ý nào</div>
                     ) : (
                         suggestedUsers.map((user) => {
-                            const name = user.fullname || user.name || 'Người dùng';
+                            const name = user.fullName || user.name || 'Người dùng';
                             const avatar = user.avatarUrl || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f7edee&color=8d3f41`;
                             const major = user.department || user.major || 'Thành viên CampusHub';
                             const reason = user.reason || 'Gợi ý kết nối mới';

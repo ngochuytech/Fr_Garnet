@@ -36,7 +36,7 @@ export const useFollowList = () => {
     useEffect(() => {
         [...users, ...searchResults].forEach(u => {
             if (lastSyncedStatesRef.current[u.id] === undefined) {
-                lastSyncedStatesRef.current[u.id] = u.isFollowing;
+                lastSyncedStatesRef.current[u.id] = !!u.isFollowing;
             }
         });
     }, [users, searchResults]);

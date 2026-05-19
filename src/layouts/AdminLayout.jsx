@@ -1,8 +1,41 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import AdminNotificationPanel from '../features/admin/components/AdminNotificationPanel';
+import { useAuth } from '../context/AuthContext';
+import useAdminNotificationSocket from '../features/admin/hooks/useAdminNotificationSocket';
+import { getAdminUnreadCount } from '../features/admin/services/adminNotificationService';
 
 const AdminLayout = () => {
   const location = useLocation();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Khởi tạo WebSocket kết nối Admin
+  useAdminNotificationSocket(user, setUnreadCount);
+
+  // Bước 1: lần đầu load lấy count từ REST API Admin
+  useEffect(() => {
+    const fetchInitialCount = async () => {
+      if (!user) return;
+      try {
+        const count = await getAdminUnreadCount();
+        setUnreadCount(typeof count === 'number' ? count : count?.count || 0);
+      } catch (error) {
+        console.error('Error fetching admin unread count:', error);
+      }
+    };
+    fetchInitialCount();
+  }, [user]);
+
+  // Bước 2: lắng nghe event từ useAdminNotifications hook để cập nhật badge realtime
+  useEffect(() => {
+    const handleUnreadChange = (e) => {
+      setUnreadCount(e.detail?.count ?? 0);
+    };
+    window.addEventListener('admin-unread-count-changed', handleUnreadChange);
+    return () => window.removeEventListener('admin-unread-count-changed', handleUnreadChange);
+  }, []);
 
   const menuItems = [
     {
@@ -104,7 +137,7 @@ const AdminLayout = () => {
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto relative">
         {/* Simple Top Bar */}
-        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 py-4 flex items-center justify-between">
+        <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] text-gray-400 uppercase">
               <Link to="/admin/dashboard" className="hover:text-gray-900 transition-colors">Trang quản trị</Link>
               
@@ -155,15 +188,58 @@ const AdminLayout = () => {
                   <span className="text-gray-900" id="breadcrumb-post-id">{location.pathname.split('/').pop().substring(0, 8)}</span>
                 </>
               )}
+
+              {location.pathname === '/admin/notifications' && (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
+                  <span className="text-gray-900">Thông báo</span>
+                </>
+              )}
+
+              {location.pathname === '/admin/profile' && (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
+                  <span className="text-gray-900">Hồ sơ cá nhân</span>
+                </>
+              )}
+
+              {location.pathname === '/admin/activity-logs' && (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
+                  <span className="text-gray-900">Nhật ký hoạt động</span>
+                </>
+              )}
               
             </div>
            <div className="flex items-center gap-4">
-              <button className="p-2 text-gray-400 hover:text-gray-900 transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              </button>
-              <div className="w-8 h-8 rounded-full bg-gray-200 border border-gray-100 overflow-hidden">
-                <img src="https://ui-avatars.com/api/?name=Admin&background=111&color=fff" alt="Admin" />
+              {/* Notification Bell */}
+              <div className="relative">
+                <button
+                  id="admin-notif-bell"
+                  onClick={() => setNotifOpen((prev) => !prev)}
+                  className={`p-2 rounded-xl transition-all duration-200 relative ${
+                    notifOpen ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
+                  )}
+                </button>
+                <AdminNotificationPanel
+                  isOpen={notifOpen}
+                  onClose={() => setNotifOpen(false)}
+                />
               </div>
+              <Link 
+                to="/admin/profile"
+                className="w-8 h-8 rounded-full bg-gray-200 border border-gray-100 overflow-hidden hover:ring-2 hover:ring-gray-900 transition-all cursor-pointer block"
+              >
+                <img src="https://ui-avatars.com/api/?name=Admin&background=111&color=fff" alt="Admin" className="w-full h-full object-cover" />
+              </Link>
            </div>
         </div>
         

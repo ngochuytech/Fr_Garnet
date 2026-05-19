@@ -26,6 +26,9 @@ import ContentModeration from './features/admin/components/ContentModeration';
 import AdminLayout from './layouts/AdminLayout';
 import ContentDetailPage from './features/admin/components/ContentDetailPage';
 import Dashboard from './features/admin/components/Dashboard';
+import AdminProfile from './features/admin/components/AdminProfile';
+import AdminNotificationPage from './features/admin/components/AdminNotificationPage';
+import AdminActivityLogPage from './features/admin/components/AdminActivityLogPage';
 
 // Component điều hướng thông minh cho đường dẫn không tồn tại
 const NotFoundRedirect = () => {
@@ -55,6 +58,9 @@ function App() {
             <Route path="users/:userId" element={<UserDetailPage />} />
             <Route path="posts" element={<ContentModeration />} />
             <Route path="posts/:postId" element={<ContentDetailPage />} />
+            <Route path="profile" element={<AdminProfile />} />
+            <Route path="notifications" element={<AdminNotificationPage />} />
+            <Route path="activity-logs" element={<AdminActivityLogPage />} />
             {/* Thêm các trang quản trị khác ở đây */}
           </Route>
 

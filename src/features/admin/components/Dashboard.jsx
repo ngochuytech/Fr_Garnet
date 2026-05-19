@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getDashboardStatsAPI, getUserGrowthAPI, getTopicDistributionAPI } from '../services/dashboardService';
+import { getDashboardStatsAPI, getUserGrowthAPI, getTopicDistributionAPI, getReportWeeklyAPI } from '../services/dashboardService';
+import { useNavigate } from 'react-router-dom';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const formatNumber = (n) => {
@@ -180,6 +181,7 @@ const SpaceBarChart = ({ data }) => {
 
 // ── Main Dashboard Component ──────────────────────────────────────────────────
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [now, setNow] = useState(new Date());
   const [data, setData] = useState({
     stats: null,
@@ -193,16 +195,17 @@ const Dashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [statsRes, growthRes, topicRes] = await Promise.all([
+        const [statsRes, growthRes, topicRes, reportsRes] = await Promise.all([
           getDashboardStatsAPI(),
           getUserGrowthAPI(),
-          getTopicDistributionAPI()
+          getTopicDistributionAPI(),
+          getReportWeeklyAPI()
         ]);
         
         // Cấu trúc dữ liệu giả định từ Backend
         setData({
           stats: statsRes?.stats || statsRes,
-          urgentReports: statsRes?.urgentReports || [],
+          urgentReports: reportsRes.items || [],
           growthData: growthRes || [],
           topicDistribution: topicRes || []
         });
@@ -332,10 +335,12 @@ const Dashboard = () => {
           </div>
 
           <SpaceBarChart 
-            data={topicDistribution.map((t, i) => ({
-              ...t,
-              color: ['#6366f1', '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#e5e7eb'][i % 7]
-            }))} 
+            data={[...topicDistribution]
+              .sort((a, b) => b.value - a.value)
+              .map((t, i) => ({
+                ...t,
+                color: ['#6366f1', '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#e5e7eb'][i % 7]
+              }))} 
           />
 
           <div className="mt-5 pt-4 border-t border-gray-50">
@@ -422,7 +427,8 @@ const Dashboard = () => {
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
             Hiển thị <span className="text-gray-900">{urgentReports.length}</span> báo cáo khẩn cấp
           </p>
-          <button className="text-[11px] font-black text-gray-500 hover:text-gray-900 uppercase tracking-wider transition-colors flex items-center gap-1">
+          <button className="text-[11px] font-black text-gray-500 hover:text-gray-900 uppercase tracking-wider transition-colors flex items-center gap-1"
+            onClick={() => navigate('/admin/reports')}>
             Xem tất cả <IconArrowRight />
           </button>
         </div>
