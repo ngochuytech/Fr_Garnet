@@ -24,6 +24,12 @@ export const getGroupById = async (groupId) => {
   });
 };
 
+export const getGroupStatus = async (groupId) => {
+  return apiFetch(`${GROUPS_ENDPOINT}/${groupId}/status`, {
+    method: 'GET',
+  });
+};
+
 export const getGroupPosts = async (
   groupId,
   { page = 0, size = 20, sortBy = 'createdAt', sortDir = 'desc' } = {},
@@ -40,6 +46,41 @@ export const getGroupPosts = async (
   });
 };
 
+export const getGroupMembers = async (
+  groupId,
+  { page = 0, size = 12 } = {},
+) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  });
+
+  return apiFetch(`${GROUPS_ENDPOINT}/${groupId}/members?${params.toString()}`, {
+    method: 'GET',
+  });
+};
+
+export const getGroupJoinRequests = async (
+  groupId,
+  { page = 0, size = 12 } = {},
+) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  });
+  let lastError;
+
+  try {
+    return await apiFetch(`${GROUPS_ENDPOINT}/${groupId}/pending-members?${params.toString()}`, {
+      method: 'GET',
+    });
+  } catch (err) {
+    lastError = err;
+  }
+
+  throw lastError;
+};
+
 export const createGroup = async (groupData) => {
   return apiFetch(GROUPS_ENDPOINT, {
     method: 'POST',
@@ -53,10 +94,24 @@ export const joinGroup = async (groupId) => {
   });
 };
 
+export const reportGroup = async (groupId, payload) => {
+  return apiFetch(`${GROUPS_ENDPOINT}/${groupId}/report`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
 export const updateGroupName = async (groupId, name) => {
   return apiFetch(`${GROUPS_ENDPOINT}/${groupId}/name`, {
     method: 'PUT',
     body: JSON.stringify({ name }),
+  });
+};
+
+export const updateGroupDescription = async (groupId, description) => {
+  return apiFetch(`${GROUPS_ENDPOINT}/${groupId}/description`, {
+    method: 'PUT',
+    body: JSON.stringify({ description }),
   });
 };
 

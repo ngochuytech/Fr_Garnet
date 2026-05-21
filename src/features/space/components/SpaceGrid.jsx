@@ -17,8 +17,9 @@ const getSpaceState = (space, actionLoadingKeys, requestedGroupIds) => {
   const isJoined = isJoinedSpace(space);
   const isPending = hasRequested || space.isPending || space.memberStatus === 'PENDING';
   const isRejected = space.memberStatus === 'REJECTED';
+  const isArchived = space.isArchived || space.status === 'ARCHIVED';
 
-  return { isJoining, isJoined, isPending, isRejected };
+  return { isJoining, isJoined, isPending, isRejected, isArchived };
 };
 
 const SpaceCard = ({
@@ -28,7 +29,7 @@ const SpaceCard = ({
   onSelectSpace,
   onJoinSpace,
 }) => {
-  const { isJoining, isJoined, isPending, isRejected } = getSpaceState(space, actionLoadingKeys, requestedGroupIds);
+  const { isJoining, isJoined, isPending, isRejected, isArchived } = getSpaceState(space, actionLoadingKeys, requestedGroupIds);
 
   return (
     <div className="flex flex-col bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group flex-1">
@@ -56,6 +57,12 @@ const SpaceCard = ({
           {space.membersCount.toLocaleString()} thành viên
         </p>
 
+        {isArchived && (
+          <span className="mt-2 inline-flex w-fit rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-amber-100">
+            Đã lưu trữ
+          </span>
+        )}
+
         <p className="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed flex-1">
           {space.description}
         </p>
@@ -71,10 +78,10 @@ const SpaceCard = ({
           <button
             type="button"
             onClick={() => onJoinSpace(space.id)}
-            disabled={isJoining || isPending || isJoined || isRejected}
+            disabled={isArchived || isJoining || isPending || isJoined || isRejected}
             className="w-full py-1.5 px-3 bg-[#8d3f41] text-white text-[13.5px] font-bold rounded-lg hover:bg-[#6a2f30] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
-            {isJoined ? 'Đã tham gia' : isPending ? 'Đã gửi' : isRejected ? 'Bị từ chối' : isJoining ? 'Đang gửi...' : 'Tham gia'}
+            {isArchived ? 'Đã lưu trữ' : isJoined ? 'Đã tham gia' : isPending ? 'Đã gửi' : isRejected ? 'Bị từ chối' : isJoining ? 'Đang gửi...' : 'Tham gia'}
           </button>
         </div>
       </div>
@@ -141,7 +148,7 @@ const SpaceGrid = ({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', description: '' });
   const mySpaces = spaces.filter(isJoinedSpace);
-  const discoverSpaces = spaces.filter((space) => !isJoinedSpace(space));
+  const discoverSpaces = spaces.filter((space) => !isJoinedSpace(space) && !space.isArchived && space.status !== 'ARCHIVED');
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;

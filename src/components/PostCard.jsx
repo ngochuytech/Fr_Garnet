@@ -19,7 +19,45 @@ const formatTimeAgo = (dateString) => {
   return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
 };
 
-const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
+const getPostGroup = (post, fallbackGroup = null) => {
+  const group = post?.group || post?.space || post?.community || post?.groupInfo || fallbackGroup;
+  const groupId = group?.id || group?.groupId || post?.groupId || post?.spaceId || post?.communityId || fallbackGroup?.id;
+  const groupName = group?.name || group?.groupName || post?.groupName || post?.spaceName || post?.communityName || fallbackGroup?.name;
+
+  if (!groupId && !groupName) return null;
+
+  return {
+    id: groupId,
+    name: groupName || 'Nhóm CampusHub',
+    avatarUrl: group?.avatarUrl || group?.avatar || post?.groupAvatarUrl || post?.spaceAvatarUrl || fallbackGroup?.avatarUrl,
+  };
+};
+
+const GroupBadge = ({ group, onNavigate }) => {
+  if (!group) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => onNavigate(event, group.id)}
+      className={`inline-flex items-center gap-1.5 max-w-full px-2 py-0.5 rounded-full bg-[#f7edee] text-[#8d3f41] border border-[#ead2d3] text-[11px] font-bold hover:bg-[#efdfe0] transition-colors ${group.id ? 'cursor-pointer' : 'cursor-default'}`}
+      title={`Đăng trong ${group.name}`}
+    >
+      {group.avatarUrl ? (
+        <img src={group.avatarUrl} alt={group.name} className="w-4 h-4 rounded-full object-cover" />
+      ) : (
+        <span className="w-4 h-4 rounded-full bg-[#8d3f41]/10 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+            </svg>
+        </span>
+      )}
+      <span className="truncate">Hội {group.name}</span>
+    </button>
+  );
+};
+
+const PostCard = ({ post, isOwnPost, group }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
@@ -42,6 +80,14 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
   const authorName = post.author?.authorName || 'Người dùng ẩn danh';
   const authorCredential = post.author?.department ? `${post.author.department}` : 'Thành viên CampusHub';
   const avatarUrl = post.author?.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=dfb9b9&color=6a2f30`;
+  const postGroup = getPostGroup(post, group);
+
+  const handleNavigateToGroup = (event, groupId) => {
+    event.stopPropagation();
+    if (groupId) {
+      navigate(`/spaces/${groupId}`);
+    }
+  };
 
   const {
     upvotesCount, downvotesCount, shareAmount, isLiked, isDisliked, handleLike, handleDislike,
@@ -51,7 +97,6 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
     isOptionOpen, toggleOption, optionRef,
     isShareModalOpen, openShareModal, closeShareModal,
     isSharing, handleSharePost,
-    sharePrivacy,
     isFocused, setIsFocused,
     hasText,
     showFormatBar, setShowFormatBar,
@@ -126,6 +171,11 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
           <div className="text-[13px] text-gray-500 line-clamp-1">
             {authorCredential} <span className="mx-1">&middot;</span> {formatTimeAgo(post.createdAt)}
           </div>
+          {postGroup && (
+            <div className="mt-1 max-w-full">
+              <GroupBadge group={postGroup} onNavigate={handleNavigateToGroup} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -429,6 +479,11 @@ const PostCard = ({ post, isOwnPost, isOwnSharePost }) => {
                   <div className="text-[13px] text-gray-500 line-clamp-1">
                     {authorCredential} <span className="mx-1">&middot;</span> {formatTimeAgo(post.createdAt)}
                   </div>
+                  {postGroup && (
+                    <div className="mt-1 max-w-full">
+                      <GroupBadge group={postGroup} onNavigate={handleNavigateToGroup} />
+                    </div>
+                  )}
                 </div>
               </div>
 

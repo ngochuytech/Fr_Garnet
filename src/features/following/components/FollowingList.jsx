@@ -50,9 +50,22 @@ const FollowingList = () => {
                   <span className="font-bold text-[15px] text-gray-800 group-hover:underline group-hover:text-[#8d3f41] transition-colors">
                     {user.fullName}
                   </span>
-                  <span className="text-[12px] text-[#8d3f41] font-medium bg-[#f7edee] w-fit px-2 py-0.5 rounded mt-1">
-                    ✨ {user.reason || 'Có thể bạn biết'}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-1 mt-1">
+                    {Array.isArray(user.commonInterests) && user.commonInterests.length > 0 ? (
+                      user.commonInterests.map((interest) => (
+                        <span
+                          key={interest}
+                          className="text-[12px] text-[#8d3f41] font-medium bg-[#f7edee] px-2 py-0.5 rounded"
+                        >
+                          ✨ {interest}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-[12px] text-[#8d3f41] font-medium bg-[#f7edee] w-fit px-2 py-0.5 rounded">
+                        ✨ {user.commonInterests || 'Có thể bạn biết'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -103,19 +116,6 @@ const FollowingList = () => {
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center pt-2">
-          {/* Checkboxes */}
-          <div className="flex flex-col gap-3">
-            <label className="flex items-center gap-2.5 cursor-pointer group">
-              <input type="checkbox" className="w-4 h-4 accent-[#8d3f41] bg-gray-100 border-gray-300 rounded cursor-pointer" />
-              <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Chỉ hiện người học cùng ngành</span>
-            </label>
-            <label className="flex items-center gap-2.5 cursor-pointer group">
-              <input type="checkbox" className="w-4 h-4 accent-[#8d3f41] bg-gray-100 border-gray-300 rounded cursor-pointer" />
-              <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Chỉ hiện người có chung sở thích</span>
-            </label>
-          </div>
-        </div>
       </div>
 
       {/* List Kết quả sau bộ lọc */}
@@ -149,7 +149,7 @@ const FollowingList = () => {
                       {user.fullName}
                     </span>
                     <span className="text-[12px] text-gray-500 mt-0.5">
-                      {user.email || 'Người dùng CampusHub'}
+                      {user.department || 'Người dùng CampusHub'}
                     </span>
                   </div>
                 </div>

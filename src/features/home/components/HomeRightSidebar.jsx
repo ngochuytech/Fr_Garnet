@@ -60,7 +60,9 @@ const HomeRightSidebar = () => {
                             const name = user.fullName || user.name || 'Người dùng';
                             const avatar = user.avatarUrl || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f7edee&color=8d3f41`;
                             const major = user.department || user.major || 'Thành viên CampusHub';
-                            const reason = user.reason || 'Gợi ý kết nối mới';
+                            const reason = Array.isArray(user.commonInterests) && user.commonInterests.length > 0
+                                ? user.commonInterests.join(', ')
+                                : user.commonInterests || 'Gợi ý kết nối mới';
 
                             return (
                                 <div key={user.id} className="flex items-start justify-between">
@@ -75,8 +77,11 @@ const HomeRightSidebar = () => {
                                                 {name}
                                             </h3>
                                             <span className="text-xs text-gray-500 mt-0.5">{major}</span>
-                                            <span className="text-[11px] text-[#8d3f41] mt-1 flex items-center gap-1 font-medium bg-[#f7edee] w-fit px-1.5 py-0.5 rounded">
-                                                ✨ {reason}
+                                            <span
+                                                className="text-[11px] text-[#8d3f41] mt-1 self-start max-w-[150px] truncate font-medium bg-[#f7edee] px-1.5 py-0.5 rounded"
+                                                title={reason}
+                                            >
+                                                {reason}
                                             </span>
                                         </div>
                                     </div>

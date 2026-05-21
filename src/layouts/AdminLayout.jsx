@@ -10,6 +10,8 @@ const AdminLayout = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const displayName = user?.fullname || user?.fullName || user?.name || 'Admin';
+  const avatarUrl = user?.avatarUrl || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=111&color=fff`;
 
   // Khởi tạo WebSocket kết nối Admin
   useAdminNotificationSocket(user, setUnreadCount);
@@ -69,6 +71,11 @@ const AdminLayout = () => {
         { path: '/admin/users', label: 'Người dùng', icon: (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        )},
+        { path: '/admin/groups', label: 'Nhóm', icon: (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 8v6"/><path d="M18 11h6"/>
           </svg>
         )},
       ]
@@ -161,6 +168,13 @@ const AdminLayout = () => {
                 </>
               )}
 
+              {location.pathname === '/admin/groups' && (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
+                  <span className="text-gray-900">Nhóm</span>
+                </>
+              )}
+
               {(location.pathname === '/admin/reports' || location.pathname.startsWith('/admin/reports/')) && (
                 <>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6"/></svg>
@@ -238,7 +252,7 @@ const AdminLayout = () => {
                 to="/admin/profile"
                 className="w-8 h-8 rounded-full bg-gray-200 border border-gray-100 overflow-hidden hover:ring-2 hover:ring-gray-900 transition-all cursor-pointer block"
               >
-                <img src="https://ui-avatars.com/api/?name=Admin&background=111&color=fff" alt="Admin" className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
               </Link>
            </div>
         </div>

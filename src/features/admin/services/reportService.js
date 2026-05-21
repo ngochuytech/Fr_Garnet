@@ -2,7 +2,7 @@ import { apiFetch } from "../../../utils/api";
 
 /**
  * @param {string} status - {ALL, OPEN, RESOLVED, CLOSED} 
- * @param {string} type - {ALL, POST, COMMENT}
+ * @param {string} type - {ALL, POST, COMMENT, GROUP}
  * @param payload {page: int, size: int, sortBy: string, sortDir: string}
  */
 export const getReportAPI = async (status = 'PENDING', type='ALL', pageable) => {

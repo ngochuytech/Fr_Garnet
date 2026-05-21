@@ -5,15 +5,17 @@ import { useSpacePosts } from '../hooks/useSpacePosts';
 
 const canCreateGroupPost = (space) => {
   return Boolean(
-    space?.isMember
+    !space?.isArchived
+    && space?.status !== 'ARCHIVED'
+    && (space?.isMember
     || space?.memberStatus === 'APPROVED'
     || space?.isLeader
     || space?.memberRole === 'LEADER'
-    || space?.role === 'LEADER'
+    || space?.role === 'LEADER')
   );
 };
 
-const SpaceFeed = ({ space, detailLoading, onBack }) => {
+const SpaceFeed = ({ space, detailLoading, onBack, onShowMembers }) => {
   const { user } = useAuth();
   const displayName = user?.fullname || 'User';
   const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30`;
@@ -47,15 +49,16 @@ const SpaceFeed = ({ space, detailLoading, onBack }) => {
   }
 
   const canCreatePost = canCreateGroupPost(space);
+  const isArchived = space.isArchived || space.status === 'ARCHIVED';
 
   return (
     <main className="w-full flex-1">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 p-4 flex items-center justify-between top-[78px] z-10">
-        <div className="flex items-center gap-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 p-4 flex items-center justify-between gap-3 top-[78px] z-10">
+        <div className="flex items-center gap-4 min-w-0">
           <button
             type="button"
             onClick={onBack}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 transition-colors border border-gray-200"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 transition-colors border border-gray-200 shrink-0"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -63,16 +66,31 @@ const SpaceFeed = ({ space, detailLoading, onBack }) => {
             </svg>
           </button>
 
-          <div className="flex flex-col">
-            <h1 className="text-[17px] font-bold text-gray-900 leading-tight">
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-[17px] font-bold text-gray-900 leading-tight truncate">
               Hội {space.name}
             </h1>
             <p className="text-[13px] text-gray-500 font-medium">Bảng tin</p>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={onShowMembers}
+          className="px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 text-[13px] font-bold text-gray-700 hover:bg-gray-100 transition-colors shrink-0"
+        >
+          Thành viên
+        </button>
       </div>
 
       <div className="flex flex-col gap-4">
+        {isArchived && (
+          <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <p className="font-bold">Nhóm đã bị lưu trữ</p>
+            <p className="mt-1">Bạn chỉ có thể xem các bài viết cũ. Nhóm này không còn cho phép đăng bài hoặc phát sinh hoạt động mới.</p>
+          </div>
+        )}
+
         {canCreatePost && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
             <div className="p-3">
@@ -104,6 +122,7 @@ const SpaceFeed = ({ space, detailLoading, onBack }) => {
                     post={post}
                     isOwnPost={isOwnPost}
                     isOwnSharePost={isOwnSharePost}
+                    group={space}
                   />
                 </div>
               );

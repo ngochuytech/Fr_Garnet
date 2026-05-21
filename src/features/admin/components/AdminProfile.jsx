@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
+import { getProfile } from '../../profile/services/profileSerivce';
 
 // ─── SVG ICONS (Inline, no external deps) ────────────────────────────────────
 const IconCamera = ({ size = 16 }) => (
@@ -70,18 +72,6 @@ const IconCalendar = ({ size = 16 }) => (
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
 const MOCK_DATA = {
-  profile: {
-    name: "Nguyễn Quản Trị",
-    role: "Super Admin",
-    email: "admin@campushub.edu.vn",
-    phone: "+84 123 456 789",
-    joined_at: "2024-01-15",
-    avatar: "https://ui-avatars.com/api/?name=Admin&background=111&color=fff&size=128"
-  },
-  settings: {
-    two_factor_enabled: true,
-    email_notifications: false
-  },
   activity_logs: [
     { id: 1, action: "TAKE_DOWN_POST", description: "Đã gỡ bài viết p892 của Trần B", time: "15 phút trước" },
     { id: 2, action: "RESOLVE_REPORT", description: "Đã xử lý xong báo cáo r152", time: "2 giờ trước" },
@@ -90,22 +80,6 @@ const MOCK_DATA = {
 };
 
 // ─── HELPER COMPONENTS ────────────────────────────────────────────────────────
-const ToggleSwitch = ({ enabled, onChange }) => (
-  <button
-    type="button"
-    onClick={onChange}
-    className={`w-10 h-6 flex items-center rounded-full px-1 transition-colors relative focus:outline-none ${
-      enabled ? 'bg-gray-900' : 'bg-gray-200'
-    }`}
-  >
-    <div
-      className={`w-4 h-4 rounded-full bg-white transition-transform duration-200 shadow-sm ${
-        enabled ? 'translate-x-2' : 'translate-x-0'
-      }`}
-    />
-  </button>
-);
-
 const ActivityIcon = ({ action }) => {
   switch (action) {
     case 'TAKE_DOWN_POST':
@@ -119,14 +93,95 @@ const ActivityIcon = ({ action }) => {
   }
 };
 
+const formatDate = (value) => {
+  if (!value) return 'Chưa cập nhật';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
+
+const formatRole = (role) => {
+  const normalizedRole = Array.isArray(role)
+    ? (role[0]?.authority || role[0]?.name || role[0])
+    : (role?.authority || role?.name || role);
+  if (!normalizedRole) return 'Quản trị viên';
+
+  const roleMap = {
+    ADMIN: 'Quản trị viên',
+    ROLE_ADMIN: 'Quản trị viên',
+    SUPER_ADMIN: 'Super Admin',
+    ROLE_SUPER_ADMIN: 'Super Admin',
+  };
+
+  return roleMap[normalizedRole] || normalizedRole;
+};
+
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const AdminProfile = () => {
-  const { profile, activity_logs } = MOCK_DATA;
-  const [settings, setSettings] = useState(MOCK_DATA.settings);
+  const { user, isLoading, logout, updateUser } = useAuth();
+  const navigate = useNavigate();
+  const { activity_logs } = MOCK_DATA;
+  const [profileUser, setProfileUser] = useState(null);
+  const userId = user?.id || user?.userId || user?.email;
 
-  const toggleSetting = (key) => {
-    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchCurrentProfile = async () => {
+      try {
+        const data = await getProfile();
+        if (!isMounted) return;
+        setProfileUser(data);
+        updateUser(data);
+      } catch (error) {
+        console.error('Failed to fetch admin profile:', error);
+      }
+    };
+
+    fetchCurrentProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId, updateUser]);
+
+  const currentUser = user && (profileUser?.id === user?.id || profileUser?.email === user?.email) ? profileUser : user;
+  const displayName = currentUser?.fullname || currentUser?.fullName || currentUser?.name || 'Quản trị viên';
+  const profile = {
+    name: displayName,
+    role: formatRole(currentUser?.role || currentUser?.roles || currentUser?.authorities),
+    email: currentUser?.email || 'Chưa cập nhật',
+    phone: currentUser?.phone || 'Chưa cập nhật',
+    joined_at: formatDate(currentUser?.createdAt || currentUser?.created_at || currentUser?.joinedAt || currentUser?.joined_at),
+    avatar: currentUser?.avatarUrl || currentUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=111&color=fff&size=128`,
   };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[320px] flex flex-col items-center justify-center gap-3 text-gray-500">
+        <svg className="animate-spin h-8 w-8 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <p className="text-sm font-semibold">Đang tải thông tin...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500">
@@ -199,7 +254,11 @@ const AdminProfile = () => {
 
               {/* Logout Button */}
               <div className="w-full mt-8 pt-6 border-t border-gray-100">
-                <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+                >
                   <IconLogOut size={16} />
                   Đăng xuất
                 </button>
@@ -218,7 +277,7 @@ const AdminProfile = () => {
               <h3 className="text-lg font-black text-gray-900">Bảo mật & Cài đặt</h3>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="max-w-xl">
               {/* Form đổi mật khẩu */}
               <div className="space-y-4">
                 <h4 className="text-[11px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-4">Thay đổi mật khẩu</h4>
@@ -248,38 +307,6 @@ const AdminProfile = () => {
                     <IconKeyRound size={16} />
                     Lưu mật khẩu mới
                   </button>
-                </div>
-              </div>
-
-              {/* Toggles */}
-              <div>
-                <h4 className="text-[11px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-4">Tùy chọn hệ thống</h4>
-                <div className="space-y-4">
-                  
-                  {/* 2FA */}
-                  <div className="flex items-start justify-between p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">Xác thực hai yếu tố (2FA)</p>
-                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">Tăng cường bảo mật bằng cách yêu cầu mã xác nhận khi đăng nhập.</p>
-                    </div>
-                    <ToggleSwitch 
-                      enabled={settings.two_factor_enabled} 
-                      onChange={() => toggleSetting('two_factor_enabled')} 
-                    />
-                  </div>
-
-                  {/* Email Notifications */}
-                  <div className="flex items-start justify-between p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">
-                    <div className="pr-4">
-                      <p className="text-sm font-bold text-gray-900">Thông báo Email (Report)</p>
-                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">Nhận email ngay khi có báo cáo vi phạm mới trên hệ thống.</p>
-                    </div>
-                    <ToggleSwitch 
-                      enabled={settings.email_notifications} 
-                      onChange={() => toggleSetting('email_notifications')} 
-                    />
-                  </div>
-
                 </div>
               </div>
             </div>

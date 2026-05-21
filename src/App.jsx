@@ -11,6 +11,7 @@ import HomePage from './pages/HomePage';
 import FollowingPage from './pages/FollowingPage';
 import NotificationPage from './pages/NotificationPage';
 import SpacePage from './pages/SpacePage';
+import SpaceDetailPage from './pages/SpaceDetailPage';
 import OnboardingPage from './pages/OnboardingPage';
 import TopicPage from './pages/TopicPage';
 import UserPage from './pages/UserPage';
@@ -29,6 +30,7 @@ import Dashboard from './features/admin/components/Dashboard';
 import AdminProfile from './features/admin/components/AdminProfile';
 import AdminNotificationPage from './features/admin/components/AdminNotificationPage';
 import AdminActivityLogPage from './features/admin/components/AdminActivityLogPage';
+import GroupManagement from './features/admin/components/GroupManagement';
 
 // Component điều hướng thông minh cho đường dẫn không tồn tại
 const NotFoundRedirect = () => {
@@ -56,6 +58,7 @@ function App() {
             <Route path="reports/:reportId" element={<ReportDetailPage />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="users/:userId" element={<UserDetailPage />} />
+            <Route path="groups" element={<GroupManagement />} />
             <Route path="posts" element={<ContentModeration />} />
             <Route path="posts/:postId" element={<ContentDetailPage />} />
             <Route path="profile" element={<AdminProfile />} />
@@ -73,6 +76,7 @@ function App() {
               <Route path="/home" element={<HomePage />} />
               <Route path="/following" element={<FollowingPage />} />
               <Route path="/spaces" element={<SpacePage />} />
+              <Route path="/spaces/:spaceId" element={<SpaceDetailPage />} />
               <Route path="/notifications" element={<NotificationPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/user/:id" element={<UserPage />} />

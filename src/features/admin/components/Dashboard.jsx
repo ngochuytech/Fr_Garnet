@@ -8,6 +8,21 @@ const formatNumber = (n) => {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n.toString();
 };
 
+const formatDateTime = (value) => {
+  if (!value) return 'Chưa cập nhật';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
 // ── SVG Icons (inline, no external deps) ─────────────────────────────────────
 const IconUsers = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -143,7 +158,6 @@ const BarChartSimulated = ({ data }) => {
 
 // ── Horizontal Bar Chart (Space distribution) ─────────────────────────────────
 const SpaceBarChart = ({ data }) => {
-  const total = data.reduce((s, d) => s + d.value, 0);
   return (
     <div className="space-y-3 pt-2">
       {/* Segmented bar */}
@@ -394,9 +408,11 @@ const Dashboard = () => {
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-black text-xs text-gray-500 border border-gray-200 flex-shrink-0">
-                        {report.targetName?.charAt(0) || report.target_name?.charAt(0)}
+                        {report.reportedUser.avatarUrl
+                          ? <img src={report.reportedUser.avatarUrl} alt={report.reportedUser.name} className="w-full h-full object-cover rounded-full" />
+                          : report.reportedUser.fullName.slice(0, 2).toUpperCase()}
                       </div>
-                      <span className="font-semibold text-gray-900 whitespace-nowrap">{report.targetName || report.target_name}</span>
+                      <span className="font-semibold text-gray-900 whitespace-nowrap">{report.reporter.fullName || "Người Trường"}</span>
                     </div>
                   </td>
 
@@ -407,7 +423,7 @@ const Dashboard = () => {
                   </td>
 
                   <td className="px-5 py-4 text-xs text-gray-400 font-medium whitespace-nowrap">
-                    {report.createdAt || report.created_at}
+                    {formatDateTime(report.createdAt || report.created_at)}
                   </td>
 
                   <td className="px-5 py-4">
