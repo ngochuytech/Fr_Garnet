@@ -127,7 +127,9 @@ const useNotifications = (activeFilter) => {
   const handleMarkAllRead = useCallback(async () => {
     try {
       await markAllAsRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, isRead: true, read: true, status: 'READ' }))
+      );
       setUnreadCount(0);
       dispatchUnreadChange(0);
     } catch (error) {

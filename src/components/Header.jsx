@@ -1,8 +1,51 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadCount } from '../features/notification/services/NotificationService';
 import useNotificationSocket from '../features/notification/hooks/useNotificationSocket';
+import { searchUsers } from '../features/following/services/followingService';
+import { getGroups } from '../features/space/services/spaceService';
+import { apiFetch } from '../utils/api';
+
+const EMPTY_SEARCH_RESULTS = { users: [], topics: [], groups: [] };
+
+const getPayloadItems = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  return payload?.items || payload?.content || [];
+};
+
+const normalizeSearchUser = (user) => {
+  const name = user?.fullName || user?.fullname || user?.displayName || user?.name || 'Người dùng CampusHub';
+
+  return {
+    id: user?.id || user?.userId,
+    name,
+    subtitle: user?.department || user?.major || user?.email || 'Người dùng',
+    avatarUrl: user?.avatarUrl || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f7edee&color=8d3f41`,
+  };
+};
+
+const normalizeSearchGroup = (group) => {
+  const name = group?.name || 'Nhóm chưa đặt tên';
+
+  return {
+    id: group?.id,
+    name,
+    subtitle: `${Number(group?.memberCount ?? group?.membersCount ?? 0).toLocaleString()} thành viên`,
+    avatarUrl: group?.avatarUrl || group?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=dfb9b9&color=6a2f30&size=128`,
+    isArchived: group?.isArchived || group?.status === 'ARCHIVED',
+  };
+};
+
+const normalizeSearchTopic = (topic) => ({
+  name: topic?.topicName || topic?.name || '',
+  subtitle: `${Number(topic?.followerCount ?? 0).toLocaleString()} thành viên`,
+  imageUrl: topic?.imageUrl || 'https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&q=80',
+});
+
+const matchesQuery = (value, query) => (
+  value?.toLowerCase().includes(query.toLowerCase())
+);
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -10,7 +53,12 @@ const Header = () => {
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(EMPTY_SEARCH_RESULTS);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
   const dropdownRef = useRef(null);
+  const searchRef = useRef(null);
 
   const displayName = user?.fullname || 'User';
   const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30&size=128`;
@@ -30,6 +78,69 @@ const Header = () => {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isDropdownOpen]);
+
+  useEffect(() => {
+    const handleSearchClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+      }
+    };
+
+    if (isSearchOpen) {
+      document.addEventListener('mousedown', handleSearchClickOutside);
+    }
+
+    return () => document.removeEventListener('mousedown', handleSearchClickOutside);
+  }, [isSearchOpen]);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+
+    if (!query) {
+      return;
+    }
+
+    let isCurrent = true;
+    const timeoutId = setTimeout(async () => {
+      setIsSearchLoading(true);
+      setIsSearchOpen(true);
+
+      const [usersResult, topicsResult, groupsResult] = await Promise.allSettled([
+        searchUsers(query),
+        apiFetch('/users/topics'),
+        getGroups(),
+      ]);
+
+      if (!isCurrent) return;
+
+      const users = usersResult.status === 'fulfilled'
+        ? getPayloadItems(usersResult.value)
+          .map(normalizeSearchUser)
+          .filter((user) => user.id)
+          .slice(0, 4)
+        : [];
+      const topics = topicsResult.status === 'fulfilled'
+        ? getPayloadItems(topicsResult.value)
+          .map(normalizeSearchTopic)
+          .filter((topic) => topic.name && matchesQuery(topic.name, query))
+          .slice(0, 3)
+        : [];
+      const groups = groupsResult.status === 'fulfilled'
+        ? getPayloadItems(groupsResult.value)
+          .map(normalizeSearchGroup)
+          .filter((group) => group.id && !group.isArchived && matchesQuery(group.name, query))
+          .slice(0, 3)
+        : [];
+
+      setSearchResults({ users, topics, groups });
+      setIsSearchLoading(false);
+    }, 300);
+
+    return () => {
+      isCurrent = false;
+      clearTimeout(timeoutId);
+    };
+  }, [searchQuery]);
 
   // Bước 1: lần đầu load lấy count từ REST API
   useEffect(() => {
@@ -60,6 +171,52 @@ const Header = () => {
     logout();
     navigate('/login');
   };
+
+  const closeSearch = () => {
+    setSearchQuery('');
+    setSearchResults(EMPTY_SEARCH_RESULTS);
+    setIsSearchOpen(false);
+  };
+
+  const handleSearchNavigate = (path) => {
+    closeSearch();
+    navigate(path);
+  };
+
+  const getFirstSearchPath = () => {
+    const firstUser = searchResults.users[0];
+    if (firstUser) return `/user/${firstUser.id}`;
+
+    const firstTopic = searchResults.topics[0];
+    if (firstTopic) return `/topic/${encodeURIComponent(firstTopic.name)}`;
+
+    const firstGroup = searchResults.groups[0];
+    if (firstGroup) return `/spaces/${firstGroup.id}`;
+
+    return null;
+  };
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    const path = getFirstSearchPath();
+
+    if (path) {
+      handleSearchNavigate(path);
+    }
+  };
+
+  const handleSearchInputChange = (event) => {
+    const value = event.target.value;
+    setSearchQuery(value);
+
+    if (!value.trim()) {
+      setSearchResults(EMPTY_SEARCH_RESULTS);
+      setIsSearchLoading(false);
+      setIsSearchOpen(false);
+    }
+  };
+
+  const searchResultCount = searchResults.users.length + searchResults.topics.length + searchResults.groups.length;
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] h-[50px] w-full flex justify-center">
@@ -127,17 +284,110 @@ const Header = () => {
         </nav>
 
         {/* Search Bar */}
-        <div className="flex-1 max-w-[360px] mx-4">
-          <div className="relative flex items-center w-full h-8 rounded-full border border-gray-300 bg-gray-50 px-3 hover:border-gray-400 focus-within:bg-white focus-within:border-blue-500">
+        <div className="flex-1 max-w-[360px] mx-4 relative" ref={searchRef}>
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative flex items-center w-full h-8 rounded-full border border-gray-300 bg-gray-50 px-3 hover:border-gray-400 focus-within:bg-white focus-within:border-[#8d3f41]"
+          >
             <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
               type="text"
-              placeholder="Search CampusHub"
+              value={searchQuery}
+              onChange={handleSearchInputChange}
+              onFocus={() => {
+                if (searchQuery.trim()) setIsSearchOpen(true);
+              }}
+              placeholder="Tìm kiếm CampusHub"
               className="w-full bg-transparent border-none outline-none px-2 text-sm text-gray-800 placeholder-gray-500"
             />
-          </div>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={closeSearch}
+                className="w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-700 flex-shrink-0"
+                aria-label="Xóa tìm kiếm"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            )}
+          </form>
+
+          {isSearchOpen && searchQuery.trim() && (
+            <div className="absolute left-0 right-0 top-[38px] z-[120] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl">
+              {isSearchLoading ? (
+                <div className="px-4 py-4 text-center text-sm text-gray-500">Đang tìm kiếm...</div>
+              ) : searchResultCount === 0 ? (
+                <div className="px-4 py-4 text-center text-sm text-gray-500">Không tìm thấy kết quả phù hợp.</div>
+              ) : (
+                <div className="max-h-[420px] overflow-y-auto py-2">
+                  {searchResults.users.length > 0 && (
+                    <div className="px-2 pb-2">
+                      <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">Người dùng</p>
+                      {searchResults.users.map((result) => (
+                        <button
+                          key={`user-${result.id}`}
+                          type="button"
+                          onClick={() => handleSearchNavigate(`/user/${result.id}`)}
+                          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-[#f7edee]"
+                        >
+                          <img src={result.avatarUrl} alt={result.name} className="h-8 w-8 rounded-full object-cover border border-gray-100" />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-gray-900">{result.name}</p>
+                            <p className="truncate text-[12px] text-gray-500">{result.subtitle}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {searchResults.topics.length > 0 && (
+                    <div className="px-2 pb-2">
+                      <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">Topics</p>
+                      {searchResults.topics.map((result) => (
+                        <button
+                          key={`topic-${result.name}`}
+                          type="button"
+                          onClick={() => handleSearchNavigate(`/topic/${encodeURIComponent(result.name)}`)}
+                          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-[#f7edee]"
+                        >
+                          <img src={result.imageUrl} alt={result.name} className="h-8 w-8 rounded-lg object-cover" />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-gray-900">{result.name}</p>
+                            <p className="truncate text-[12px] text-gray-500">{result.subtitle}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {searchResults.groups.length > 0 && (
+                    <div className="px-2 pb-2">
+                      <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">Hội nhóm</p>
+                      {searchResults.groups.map((result) => (
+                        <button
+                          key={`group-${result.id}`}
+                          type="button"
+                          onClick={() => handleSearchNavigate(`/spaces/${result.id}`)}
+                          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-[#f7edee]"
+                        >
+                          <img src={result.avatarUrl} alt={result.name} className="h-8 w-8 rounded-lg object-cover" />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-gray-900">{result.name}</p>
+                            <p className="truncate text-[12px] text-gray-500">{result.subtitle}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right Actions */}

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+const GROUP_NAME_MAX_LENGTH = 50;
+
 const isJoinedSpace = (space) => {
   return Boolean(
     space?.isMember
@@ -10,13 +12,21 @@ const isJoinedSpace = (space) => {
   );
 };
 
+const isRejectedSpace = (space) => {
+  return space?.memberStatus === 'REJECTED'
+    || space?.membershipStatus === 'REJECTED'
+    || space?.requestStatus === 'REJECTED'
+    || space?.joinStatus === 'REJECTED'
+    || space?.status === 'REJECTED';
+};
+
 const getSpaceState = (space, actionLoadingKeys, requestedGroupIds) => {
   const joinKey = `join:${space.id}`;
   const hasRequested = requestedGroupIds.includes(space.id);
   const isJoining = actionLoadingKeys.includes(joinKey);
   const isJoined = isJoinedSpace(space);
-  const isPending = hasRequested || space.isPending || space.memberStatus === 'PENDING';
-  const isRejected = space.memberStatus === 'REJECTED';
+  const isRejected = isRejectedSpace(space);
+  const isPending = !isRejected && (hasRequested || space.isPending || space.memberStatus === 'PENDING');
   const isArchived = space.isArchived || space.status === 'ARCHIVED';
 
   return { isJoining, isJoined, isPending, isRejected, isArchived };
@@ -63,6 +73,12 @@ const SpaceCard = ({
           </span>
         )}
 
+        {!isArchived && isRejected && (
+          <span className="mt-2 inline-flex w-fit rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-600 ring-1 ring-red-100">
+            Yêu cầu bị từ chối
+          </span>
+        )}
+
         <p className="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed flex-1">
           {space.description}
         </p>
@@ -78,10 +94,10 @@ const SpaceCard = ({
           <button
             type="button"
             onClick={() => onJoinSpace(space.id)}
-            disabled={isArchived || isJoining || isPending || isJoined || isRejected}
+            disabled={isArchived || isJoining || isPending || isJoined}
             className="w-full py-1.5 px-3 bg-[#8d3f41] text-white text-[13.5px] font-bold rounded-lg hover:bg-[#6a2f30] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
-            {isArchived ? 'Đã lưu trữ' : isJoined ? 'Đã tham gia' : isPending ? 'Đã gửi' : isRejected ? 'Bị từ chối' : isJoining ? 'Đang gửi...' : 'Tham gia'}
+            {isArchived ? 'Đã lưu trữ' : isJoined ? 'Đã tham gia' : isPending ? 'Đã gửi' : isJoining ? 'Đang gửi...' : isRejected ? 'Gửi lại' : 'Tham gia'}
           </button>
         </div>
       </div>
@@ -213,6 +229,7 @@ const SpaceGrid = ({
               name="name"
               value={formData.name}
               onChange={handleInputChange}
+              maxLength={GROUP_NAME_MAX_LENGTH}
               placeholder="Tên nhóm"
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#d09596]"
             />

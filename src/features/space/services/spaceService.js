@@ -147,6 +147,12 @@ export const kickMember = async (groupId, targetUserId) => {
   });
 };
 
+export const deleteGroup = async (groupId) => {
+  return apiFetch(`${GROUPS_ENDPOINT}/${groupId}`, {
+    method: 'DELETE',
+  });
+};
+
 export const leaveGroup = async (groupId) => {
   return apiFetch(`${GROUPS_ENDPOINT}/${groupId}/leave`, {
     method: 'DELETE',

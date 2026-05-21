@@ -6,6 +6,19 @@ import { toast } from 'sonner';
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY;
 const WS_URL = import.meta.env.VITE_WS_URL;
 
+const GROUP_NOTIFICATION_TYPES = new Set([
+  'GROUP_JOIN_REQUEST',
+  'GROUP_JOIN_APPROVED',
+  'GROUP_NAME_UPDATED',
+  'GROUP_LOCKED',
+  'GROUP_UNLOCKED',
+  'GROUP_JOIN_REJECTED'
+]);
+
+const getGroupId = (notification) => (
+  notification.targetId
+);
+
 export const dispatchUnreadChange = (count) => {
   setTimeout(() => {
     window.dispatchEvent(new CustomEvent('unread-count-changed', { detail: { count } }));
@@ -66,6 +79,12 @@ const useNotificationSocket = (user, setUnreadCount) => {
               action: {
                 label: 'Xem',
                 onClick: () => {
+                  if (GROUP_NOTIFICATION_TYPES.has(newNotif.type)) {
+                    const groupId = getGroupId(newNotif);
+                    window.location.href = groupId ? `/spaces/${groupId}` : '/notifications';
+                    return;
+                  }
+
                   const postId = newNotif.postId || newNotif.targetId;
                   if (postId && newNotif.type !== 'NEW_FOLLOWER') {
                     window.location.href = `/post/${postId}`;

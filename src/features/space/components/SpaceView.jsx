@@ -42,6 +42,7 @@ const SpaceView = () => {
     handleCreateGroup,
     handleJoinGroup,
     handleLeaveGroup,
+    handleDeleteGroup,
     handleUpdateGroupAvatar,
     handleUpdateGroupCover,
     handleUpdateGroupName,
@@ -76,6 +77,17 @@ const SpaceView = () => {
     return createdSpace;
   };
 
+  const handleDeleteGroupView = async (groupId) => {
+    const success = await handleDeleteGroup(groupId);
+
+    if (success) {
+      setActiveView('feed');
+      navigate('/spaces');
+    }
+
+    return success;
+  };
+
   const handleShowStatusView = () => {
     setActiveView('status');
     if (selectedSpace?.id) {
@@ -98,6 +110,7 @@ const SpaceView = () => {
               onSelectSpace={handleSelectSpaceView}
               onJoinSpace={handleJoinGroup}
               onLeaveSpace={handleLeaveGroup}
+              onDeleteGroup={handleDeleteGroupView}
               onUpdateAvatar={handleUpdateGroupAvatar}
               onUpdateCover={handleUpdateGroupCover}
               onUpdateName={handleUpdateGroupName}

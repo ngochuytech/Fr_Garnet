@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import {
   approveJoinRequest,
   createGroup,
+  deleteGroup,
   getGroupById,
   getGroupJoinRequests,
   getGroupMembers,
@@ -20,6 +21,9 @@ import {
 } from '../services/spaceService';
 
 const DEFAULT_COVER_URL = 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80';
+const GROUP_NAME_MAX_LENGTH = 50;
+const GROUP_STATUSES = ['ACTIVE', 'ARCHIVED', 'DELETED'];
+const MEMBER_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'];
 
 const getFallbackAvatarUrl = (name) => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'Group')}&background=dfb9b9&color=6a2f30&size=128`;
@@ -153,9 +157,14 @@ const mergeMembers = (currentMembers, nextMembers) => {
 const normalizeSpace = (group) => {
   const name = group?.name || 'Nhóm chưa đặt tên';
   const membersCount = Number(group?.memberCount ?? group?.membersCount ?? 0);
-  const memberStatus = group?.memberStatus ?? null;
+  const rawStatus = group?.status ?? null;
+  const memberStatus = group?.memberStatus
+    ?? group?.membershipStatus
+    ?? group?.requestStatus
+    ?? group?.joinStatus
+    ?? (MEMBER_STATUSES.includes(rawStatus) ? rawStatus : null);
   const memberRole = group?.memberRole ?? group?.role ?? null;
-  const status = group?.status ?? 'ACTIVE';
+  const status = GROUP_STATUSES.includes(rawStatus) ? rawStatus : (group?.groupStatus ?? 'ACTIVE');
   const warnings = Array.isArray(group?.warnings)
     ? group.warnings
     : Array.isArray(group?.adminWarnings)
@@ -177,8 +186,8 @@ const normalizeSpace = (group) => {
     isArchived: status === 'ARCHIVED',
     memberStatus,
     memberRole,
-    isMember: group?.isMember ?? memberStatus === 'APPROVED',
-    isPending: group?.isPending ?? memberStatus === 'PENDING',
+    isMember: memberStatus === 'APPROVED' || (!memberStatus && Boolean(group?.isMember)),
+    isPending: memberStatus === 'PENDING' || (!memberStatus && Boolean(group?.isPending)),
     isLeader: group?.isLeader ?? (['LEADER', 'OWNER'].includes(memberRole) && memberStatus === 'APPROVED'),
     avatarUrl: group?.avatarUrl || getFallbackAvatarUrl(name),
     coverUrl: group?.coverUrl || DEFAULT_COVER_URL,
@@ -309,6 +318,14 @@ export const useSpaces = (routeSpaceId = null) => {
       return currentSpaces.map((space) => (
         space.id === normalized.id ? { ...space, ...normalized } : space
       ));
+    });
+
+    setRequestedGroupIds((currentIds) => {
+      if (normalized.memberStatus === 'PENDING' || normalized.isPending) {
+        return currentIds.includes(normalized.id) ? currentIds : [...currentIds, normalized.id];
+      }
+
+      return currentIds.filter((id) => id !== normalized.id);
     });
 
     return normalized;
@@ -492,7 +509,11 @@ export const useSpaces = (routeSpaceId = null) => {
       setError(null);
       const data = await getGroups();
       const groups = Array.isArray(data) ? data : (data?.items || []);
-      setSpaces(groups.map(normalizeSpace));
+      const normalizedGroups = groups.map(normalizeSpace);
+      setSpaces(normalizedGroups);
+      setRequestedGroupIds(normalizedGroups
+        .filter((group) => group.memberStatus === 'PENDING' || group.isPending)
+        .map((group) => group.id));
     } catch (err) {
       const message = getErrorMessage(err, 'Không thể tải danh sách nhóm');
       setError(message);
@@ -581,6 +602,11 @@ export const useSpaces = (routeSpaceId = null) => {
       return null;
     }
 
+    if (payload.name.length > GROUP_NAME_MAX_LENGTH) {
+      toast.error(`Tên nhóm không được vượt quá ${GROUP_NAME_MAX_LENGTH} ký tự`);
+      return null;
+    }
+
     try {
       setCreateLoading(true);
       const createdGroup = await createGroup(payload);
@@ -605,6 +631,17 @@ export const useSpaces = (routeSpaceId = null) => {
 
   const handleJoinGroup = useCallback(async (groupId) => {
     const key = `join:${groupId}`;
+    const targetSpace = spaces.find((space) => space.id === groupId);
+
+    if (targetSpace?.isPending || targetSpace?.memberStatus === 'PENDING' || requestedGroupIds.includes(groupId)) {
+      toast.error('Bạn đang chờ duyệt vào nhóm này');
+      return false;
+    }
+
+    if (targetSpace?.isMember || targetSpace?.memberStatus === 'APPROVED') {
+      toast.error('Bạn đã là thành viên của nhóm này');
+      return false;
+    }
 
     try {
       setActionLoading(key, true);
@@ -617,12 +654,14 @@ export const useSpaces = (routeSpaceId = null) => {
       ));
       toast.success(typeof result === 'string' ? result : 'Đã gửi yêu cầu tham gia nhóm');
       await refreshGroup(groupId);
+      return true;
     } catch (err) {
       toast.error(getErrorMessage(err, 'Không thể gửi yêu cầu tham gia nhóm'));
+      return false;
     } finally {
       setActionLoading(key, false);
     }
-  }, [refreshGroup, setActionLoading]);
+  }, [refreshGroup, requestedGroupIds, setActionLoading, spaces]);
 
   const handleLeaveGroup = useCallback(async (groupId) => {
     const key = `leave:${groupId}`;
@@ -647,6 +686,42 @@ export const useSpaces = (routeSpaceId = null) => {
       setActionLoading(key, false);
     }
   }, [fetchGroupMembers, refreshGroup, setActionLoading]);
+
+  const handleDeleteGroup = useCallback(async (groupId) => {
+    const key = `delete:${groupId}`;
+
+    try {
+      setActionLoading(key, true);
+      const result = await deleteGroup(groupId);
+
+      setSpaces((currentSpaces) => currentSpaces.filter((space) => space.id !== groupId));
+      setSelectedSpaceId((currentId) => (currentId === groupId ? null : currentId));
+      setRequestedGroupIds((currentIds) => currentIds.filter((id) => id !== groupId));
+      setMembersByGroupId((currentState) => {
+        const nextState = { ...currentState };
+        delete nextState[groupId];
+        return nextState;
+      });
+      setJoinRequestsByGroupId((currentState) => {
+        const nextState = { ...currentState };
+        delete nextState[groupId];
+        return nextState;
+      });
+      setStatusByGroupId((currentState) => {
+        const nextState = { ...currentState };
+        delete nextState[groupId];
+        return nextState;
+      });
+
+      toast.success(typeof result === 'string' ? result : 'Đã xóa nhóm');
+      return true;
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể xóa nhóm'));
+      return false;
+    } finally {
+      setActionLoading(key, false);
+    }
+  }, [setActionLoading]);
 
   const handleUpdateGroupAvatar = useCallback(async (groupId, file) => {
     const key = `avatar:${groupId}`;
@@ -683,6 +758,11 @@ export const useSpaces = (routeSpaceId = null) => {
 
     if (!payloadName) {
       toast.error('Vui lòng nhập tên nhóm');
+      return false;
+    }
+
+    if (payloadName.length > GROUP_NAME_MAX_LENGTH) {
+      toast.error(`Tên nhóm không được vượt quá ${GROUP_NAME_MAX_LENGTH} ký tự`);
       return false;
     }
 
@@ -826,6 +906,7 @@ export const useSpaces = (routeSpaceId = null) => {
     handleCreateGroup,
     handleJoinGroup,
     handleLeaveGroup,
+    handleDeleteGroup,
     handleUpdateGroupAvatar,
     handleUpdateGroupCover,
     handleUpdateGroupName,

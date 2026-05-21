@@ -1,24 +1,7 @@
-import React from 'react';
 import { useHomeRightSideBar } from '../hooks/useHomeRightSideBar';
 
 const HomeRightSidebar = () => {
     const { currentUser, suggestedUsers, loadingSuggestions } = useHomeRightSideBar();
-
-    // Dữ liệu giả lập (Mock data) cho Khám phá Hội nhóm
-    const suggestedGroups = [
-        {
-            id: 1,
-            name: 'CLB Lập trình',
-            members: 1200,
-            avatar: 'https://i.pravatar.cc/150?u=group1'
-        },
-        {
-            id: 2,
-            name: 'Hội sinh viên KTPM',
-            members: 850,
-            avatar: 'https://i.pravatar.cc/150?u=group2'
-        },
-    ];
 
     return (
         <aside className="w-full pb-6 pl-2 space-y-5">
@@ -94,40 +77,6 @@ const HomeRightSidebar = () => {
                     )}
                 </div>
             </div>
-
-            {/* Khối 3: Khám phá Hội nhóm */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <h2 className="text-base font-bold text-gray-800 mb-4">Khám phá Hội nhóm</h2>
-                <div className="space-y-4">
-                    {suggestedGroups.map((group) => (
-                        <div key={group.id} className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <img
-                                    src={group.avatar}
-                                    alt={group.name}
-                                    className="w-10 h-10 rounded-lg object-cover border border-gray-100"
-                                />
-                                <div className="flex flex-col">
-                                    <h3
-                                        className="text-sm font-semibold text-gray-900 leading-tight truncate w-32 hover:underline cursor-pointer"
-                                        title={group.name}
-                                    >
-                                        {group.name}
-                                    </h3>
-                                    <span className="text-xs text-gray-500 mt-0.5">{group.members} thành viên</span>
-                                </div>
-                            </div>
-                            <button className="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-semibold rounded-full transition-colors flex-shrink-0">
-                                Tham gia
-                            </button>
-                        </div>
-                    ))}
-                </div>
-                <button className="w-full mt-4 py-2 text-sm text-blue-600 font-medium hover:bg-blue-50 rounded-lg transition-colors">
-                    Xem tất cả nhóm
-                </button>
-            </div>
-
         </aside>
     );
 };

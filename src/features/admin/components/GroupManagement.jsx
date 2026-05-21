@@ -10,6 +10,16 @@ const formatDate = (value) => {
 
 const StatusBadge = ({ status }) => {
   const isArchived = status === 'ARCHIVED';
+  const isDeleted = status === 'DELETED';
+
+  if (isDeleted) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide bg-gray-50 text-gray-600 ring-1 ring-gray-200">
+        <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-gray-500" />
+        Đã xóa
+      </span>
+    );
+  }
 
   return (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide ${
@@ -221,6 +231,7 @@ const GroupManagement = () => {
             <option value="ALL">Tất cả</option>
             <option value="ACTIVE">Hoạt động</option>
             <option value="ARCHIVED">Đã khóa</option>
+            <option value="DELETED">Đã xóa</option>
           </select>
           <svg className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
         </div>
@@ -281,27 +292,31 @@ const GroupManagement = () => {
                     <td className="px-5 py-4 text-gray-500 text-xs whitespace-nowrap font-medium">{formatDate(group.createdAt)}</td>
                     <td className="px-5 py-4"><StatusBadge status={group.status} /></td>
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setReportGroup(group)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 hover:bg-gray-900 hover:text-white transition-all"
-                        >
-                          Xử lý
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmGroup(group)}
-                          disabled={actionLoadingId === group.id}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-60 ${
-                            group.status === 'ARCHIVED'
-                              ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-100'
-                              : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-100'
-                          }`}
-                        >
-                          {group.status === 'ARCHIVED' ? 'Mở khóa' : 'Khóa'}
-                        </button>
-                      </div>
+                      {group.status !== 'DELETED' ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setReportGroup(group)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 hover:bg-gray-900 hover:text-white transition-all"
+                          >
+                            Xử lý
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmGroup(group)}
+                            disabled={actionLoadingId === group.id}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-60 ${
+                              group.status === 'ARCHIVED'
+                                ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-100'
+                                : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-100'
+                            }`}
+                          >
+                            {group.status === 'ARCHIVED' ? 'Mở khóa' : 'Khóa'}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs font-medium">—</span>
+                      )}
                     </td>
                   </tr>
                 ))

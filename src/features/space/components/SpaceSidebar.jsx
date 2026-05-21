@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 
+const GROUP_NAME_EDIT_MAX_LENGTH = 50;
+
 const canManageGroup = (space) => {
   return ['LEADER', 'OWNER'].includes(space?.memberRole)
     || ['LEADER', 'OWNER'].includes(space?.role)
@@ -21,14 +23,21 @@ const canLeaveSpace = (space) => {
   return !canManageGroup(space) && (space?.isMember || space?.memberStatus === 'APPROVED');
 };
 
+const isRejectedSpace = (space) => {
+  return space?.memberStatus === 'REJECTED'
+    || space?.membershipStatus === 'REJECTED'
+    || space?.requestStatus === 'REJECTED'
+    || space?.joinStatus === 'REJECTED'
+    || space?.status === 'REJECTED';
+};
+
 const canJoinSpace = (space) => {
   return !canManageGroup(space)
     && space?.status !== 'ARCHIVED'
     && !space?.isArchived
     && !space?.isMember
     && space?.memberStatus !== 'APPROVED'
-    && space?.memberStatus !== 'PENDING'
-    && space?.memberStatus !== 'REJECTED';
+    && space?.memberStatus !== 'PENDING';
 };
 
 const SidebarGroupList = ({ title, spaces, emptyText, onSelectSpace }) => (
@@ -102,6 +111,48 @@ const LeaveConfirmModal = ({
             className="py-2 px-4 rounded-lg bg-red-600 text-[13px] font-bold text-white hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isLeaving ? 'Đang rời...' : 'Rời nhóm'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+};
+
+const DeleteConfirmModal = ({
+  space,
+  isDeleting,
+  onClose,
+  onConfirm,
+}) => {
+  if (!space) {
+    return null;
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center bg-black/40 px-4" style={{ zIndex: 9999 }}>
+      <div className="w-full max-w-sm rounded-xl bg-white border border-gray-100 shadow-xl p-5 text-left">
+        <h2 className="text-base font-bold text-gray-900">Xác nhận xóa nhóm</h2>
+        <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+          Bạn có chắc muốn xóa nhóm <span className="font-bold text-gray-900">{space.name}</span> không? Thao tác này không thể hoàn tác.
+        </p>
+
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isDeleting}
+            className="py-2 px-4 rounded-lg border border-gray-200 text-[13px] font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+          >
+            Hủy
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(space.id)}
+            disabled={isDeleting}
+            className="py-2 px-4 rounded-lg bg-red-600 text-[13px] font-bold text-white hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isDeleting ? 'Đang xóa...' : 'Xóa nhóm'}
           </button>
         </div>
       </div>
@@ -198,6 +249,7 @@ const SpaceSidebar = ({
   onSelectSpace,
   onJoinSpace,
   onLeaveSpace,
+  onDeleteGroup,
   onUpdateAvatar,
   onUpdateCover,
   onUpdateName,
@@ -215,6 +267,7 @@ const SpaceSidebar = ({
 }) => {
   const [nameEditor, setNameEditor] = useState({ groupId: null, name: '', isEditing: false });
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportForm, setReportForm] = useState({ reason: '', description: '' });
   const [descriptionEditor, setDescriptionEditor] = useState({
@@ -252,17 +305,19 @@ const SpaceSidebar = ({
 
   const joinKey = `join:${selectedSpace.id}`;
   const leaveKey = `leave:${selectedSpace.id}`;
+  const deleteKey = `delete:${selectedSpace.id}`;
   const nameKey = `name:${selectedSpace.id}`;
   const descriptionKey = `description:${selectedSpace.id}`;
   const reportKey = `report:${selectedSpace.id}`;
   const hasRequested = requestedGroupIds.includes(selectedSpace.id);
   const isJoining = actionLoadingKeys.includes(joinKey);
   const isLeaving = actionLoadingKeys.includes(leaveKey);
+  const isDeleting = actionLoadingKeys.includes(deleteKey);
   const isUpdatingName = actionLoadingKeys.includes(nameKey);
   const isUpdatingDescription = actionLoadingKeys.includes(descriptionKey);
   const isReporting = actionLoadingKeys.includes(reportKey);
-  const isPending = hasRequested || selectedSpace.isPending || selectedSpace.memberStatus === 'PENDING';
-  const isRejected = selectedSpace.memberStatus === 'REJECTED';
+  const isRejected = isRejectedSpace(selectedSpace);
+  const isPending = !isRejected && (hasRequested || selectedSpace.isPending || selectedSpace.memberStatus === 'PENDING');
   const isArchived = selectedSpace.isArchived || selectedSpace.status === 'ARCHIVED';
   const isLeader = canManageGroup(selectedSpace);
   const canEditGroup = isLeader && !isArchived;
@@ -317,6 +372,14 @@ const SpaceSidebar = ({
     }
   };
 
+  const confirmDeleteGroup = async (groupId) => {
+    const success = await onDeleteGroup(groupId);
+
+    if (success) {
+      setIsDeleteConfirmOpen(false);
+    }
+  };
+
   const submitGroupReport = async (event) => {
     event.preventDefault();
     const success = await onReportGroup(selectedSpace.id, reportForm);
@@ -347,6 +410,7 @@ const SpaceSidebar = ({
             <input
               value={draftName}
               onChange={(event) => setNameEditor((current) => ({ ...current, name: event.target.value }))}
+              maxLength={GROUP_NAME_EDIT_MAX_LENGTH}
               disabled={isUpdatingName}
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-center text-sm font-bold text-gray-900 outline-none focus:border-[#d09596] disabled:bg-gray-50"
               autoFocus
@@ -463,6 +527,13 @@ const SpaceSidebar = ({
             </div>
           )}
 
+          {!isArchived && isRejected && (
+            <div className="w-full rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-left">
+              <p className="text-[13px] font-bold text-red-700">Yêu cầu trước đó bị từ chối</p>
+              <p className="mt-0.5 text-[12px] text-red-600">Bạn có thể gửi lại yêu cầu tham gia nhóm.</p>
+            </div>
+          )}
+
           {canJoinSpace(selectedSpace) && (
             <button
               type="button"
@@ -470,7 +541,7 @@ const SpaceSidebar = ({
               disabled={isJoining || isPending}
               className="w-full py-1.5 px-4 bg-[#8d3f41] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-[#6a2f30] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
-              {isPending ? 'Đã gửi yêu cầu' : isJoining ? 'Đang gửi...' : 'Tham gia nhóm'}
+              {isPending ? 'Đã gửi yêu cầu' : isJoining ? 'Đang gửi...' : isRejected ? 'Gửi lại yêu cầu' : 'Tham gia nhóm'}
             </button>
           )}
 
@@ -535,6 +606,17 @@ const SpaceSidebar = ({
                 />
               </label>
             </div>
+          )}
+
+          {canEditGroup && (
+            <button
+              type="button"
+              onClick={() => setIsDeleteConfirmOpen(true)}
+              disabled={isDeleting}
+              className="w-full py-1.5 px-4 bg-red-50 text-red-600 text-[13px] font-bold rounded-lg border border-red-100 hover:bg-red-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            >
+              {isDeleting ? 'Đang xóa nhóm...' : 'Xóa nhóm'}
+            </button>
           )}
         </div>
 
@@ -608,6 +690,15 @@ const SpaceSidebar = ({
           isLeaving={isLeaving}
           onClose={() => setIsLeaveConfirmOpen(false)}
           onConfirm={confirmLeaveSpace}
+        />
+      )}
+
+      {isDeleteConfirmOpen && (
+        <DeleteConfirmModal
+          space={selectedSpace}
+          isDeleting={isDeleting}
+          onClose={() => setIsDeleteConfirmOpen(false)}
+          onConfirm={confirmDeleteGroup}
         />
       )}
 
