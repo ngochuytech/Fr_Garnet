@@ -113,12 +113,6 @@ const StatCard = ({ icon, label, value, trend, colorScheme }) => {
 
       <div className="flex items-start justify-between relative z-10">
         <div className={`p-2.5 rounded-xl ${s.iconBg}`}>{icon}</div>
-        {trend && (
-          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${s.trend}`}>
-            <IconTrendUp />
-            {trend}
-          </span>
-        )}
       </div>
 
       <div className="relative z-10">

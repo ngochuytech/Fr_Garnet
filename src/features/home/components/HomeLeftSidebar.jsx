@@ -8,11 +8,8 @@ const getFallbackGroupAvatarUrl = (name) => (
 );
 
 const isJoinedGroup = (group) => (
-  group?.isMember ||
   group?.memberStatus === 'APPROVED' ||
-  group?.isLeader ||
-  ['LEADER', 'OWNER'].includes(group?.memberRole) ||
-  ['LEADER', 'OWNER'].includes(group?.role)
+  ['LEADER'].includes(group?.memberRole)
 );
 
 const normalizeGroup = (group) => {
@@ -24,7 +21,7 @@ const normalizeGroup = (group) => {
     name,
     membersCount: Number(group?.memberCount ?? group?.membersCount ?? 0),
     avatarUrl: group?.avatarUrl || group?.avatar || getFallbackGroupAvatarUrl(name),
-    isArchived: group?.isArchived || group?.status === 'ARCHIVED',
+    status: group?.status,
   };
 };
 
@@ -109,7 +106,7 @@ const HomeLeftSidebar = () => {
   const visibleSpaces = showAllSpaces ? topics : topics.slice(0, 4);
   const joinedGroups = groups.filter(isJoinedGroup).slice(0, 2);
   const discoverGroups = groups
-    .filter((group) => !isJoinedGroup(group) && !group.isArchived)
+    .filter((group) => !isJoinedGroup(group) && group.status !== 'ARCHIVED')
     .slice(0, 2);
 
   return (

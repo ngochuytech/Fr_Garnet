@@ -55,17 +55,6 @@ const AuthLayout = () => {
             <Outlet />
           </div>
         </div>
-
-        {/* Footer links */}
-        <p className="text-center text-xs text-slate-400 mt-5 leading-relaxed">
-          <a href="#" className="hover:text-slate-600 transition-colors">Về chúng tôi</a>
-          {' · '}
-          <a href="#" className="hover:text-slate-600 transition-colors">Điều khoản</a>
-          {' · '}
-          <a href="#" className="hover:text-slate-600 transition-colors">Bảo mật</a>
-          {' · '}
-          <span className="text-slate-300">© CampusHub 2026</span>
-        </p>
       </div>
     </div>
   );

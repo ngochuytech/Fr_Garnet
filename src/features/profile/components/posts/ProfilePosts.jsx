@@ -6,43 +6,13 @@ const ProfilePosts = ({ userId = null }) => {
   const { user: currentUser } = useAuth();
   const isOwnProfile = !userId || (currentUser && (currentUser.id === userId || currentUser.userId === userId));
 
-  const {
-    dropdownRef,
-    isOpenSort,
-    selectedSort,
-    sortOptions,
-    posts,
-    handleSelect,
-    setIsOpenSort
-  } = useProfilePosts(userId);
+  const { posts } = useProfilePosts(userId);
 
   return (
     <>
       {/* ... (phần code Sub Header & Search Content giữ nguyên) */}
       <div className="flex items-center justify-between mb-4 mt-2">
         <h2 className="text-[15px] font-bold text-gray-900">Bài đăng</h2>
-        <div className='relative' ref={dropdownRef}>
-          <button onClick={() => setIsOpenSort(!isOpenSort)} className="flex items-center text-gray-500 text-sm hover:bg-gray-100 px-2 py-1 rounded">
-            {selectedSort}
-            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          {isOpenSort && (
-            <div className="absolute right-0 bottom-full mt-1 bg-white border border-gray-200 rounded shadow-md w-48 z-10">
-              {sortOptions.map((option) => (
-                <button
-                  key={option}
-                  onClick={() => handleSelect(option)}
-                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${selectedSort === option ? 'font-semibold text-blue-600 bg-blue-50' : 'text-gray-700'
-                    }`}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Divider */}

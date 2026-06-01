@@ -19,6 +19,20 @@ const formatTimeAgo = (dateString) => {
   return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
 };
 
+const formatNumber = (num) => {
+  if (!num) return num;
+  if (num >= 1000000000) {
+    return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+  }
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  }
+  return num;
+};
+
 const getPostGroup = (post, fallbackGroup = null) => {
   const group = post?.group || post?.space || post?.community || post?.groupInfo || fallbackGroup;
   const groupId = group?.id || group?.groupId || post?.groupId || post?.spaceId || post?.communityId || fallbackGroup?.id;
@@ -81,6 +95,8 @@ const PostCard = ({ post, isOwnPost, group }) => {
   const authorCredential = post.author?.department ? `${post.author.department}` : 'Thành viên CampusHub';
   const avatarUrl = post.author?.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=dfb9b9&color=6a2f30`;
   const postGroup = getPostGroup(post, group);
+  const groupInfo =  group;
+  const isLeaderOfGroup = groupInfo?.memberRole === 'LEADER';
 
   const handleNavigateToGroup = (event, groupId) => {
     event.stopPropagation();
@@ -309,14 +325,15 @@ const PostCard = ({ post, isOwnPost, group }) => {
               className={`flex items-center gap-1 px-3 py-1.5 transition-colors ${isLiked ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'}`}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-              <span className="text-[13px] font-medium">{upvotesCount}</span>
+              {upvotesCount > 0 && <span className="text-[13px] font-medium">{formatNumber(upvotesCount)}</span>}
+
             </button>
             <button
               onClick={handleDislike}
               className={`flex items-center gap-1 px-3 py-1.5 border-l border-gray-300 transition-colors ${isDisliked ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'}`}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-180"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-              {downvotesCount > 0 && <span className="text-[13px] font-medium">{downvotesCount}</span>}
+              {downvotesCount > 0 && <span className="text-[13px] font-medium">{formatNumber(downvotesCount)}</span>}
             </button>
           </div>
           {/* Comment button */}
@@ -325,7 +342,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
             className={`flex items-center gap-1 px-3 py-1.5 rounded-full hover:bg-[#f7edee] transition-colors flex-shrink-0 ${isCommentOpen ? 'bg-[#f7edee]' : ''}`}
             style={isCommentOpen ? { color: 'var(--color-dusty-rose-600)' } : {}}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-            <span className="text-[13px] font-medium">{commentAmount > 0 ? commentAmount : ''}</span>
+            <span className="text-[13px] font-medium">{commentAmount > 0 ? formatNumber(commentAmount) : ''}</span>
           </button>
 
 
@@ -334,7 +351,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
             onClick={openShareModal}
             className="flex items-center justify-center gap-1.5 p-2 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-            {shareAmount > 0 && <span className="text-[13px] font-medium">{shareAmount}</span>}
+            {shareAmount > 0 && <span className="text-[13px] font-medium">{formatNumber(shareAmount)}</span>}
           </button>
         </div>
         {/* Option button */}
@@ -349,7 +366,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
           {isOptionOpen && (
             <div className="absolute right-0 bottom-full mt-1 bg-white border border-gray-200 rounded shadow-md w-48 z-10 overflow-hidden">
               {isOwnPost && <button onClick={openEditModal} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Chỉnh sửa bài viết</button>}
-              {isOwnPost && <button onClick={handleDeletePost} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Xóa bài viết</button>}
+              {(isOwnPost || isLeaderOfGroup) && <button onClick={handleDeletePost} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Xóa bài viết</button>}
               <button onClick={openReportModal} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Báo cáo bài viết</button>
             </div>
           )}
@@ -370,10 +387,6 @@ const PostCard = ({ post, isOwnPost, group }) => {
           {/* Comments Header */}
           <div className="flex items-center justify-between border-b border-gray-200 pb-2 mb-3">
             <span className="text-[14px] font-bold text-gray-800">Bình luận</span>
-            <button className="flex items-center text-[13px] text-gray-500 font-medium hover:bg-gray-100 px-2 py-1 rounded">
-              Recommended
-              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-            </button>
           </div>
 
           {/* Comments List */}
@@ -596,11 +609,11 @@ const PostCard = ({ post, isOwnPost, group }) => {
                 <div className="flex items-center gap-2">
                   <button onClick={handleLike} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${isLiked ? 'text-blue-600 bg-blue-50' : 'hover:bg-gray-100'}`}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                    <span className="text-[14px] font-medium">{upvotesCount > 0 ? upvotesCount : ''}</span>
+                    <span className="text-[14px] font-medium">{upvotesCount > 0 ? formatNumber(upvotesCount) : ''}</span>
                   </button>
                   <button onClick={handleDislike} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${isDisliked ? 'text-blue-600 bg-blue-50' : 'hover:bg-gray-100'}`}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-180"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                    {downvotesCount > 0 && <span className="text-[14px] font-medium">{downvotesCount}</span>}
+                    {downvotesCount > 0 && <span className="text-[14px] font-medium">{formatNumber(downvotesCount)}</span>}
                   </button>
                 </div>
                 {/* Right side: Comment, Share & Option */}
@@ -612,7 +625,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
                       <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
                     </svg>
                     <span className="text-[14px] font-medium hidden sm:inline">
-                      {commentAmount > 0 && <span className="text-[14px] font-medium ml-1">{commentAmount}</span>}
+                      {commentAmount > 0 && <span className="text-[14px] font-medium ml-1">{formatNumber(commentAmount)}</span>}
                     </span>
                   </button>
 
@@ -620,7 +633,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
                   <button onClick={openShareModal} className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
                     <span className="text-[14px] font-medium hidden sm:inline">
-                      {shareAmount > 0 && <span className="text-[13px] font-medium ml-1">{shareAmount}</span>}
+                      {shareAmount > 0 && <span className="text-[13px] font-medium ml-1">{formatNumber(shareAmount)}</span>}
                     </span>
                   </button>
                   
@@ -636,7 +649,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
                     {isModalOptionOpen && (
                       <div className="absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded shadow-md w-48 z-10 overflow-hidden">
                         {isOwnPost && <button onClick={openEditModal} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Chỉnh sửa bài viết</button>}
-                        {isOwnPost && <button onClick={handleDeletePost} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Xóa bài viết</button>}
+                        {(isOwnPost || isLeaderOfGroup) && <button onClick={handleDeletePost} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Xóa bài viết</button>}
                         <button onClick={openReportModal} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Báo cáo bài viết</button>
                       </div>
                     )}
@@ -647,7 +660,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
               {/* Comments inside Modal (Always open) */}
               <div className="mt-2">
                 <CommentInput
-                  avatarUrl={avatarUrl}
+                  avatarUrl={currentUser.avatarUrl}
                   placeholder="Viết bình luận..."
                   bgClass="bg-gray-50/80"
                   toggleComment={() => { }}

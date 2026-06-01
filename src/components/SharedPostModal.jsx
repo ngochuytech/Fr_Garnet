@@ -9,6 +9,20 @@ import Comment from './Comment';
 import SharePostModal from './SharePostModal';
 import { ImagePreviewModal } from './ImagePreviewModal';
 
+const formatNumber = (num) => {
+  if (!num) return num;
+  if (num >= 1000000000) {
+    return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+  }
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  }
+  return num;
+};
+
 // ─── Inner component dùng usePostCard sau khi đã có postId ─────────────────
 const SharedPostContent = ({ post, onClose }) => {
   const navigate = useNavigate();
@@ -221,7 +235,7 @@ const SharedPostContent = ({ post, onClose }) => {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
             </svg>
-            <span className="text-[14px] font-medium">{upvotesCount > 0 ? upvotesCount : ''}</span>
+            <span className="text-[14px] font-medium">{upvotesCount > 0 ? formatNumber(upvotesCount) : ''}</span>
           </button>
           {/* Dislike */}
           <button
@@ -231,7 +245,7 @@ const SharedPostContent = ({ post, onClose }) => {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-180">
               <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
             </svg>
-            {downvotesCount > 0 && <span className="text-[14px] font-medium ml-1">{downvotesCount}</span>}
+            {downvotesCount > 0 && <span className="text-[14px] font-medium ml-1">{formatNumber(downvotesCount)}</span>}
           </button>
         </div>
 
@@ -245,7 +259,7 @@ const SharedPostContent = ({ post, onClose }) => {
               <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
             </svg>
             <span className="text-[14px] font-medium hidden sm:inline">
-              {commentAmount > 0 && <span className="text-[14px] font-medium ml-1">{commentAmount}</span>}
+              {commentAmount > 0 && <span className="text-[14px] font-medium ml-1">{formatNumber(commentAmount)}</span>}
             </span>
 
           </button>
@@ -260,7 +274,7 @@ const SharedPostContent = ({ post, onClose }) => {
               <line x1="12" y1="2" x2="12" y2="15" />
             </svg>
             <span className="text-[14px] font-medium hidden sm:inline">
-              {shareAmount > 0 && <span className="text-[14px] font-medium ml-1">{shareAmount}</span>}
+              {shareAmount > 0 && <span className="text-[14px] font-medium ml-1">{formatNumber(shareAmount)}</span>}
             </span>
           </button>
 

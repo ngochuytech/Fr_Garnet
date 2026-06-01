@@ -12,7 +12,7 @@ const formatDate = (value) => {
 };
 
 const getStatusMeta = (space) => {
-  const isArchived = space?.isArchived || space?.status === 'ARCHIVED';
+  const isArchived = space?.status === 'ARCHIVED';
 
   if (isArchived) {
     return {
@@ -25,7 +25,7 @@ const getStatusMeta = (space) => {
   return {
     label: 'Hoạt động bình thường',
     tone: 'emerald',
-    description: 'Nhóm không có cảnh báo hoặc báo cáo vi phạm đang hiển thị.',
+    description: 'Nhóm không có báo cáo vi phạm đang hiển thị.',
   };
 };
 

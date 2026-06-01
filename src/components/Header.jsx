@@ -33,7 +33,7 @@ const normalizeSearchGroup = (group) => {
     name,
     subtitle: `${Number(group?.memberCount ?? group?.membersCount ?? 0).toLocaleString()} thành viên`,
     avatarUrl: group?.avatarUrl || group?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=dfb9b9&color=6a2f30&size=128`,
-    isArchived: group?.isArchived || group?.status === 'ARCHIVED',
+    status: group?.status,
   };
 };
 
@@ -128,7 +128,7 @@ const Header = () => {
       const groups = groupsResult.status === 'fulfilled'
         ? getPayloadItems(groupsResult.value)
           .map(normalizeSearchGroup)
-          .filter((group) => group.id && !group.isArchived && matchesQuery(group.name, query))
+          .filter((group) => group.id && group.status !== 'ARCHIVED' && matchesQuery(group.name, query))
           .slice(0, 3)
         : [];
 
@@ -419,29 +419,6 @@ const Header = () => {
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </Link>
-
-              <div className="h-px bg-gray-100 mx-2 my-1" />
-
-              {/* Menu Items */}
-              <div className="flex flex-col">
-                <Link to="/messages" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition-colors text-[14.5px]">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span>Tin nhắn</span>
-                </Link>
-              </div>
-
-              <div className="flex flex-col">
-                <Link to="/stats" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition-colors text-[14.5px]">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
-                        <line x1="18" y1="20" x2="18" y2="10"></line>
-                        <line x1="12" y1="20" x2="12" y2="4"></line>
-                        <line x1="6" y1="20" x2="6" y2="14"></line>
-                    </svg>
-                    <span>Thống kê nội dung</span>
-                </Link>
-              </div>
 
               <div className="h-px bg-gray-100 mx-2 my-1" />
 

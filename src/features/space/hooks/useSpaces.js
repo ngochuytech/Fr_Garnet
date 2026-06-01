@@ -89,8 +89,6 @@ const getEmbeddedJoinRequests = (group) => {
 
 const canManageGroup = (space) => {
   return ['LEADER', 'OWNER'].includes(space?.memberRole)
-    || ['LEADER', 'OWNER'].includes(space?.role)
-    || space?.isLeader;
 };
 
 const normalizeMember = (member) => {
@@ -156,20 +154,12 @@ const mergeMembers = (currentMembers, nextMembers) => {
 
 const normalizeSpace = (group) => {
   const name = group?.name || 'Nhóm chưa đặt tên';
-  const membersCount = Number(group?.memberCount ?? group?.membersCount ?? 0);
+  const membersCount = Number(group?.memberCount ?? 0);
   const rawStatus = group?.status ?? null;
   const memberStatus = group?.memberStatus
-    ?? group?.membershipStatus
-    ?? group?.requestStatus
-    ?? group?.joinStatus
     ?? (MEMBER_STATUSES.includes(rawStatus) ? rawStatus : null);
-  const memberRole = group?.memberRole ?? group?.role ?? null;
-  const status = GROUP_STATUSES.includes(rawStatus) ? rawStatus : (group?.groupStatus ?? 'ACTIVE');
-  const warnings = Array.isArray(group?.warnings)
-    ? group.warnings
-    : Array.isArray(group?.adminWarnings)
-      ? group.adminWarnings
-      : [];
+  const memberRole = group?.memberRole ?? null;
+  const status = GROUP_STATUSES.includes(rawStatus) ? rawStatus : 'ACTIVE';
   const reports = Array.isArray(group?.reports)
     ? group.reports
     : Array.isArray(group?.violationReports)
@@ -183,30 +173,18 @@ const normalizeSpace = (group) => {
     memberCount: membersCount,
     membersCount,
     status,
-    isArchived: status === 'ARCHIVED',
     memberStatus,
     memberRole,
-    isMember: memberStatus === 'APPROVED' || (!memberStatus && Boolean(group?.isMember)),
-    isPending: memberStatus === 'PENDING' || (!memberStatus && Boolean(group?.isPending)),
-    isLeader: group?.isLeader ?? (['LEADER', 'OWNER'].includes(memberRole) && memberStatus === 'APPROVED'),
     avatarUrl: group?.avatarUrl || getFallbackAvatarUrl(name),
     coverUrl: group?.coverUrl || DEFAULT_COVER_URL,
-    warningCount: Number(group?.warningCount ?? group?.warningsCount ?? warnings.length),
     reportCount: Number(group?.reportCount ?? group?.reportedCount ?? group?.reportsCount ?? reports.length),
-    warnings,
     reports,
-    latestWarning: group?.latestWarning || group?.lastWarning || warnings[0] || null,
     latestReport: group?.latestReport || group?.lastReport || reports[0] || null,
     adminNotes: group?.adminNotes || group?.moderationNotes || group?.statusNotes || '',
   };
 };
 
 const normalizeGroupStatus = (payload = {}) => {
-  const warnings = Array.isArray(payload?.warnings)
-    ? payload.warnings
-    : Array.isArray(payload?.adminWarnings)
-      ? payload.adminWarnings
-      : [];
   const reports = Array.isArray(payload?.reports)
     ? payload.reports
     : Array.isArray(payload?.violationReports)
@@ -216,11 +194,8 @@ const normalizeGroupStatus = (payload = {}) => {
   return {
     ...payload,
     status: payload?.status,
-    warningCount: Number(payload?.warningCount ?? payload?.warningsCount ?? warnings.length),
     reportCount: Number(payload?.reportCount ?? payload?.reportedCount ?? payload?.reportsCount ?? reports.length),
-    warnings,
     reports,
-    latestWarning: payload?.latestWarning || payload?.lastWarning || warnings[0] || null,
     latestReport: payload?.latestReport || payload?.lastReport || reports[0] || null,
     adminNotes: payload?.adminNotes || payload?.moderationNotes || payload?.statusNotes || '',
   };
@@ -321,7 +296,7 @@ export const useSpaces = (routeSpaceId = null) => {
     });
 
     setRequestedGroupIds((currentIds) => {
-      if (normalized.memberStatus === 'PENDING' || normalized.isPending) {
+      if (normalized.memberStatus === 'PENDING') {
         return currentIds.includes(normalized.id) ? currentIds : [...currentIds, normalized.id];
       }
 
@@ -512,7 +487,7 @@ export const useSpaces = (routeSpaceId = null) => {
       const normalizedGroups = groups.map(normalizeSpace);
       setSpaces(normalizedGroups);
       setRequestedGroupIds(normalizedGroups
-        .filter((group) => group.memberStatus === 'PENDING' || group.isPending)
+        .filter((group) => group.memberStatus === 'PENDING')
         .map((group) => group.id));
     } catch (err) {
       const message = getErrorMessage(err, 'Không thể tải danh sách nhóm');
@@ -612,8 +587,6 @@ export const useSpaces = (routeSpaceId = null) => {
       const createdGroup = await createGroup(payload);
       const normalized = syncSpace({
         ...createdGroup,
-        isLeader: true,
-        isMember: true,
         memberRole: 'LEADER',
         memberStatus: 'APPROVED',
       });
@@ -633,12 +606,12 @@ export const useSpaces = (routeSpaceId = null) => {
     const key = `join:${groupId}`;
     const targetSpace = spaces.find((space) => space.id === groupId);
 
-    if (targetSpace?.isPending || targetSpace?.memberStatus === 'PENDING' || requestedGroupIds.includes(groupId)) {
+    if (targetSpace?.memberStatus === 'PENDING' || requestedGroupIds.includes(groupId)) {
       toast.error('Bạn đang chờ duyệt vào nhóm này');
       return false;
     }
 
-    if (targetSpace?.isMember || targetSpace?.memberStatus === 'APPROVED') {
+    if (targetSpace?.memberStatus === 'APPROVED') {
       toast.error('Bạn đã là thành viên của nhóm này');
       return false;
     }
@@ -647,7 +620,7 @@ export const useSpaces = (routeSpaceId = null) => {
       setActionLoading(key, true);
       const result = await joinGroup(groupId);
       setSpaces((currentSpaces) => currentSpaces.map((space) => (
-        space.id === groupId ? { ...space, memberStatus: 'PENDING', isPending: true } : space
+        space.id === groupId ? { ...space, memberStatus: 'PENDING' } : space
       )));
       setRequestedGroupIds((currentIds) => (
         currentIds.includes(groupId) ? currentIds : [...currentIds, groupId]
@@ -671,7 +644,7 @@ export const useSpaces = (routeSpaceId = null) => {
       const result = await leaveGroup(groupId);
       setSpaces((currentSpaces) => currentSpaces.map((space) => (
         space.id === groupId
-          ? { ...space, memberStatus: null, memberRole: null, isMember: false, isPending: false, isLeader: false }
+          ? { ...space, memberStatus: null, memberRole: null }
           : space
       )));
       setRequestedGroupIds((currentIds) => currentIds.filter((id) => id !== groupId));

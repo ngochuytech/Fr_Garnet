@@ -4,11 +4,8 @@ const GROUP_NAME_MAX_LENGTH = 50;
 
 const isJoinedSpace = (space) => {
   return Boolean(
-    space?.isMember
-    || space?.memberStatus === 'APPROVED'
-    || space?.isLeader
+    space?.memberStatus === 'APPROVED'
     || space?.memberRole === 'LEADER'
-    || space?.role === 'LEADER'
   );
 };
 
@@ -26,8 +23,8 @@ const getSpaceState = (space, actionLoadingKeys, requestedGroupIds) => {
   const isJoining = actionLoadingKeys.includes(joinKey);
   const isJoined = isJoinedSpace(space);
   const isRejected = isRejectedSpace(space);
-  const isPending = !isRejected && (hasRequested || space.isPending || space.memberStatus === 'PENDING');
-  const isArchived = space.isArchived || space.status === 'ARCHIVED';
+  const isPending = !isRejected && (hasRequested || space.memberStatus === 'PENDING');
+  const isArchived = space.status === 'ARCHIVED';
 
   return { isJoining, isJoined, isPending, isRejected, isArchived };
 };
@@ -164,7 +161,7 @@ const SpaceGrid = ({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', description: '' });
   const mySpaces = spaces.filter(isJoinedSpace);
-  const discoverSpaces = spaces.filter((space) => !isJoinedSpace(space) && !space.isArchived && space.status !== 'ARCHIVED');
+  const discoverSpaces = spaces.filter((space) => !isJoinedSpace(space) && space.status !== 'ARCHIVED');
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;

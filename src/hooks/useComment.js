@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getRepliesByCommentId } from '../services/postService';
+import { getRepliesByCommentId, reportCommentAPI } from '../services/postService';
 
 export const useComment = ({ comment, handleReactionComment, depth = 0 }) => {
     const [showReplies, setShowReplies] = useState(false);
@@ -83,6 +83,16 @@ export const useComment = ({ comment, handleReactionComment, depth = 0 }) => {
         }
     };
 
+    const handleReportComment = async (payload) => {
+        try {
+            await reportCommentAPI(comment.id, payload);
+            return true;
+        } catch (error) {
+            console.error("Lỗi báo cáo bình luận:", error);
+            return false;
+        }
+    };
+
     const isMaxDepth = depth >= 4;
     const isNested = depth > 0;
 
@@ -99,6 +109,7 @@ export const useComment = ({ comment, handleReactionComment, depth = 0 }) => {
         dislikeCount,
         handleLocalReaction,
         handleLoadReplies,
+        handleReportComment,
         setReplies,
         setShowReplies,
         isMaxDepth,

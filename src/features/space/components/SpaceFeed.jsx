@@ -5,13 +5,9 @@ import { useSpacePosts } from '../hooks/useSpacePosts';
 
 const canCreateGroupPost = (space) => {
   return Boolean(
-    !space?.isArchived
-    && space?.status !== 'ARCHIVED'
-    && (space?.isMember
-    || space?.memberStatus === 'APPROVED'
-    || space?.isLeader
-    || space?.memberRole === 'LEADER'
-    || space?.role === 'LEADER')
+    space?.status === 'ACTIVE'
+    && (space?.memberStatus === 'APPROVED'
+      || space?.memberRole === 'LEADER')
   );
 };
 
@@ -49,7 +45,7 @@ const SpaceFeed = ({ space, detailLoading, onBack, onShowMembers }) => {
   }
 
   const canCreatePost = canCreateGroupPost(space);
-  const isArchived = space.isArchived || space.status === 'ARCHIVED';
+  const isArchived = space?.status === 'ARCHIVED';
 
   return (
     <main className="w-full flex-1">

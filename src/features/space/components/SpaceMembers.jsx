@@ -22,8 +22,7 @@ const getMemberRoleLabel = (member) => {
 
 const canManageSpace = (space) => {
   return ['LEADER', 'OWNER'].includes(space?.memberRole)
-    || ['LEADER', 'OWNER'].includes(space?.role)
-    || space?.isLeader;
+    || ['LEADER', 'OWNER'].includes(space?.role);
 };
 
 const MemberCard = ({
@@ -195,7 +194,7 @@ const SpaceMembers = ({
       return groups;
     }, { leaders: [], regularMembers: [] });
   }, [members]);
-  const isArchived = space?.isArchived || space?.status === 'ARCHIVED';
+  const isArchived = space?.status === 'ARCHIVED';
   const canKickMembers = canManageSpace(space) && !isArchived;
 
   const handleConfirmKick = async (groupId, targetUserId) => {

@@ -177,35 +177,6 @@ const RegisterForm = () => {
           }
         />
 
-        {/* Terms */}
-        <div className="mt-1">
-          <label className="flex items-start gap-2.5 cursor-pointer">
-            <input
-              type="checkbox"
-              name="agreeTerms"
-              checked={formData.agreeTerms}
-              onChange={handleChange}
-              className="mt-0.5 w-4 h-4 rounded cursor-pointer"
-              style={{ accentColor: 'var(--color-dusty-rose-500)' }}
-            />
-            <span className="text-xs text-slate-500 leading-relaxed">
-              Tôi đồng ý với{' '}
-              <a href="#" className="font-medium underline" style={{ color: 'var(--color-dusty-rose-500)' }}>
-                Điều khoản dịch vụ
-              </a>{' '}
-              và{' '}
-              <a href="#" className="font-medium underline" style={{ color: 'var(--color-dusty-rose-500)' }}>
-                Chính sách bảo mật
-              </a>
-            </span>
-          </label>
-          {errors.agreeTerms && (
-            <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
-              <span>⚠</span> {errors.agreeTerms}
-            </p>
-          )}
-        </div>
-
         {/* Submit */}
         <button
           type="submit"

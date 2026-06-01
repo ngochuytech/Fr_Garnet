@@ -128,4 +128,16 @@ export const sharePostAPI = async (postId, payload) => {
         method: 'POST',
         body: JSON.stringify(payload),
     });
-}
+};
+
+/**
+ * Reports a comment.
+ * @param {string|number} commentId 
+ * @param {object} payload - { reason, description }
+ */
+export const reportCommentAPI = async (commentId, payload) => {
+    return apiFetch(`/users/comments/${commentId}/report`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+};

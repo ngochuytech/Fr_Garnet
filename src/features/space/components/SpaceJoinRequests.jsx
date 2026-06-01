@@ -100,7 +100,7 @@ const SpaceJoinRequests = ({
     );
   }
 
-  const isArchived = space.isArchived || space.status === 'ARCHIVED';
+  const isArchived = space?.status === 'ARCHIVED';
 
   return (
     <main className="w-full flex-1">

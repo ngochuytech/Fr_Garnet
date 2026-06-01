@@ -4,23 +4,19 @@ import { createPortal } from 'react-dom';
 const GROUP_NAME_EDIT_MAX_LENGTH = 50;
 
 const canManageGroup = (space) => {
-  return ['LEADER', 'OWNER'].includes(space?.memberRole)
-    || ['LEADER', 'OWNER'].includes(space?.role)
-    || space?.isLeader;
+  return ['LEADER'].includes(space?.memberRole)
 };
 
 const isJoinedSpace = (space) => {
   return Boolean(
-    space?.isMember
-    || space?.memberStatus === 'APPROVED'
-    || space?.isLeader
+    space?.memberStatus === 'APPROVED'
     || space?.memberRole === 'LEADER'
     || space?.role === 'LEADER'
   );
 };
 
 const canLeaveSpace = (space) => {
-  return !canManageGroup(space) && (space?.isMember || space?.memberStatus === 'APPROVED');
+  return !canManageGroup(space) && space?.memberStatus === 'APPROVED';
 };
 
 const isRejectedSpace = (space) => {
@@ -34,8 +30,6 @@ const isRejectedSpace = (space) => {
 const canJoinSpace = (space) => {
   return !canManageGroup(space)
     && space?.status !== 'ARCHIVED'
-    && !space?.isArchived
-    && !space?.isMember
     && space?.memberStatus !== 'APPROVED'
     && space?.memberStatus !== 'PENDING';
 };
@@ -278,7 +272,7 @@ const SpaceSidebar = ({
 
   if (!selectedSpace) {
     const mySpaces = spaces.filter(isJoinedSpace);
-    const discoverSpaces = spaces.filter((space) => !isJoinedSpace(space) && !space.isArchived && space.status !== 'ARCHIVED');
+    const discoverSpaces = spaces.filter((space) => !isJoinedSpace(space) && space.status !== 'ARCHIVED');
 
     return (
       <aside className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-4">
@@ -317,8 +311,8 @@ const SpaceSidebar = ({
   const isUpdatingDescription = actionLoadingKeys.includes(descriptionKey);
   const isReporting = actionLoadingKeys.includes(reportKey);
   const isRejected = isRejectedSpace(selectedSpace);
-  const isPending = !isRejected && (hasRequested || selectedSpace.isPending || selectedSpace.memberStatus === 'PENDING');
-  const isArchived = selectedSpace.isArchived || selectedSpace.status === 'ARCHIVED';
+  const isPending = !isRejected && (hasRequested || selectedSpace.memberStatus === 'PENDING');
+  const isArchived = selectedSpace.status === 'ARCHIVED';
   const isLeader = canManageGroup(selectedSpace);
   const canEditGroup = isLeader && !isArchived;
   const isEditingName = nameEditor.isEditing && nameEditor.groupId === selectedSpace.id;

@@ -20,7 +20,6 @@ export const useRegisterForm = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    agreeTerms: false,
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +45,6 @@ export const useRegisterForm = () => {
       email: validateEmail(formData.email),
       password: validatePassword(formData.password),
       confirmPassword: validateConfirmPassword(formData.password, formData.confirmPassword),
-      agreeTerms: !formData.agreeTerms ? 'Bạn phải đồng ý với điều khoản sử dụng' : null,
     };
     setErrors(newErrors);
     return !Object.values(newErrors).some(Boolean);

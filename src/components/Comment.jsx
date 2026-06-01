@@ -1,7 +1,90 @@
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { toast } from 'sonner';
 import CommentInput from './CommentInput';
 import { useNavigate } from 'react-router-dom';
 import { useComment } from '../hooks/useComment';
 import { useAuth } from '../context/AuthContext';
+
+const REPORT_REASONS = [
+  'Nội dung spam hoặc lừa đảo',
+  'Ngôn từ thù ghét hoặc quấy rối',
+  'Nội dung không phù hợp',
+  'Mạo danh hoặc thông tin sai lệch',
+  'Vi phạm quy định cộng đồng',
+];
+
+const ReportCommentModal = ({
+  comment,
+  value,
+  isSubmitting,
+  onChange,
+  onClose,
+  onSubmit,
+}) => {
+  if (!comment) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center bg-black/40 px-4" style={{ zIndex: 9999 }}>
+      <form
+        onSubmit={onSubmit}
+        className="w-full max-w-md rounded-xl bg-white border border-gray-100 shadow-xl p-5 text-left"
+      >
+        <h2 className="text-base font-bold text-gray-900">Báo cáo bình luận</h2>
+        <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+          Báo cáo bình luận của <span className="font-bold text-gray-900">{comment.user?.name}</span> đến quản trị viên.
+        </p>
+
+        <label className="block mt-5 text-[12px] font-bold uppercase tracking-wide text-gray-500">
+          Lý do vi phạm
+        </label>
+        <select
+          value={value.reason}
+          onChange={(event) => onChange({ ...value, reason: event.target.value })}
+          disabled={isSubmitting}
+          className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-[#d09596] disabled:bg-gray-50"
+          required
+        >
+          <option value="">Chọn lý do</option>
+          {REPORT_REASONS.map((reason) => (
+            <option key={reason} value={reason}>{reason}</option>
+          ))}
+        </select>
+
+        <label className="block mt-4 text-[12px] font-bold uppercase tracking-wide text-gray-500">
+          Mô tả thêm
+        </label>
+        <textarea
+          value={value.description}
+          onChange={(event) => onChange({ ...value, description: event.target.value })}
+          disabled={isSubmitting}
+          rows="4"
+          placeholder="Nhập chi tiết để quản trị viên dễ kiểm tra..."
+          className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-[#d09596] disabled:bg-gray-50 resize-none"
+        />
+
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="py-2 px-4 rounded-lg border border-gray-200 text-[13px] font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+          >
+            Hủy
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting || !value.reason}
+            className="py-2 px-4 rounded-lg bg-[#8d3f41] text-[13px] font-bold text-white hover:bg-[#6a2f30] disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? 'Đang gửi...' : 'Gửi báo cáo'}
+          </button>
+        </div>
+      </form>
+    </div>,
+    document.body,
+  );
+};
 
 const Comment = ({
   comment,
@@ -23,6 +106,7 @@ const Comment = ({
     dislikeCount,
     handleLocalReaction,
     handleLoadReplies,
+    handleReportComment,
     setReplies,
     setShowReplies,
     isMaxDepth,
@@ -31,6 +115,24 @@ const Comment = ({
 
     const { user: currentUser } = useAuth();
     const navigate = useNavigate();
+
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [reportForm, setReportForm] = useState({ reason: '', description: '' });
+    const [isReporting, setIsReporting] = useState(false);
+
+    const submitReport = async (e) => {
+      e.preventDefault();
+      setIsReporting(true);
+      const success = await handleReportComment(reportForm);
+      setIsReporting(false);
+      if (success) {
+        toast.success('Đã gửi báo cáo thành công');
+        setIsReportModalOpen(false);
+        setReportForm({ reason: '', description: '' });
+      } else {
+        toast.error('Không thể gửi báo cáo');
+      }
+    };
 
     const handleNavigateToUser = (e, userId) => {
       if (e) e.stopPropagation();
@@ -112,6 +214,12 @@ const Comment = ({
                 >
                   Phản hồi
                 </button>
+                <button
+                  onClick={() => setIsReportModalOpen(true)}
+                  className="px-3 py-1 text-[13px] font-medium text-gray-500 rounded hover:bg-gray-100 transition-colors"
+                >
+                  Báo cáo
+                </button>
               </div>
 
               {/* Reply Input */}
@@ -178,6 +286,18 @@ const Comment = ({
             />
           ))}
         </div>
+      )}
+
+      {/* Report Modal */}
+      {isReportModalOpen && (
+        <ReportCommentModal
+          comment={comment}
+          value={reportForm}
+          isSubmitting={isReporting}
+          onChange={setReportForm}
+          onClose={() => setIsReportModalOpen(false)}
+          onSubmit={submitReport}
+        />
       )}
     </div>
   );
