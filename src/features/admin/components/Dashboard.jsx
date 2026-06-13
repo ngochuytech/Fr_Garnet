@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDashboardStatsAPI, getUserGrowthAPI, getTopicDistributionAPI, getReportWeeklyAPI } from '../services/dashboardService';
+import { getDashboardStatsAPI, getUserGrowthAPI, getTopicDistributionAPI } from '../services/dashboardService';
 import { useNavigate } from 'react-router-dom';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -51,11 +51,7 @@ const IconAlertTriangle = () => (
   </svg>
 );
 
-const IconHeart = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-  </svg>
-);
+
 
 const IconArrowRight = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -152,20 +148,11 @@ const BarChartSimulated = ({ data }) => {
 
 // ── Horizontal Bar Chart (Space distribution) ─────────────────────────────────
 const SpaceBarChart = ({ data }) => {
+  const total = data.reduce((sum, d) => sum + (d.value || 0), 0) || 1;
+  const max = Math.max(...data.map(d => d.value || 0), 1);
+
   return (
     <div className="space-y-3 pt-2">
-      {/* Segmented bar */}
-      <div className="flex rounded-xl overflow-hidden h-4 gap-0.5">
-        {data.map((d, i) => (
-          <div
-            key={i}
-            className="transition-all duration-700 first:rounded-l-xl last:rounded-r-xl"
-            style={{ width: `${d.value}%`, backgroundColor: d.color }}
-            title={`${d.label}: ${d.value}%`}
-          />
-        ))}
-      </div>
-
       {/* Legend */}
       <div className="space-y-2 mt-4">
         {data.map((d, i) => (
@@ -176,7 +163,7 @@ const SpaceBarChart = ({ data }) => {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${d.value}%`, backgroundColor: d.color }} />
+                <div className="h-full rounded-full" style={{ width: `${(d.value / max) * 100}%`, backgroundColor: d.color }} />
               </div>
               <span className="text-[11px] font-black text-gray-700 w-8 text-right">{d.value}%</span>
             </div>
@@ -193,7 +180,6 @@ const Dashboard = () => {
   const [now, setNow] = useState(new Date());
   const [data, setData] = useState({
     stats: null,
-    urgentReports: [],
     growthData: [],
     topicDistribution: []
   });
@@ -203,17 +189,15 @@ const Dashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [statsRes, growthRes, topicRes, reportsRes] = await Promise.all([
+        const [statsRes, growthRes, topicRes] = await Promise.all([
           getDashboardStatsAPI(),
           getUserGrowthAPI(),
-          getTopicDistributionAPI(),
-          getReportWeeklyAPI()
+          getTopicDistributionAPI()
         ]);
         
         // Cấu trúc dữ liệu giả định từ Backend
         setData({
           stats: statsRes?.stats || statsRes,
-          urgentReports: reportsRes.items || [],
           growthData: growthRes || [],
           topicDistribution: topicRes || []
         });
@@ -229,7 +213,7 @@ const Dashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const { stats, urgentReports, growthData, topicDistribution } = data;
+  const { stats, growthData, topicDistribution } = data;
 
   const formattedDate = now.toLocaleDateString('vi-VN', {
     weekday: 'long',
@@ -266,7 +250,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── Stat Cards ────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <StatCard
           icon={<IconUsers />}
           label="Tổng Người dùng"
@@ -287,13 +271,6 @@ const Dashboard = () => {
           value={stats.weeklyReports}
           trend={stats.reportGrowthPercent > 0 ? `+${stats.reportGrowthPercent}%` : `${stats.reportGrowthPercent}%`}
           colorScheme="red"
-        />
-        <StatCard
-          icon={<IconHeart />}
-          label="Tương Tác Tuần"
-          value={stats.weeklyInteractions}
-          trend={stats.interactionGrowthPercent > 0 ? `+${stats.interactionGrowthPercent}%` : `${stats.interactionGrowthPercent}%`}
-          colorScheme="neutral"
         />
       </div>
 
@@ -345,104 +322,16 @@ const Dashboard = () => {
           <SpaceBarChart 
             data={[...topicDistribution]
               .sort((a, b) => b.value - a.value)
+              .slice(0, 5)
               .map((t, i) => ({
                 ...t,
                 color: ['#6366f1', '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#e5e7eb'][i % 7]
               }))} 
           />
-
-          <div className="mt-5 pt-4 border-t border-gray-50">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              Tổng số báo cáo hệ thống: <span className="text-gray-900">{stats.totalReports}</span>
-            </p>
-          </div>
         </div>
       </div>
 
-      {/* ── Urgent Reports Table ──────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-        {/* Section header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-50 rounded-xl text-red-600">
-              <IconAlertTriangle />
-            </div>
-            <div>
-              <h2 className="text-sm font-black text-gray-900">Việc cần làm ngay</h2>
-              <p className="text-[11px] text-gray-400 font-medium mt-0.5">Báo cáo vi phạm đang chờ xử lý</p>
-            </div>
-          </div>
-
-          <span className="inline-flex items-center gap-1.5 bg-red-50 border border-red-100 text-red-600 text-[11px] font-black uppercase tracking-wide px-3 py-1.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-            {stats.weeklyReports} báo cáo mới tuần này
-          </span>
-        </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead>
-              <tr className="bg-gray-50/80 border-b border-gray-100">
-                {['#', 'Người bị báo cáo', 'Lý do vi phạm', 'Thời gian', 'Hành động'].map((h) => (
-                  <th key={h} className="px-5 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {urgentReports.map((report, idx) => (
-                <tr key={report.id} className="hover:bg-gray-50/50 transition-colors group">
-                  <td className="px-5 py-4">
-                    <span className="text-[11px] font-black text-gray-300">#{String(idx + 1).padStart(2, '0')}</span>
-                  </td>
-
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-black text-xs text-gray-500 border border-gray-200 flex-shrink-0">
-                        {report.reportedUser.avatarUrl
-                          ? <img src={report.reportedUser.avatarUrl} alt={report.reportedUser.name} className="w-full h-full object-cover rounded-full" />
-                          : report.reportedUser.fullName.slice(0, 2).toUpperCase()}
-                      </div>
-                      <span className="font-semibold text-gray-900 whitespace-nowrap">{report.reporter.fullName || "Người Trường"}</span>
-                    </div>
-                  </td>
-
-                  <td className="px-5 py-4">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 ring-1 ring-amber-200 whitespace-nowrap">
-                      {report.reason}
-                    </span>
-                  </td>
-
-                  <td className="px-5 py-4 text-xs text-gray-400 font-medium whitespace-nowrap">
-                    {formatDateTime(report.createdAt || report.created_at)}
-                  </td>
-
-                  <td className="px-5 py-4">
-                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-900 text-white hover:bg-gray-700 transition-all shadow-sm whitespace-nowrap group-hover:shadow-md">
-                      Xử lý ngay
-                      <IconArrowRight />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 py-3.5 border-t border-gray-50 bg-gray-50/30 flex items-center justify-between">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            Hiển thị <span className="text-gray-900">{urgentReports.length}</span> báo cáo khẩn cấp
-          </p>
-          <button className="text-[11px] font-black text-gray-500 hover:text-gray-900 uppercase tracking-wider transition-colors flex items-center gap-1"
-            onClick={() => navigate('/admin/reports')}>
-            Xem tất cả <IconArrowRight />
-          </button>
-        </div>
-      </div>
 
     </div>
   );

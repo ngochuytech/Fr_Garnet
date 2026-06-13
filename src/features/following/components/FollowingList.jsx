@@ -51,18 +51,18 @@ const FollowingList = () => {
                     {user.fullName}
                   </span>
                   <div className="flex flex-wrap items-center gap-1 mt-1">
-                    {Array.isArray(user.commonInterests) && user.commonInterests.length > 0 ? (
-                      user.commonInterests.map((interest) => (
+                    {Array.isArray(user.reason) && user.reason.length > 0 ? (
+                      user.reason.map((reason) => (
                         <span
-                          key={interest}
+                          key={reason}
                           className="text-[12px] text-[#8d3f41] font-medium bg-[#f7edee] px-2 py-0.5 rounded"
                         >
-                          ✨ {interest}
+                          ✨ {reason}
                         </span>
                       ))
                     ) : (
                       <span className="text-[12px] text-[#8d3f41] font-medium bg-[#f7edee] w-fit px-2 py-0.5 rounded">
-                        ✨ {user.commonInterests || 'Có thể bạn biết'}
+                        ✨ {user.reason || 'Có thể bạn biết'}
                       </span>
                     )}
                   </div>

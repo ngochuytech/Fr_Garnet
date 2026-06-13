@@ -1,7 +1,7 @@
 import { useHomeRightSideBar } from '../hooks/useHomeRightSideBar';
 
 const HomeRightSidebar = () => {
-    const { currentUser, suggestedUsers, loadingSuggestions } = useHomeRightSideBar();
+    const { currentUser, suggestedUsers, loadingSuggestions, actionLoadingIds, toggleFollow } = useHomeRightSideBar();
 
     return (
         <aside className="w-full pb-6 pl-2 space-y-5">
@@ -43,9 +43,9 @@ const HomeRightSidebar = () => {
                             const name = user.fullName || user.name || 'Người dùng';
                             const avatar = user.avatarUrl || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f7edee&color=8d3f41`;
                             const major = user.department || user.major || 'Thành viên CampusHub';
-                            const reason = Array.isArray(user.commonInterests) && user.commonInterests.length > 0
-                                ? user.commonInterests.join(', ')
-                                : user.commonInterests || 'Gợi ý kết nối mới';
+                            const reason = Array.isArray(user.reason) && user.reason.length > 0
+                                ? user.reason.join(', ')
+                                : user.reason || 'Gợi ý kết nối mới';
 
                             return (
                                 <div key={user.id} className="flex items-start justify-between">
@@ -68,8 +68,16 @@ const HomeRightSidebar = () => {
                                             </span>
                                         </div>
                                     </div>
-                                    <button className="px-3 py-1.5 bg-[#f7edee] text-[#8d3f41] hover:bg-[#efdcdc] hover:text-[#6a2f30] text-xs font-semibold rounded-full transition-colors flex-shrink-0">
-                                        Theo dõi
+                                    <button
+                                        onClick={() => toggleFollow(user.id, user.isFollowing)}
+                                        disabled={actionLoadingIds.includes(user.id)}
+                                        className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors flex-shrink-0 ${
+                                            user.isFollowing
+                                                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                : 'bg-[#f7edee] text-[#8d3f41] hover:bg-[#efdcdc] hover:text-[#6a2f30]'
+                                        } ${actionLoadingIds.includes(user.id) ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                    >
+                                        {user.isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
                                     </button>
                                 </div>
                             );

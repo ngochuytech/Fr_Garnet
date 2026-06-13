@@ -6,6 +6,8 @@ import AuthLayout from './layouts/AuthLayout';
 import MainLayout from './layouts/MainLayout';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import HomePage from './pages/HomePage';
 import FollowingPage from './pages/FollowingPage';
@@ -17,7 +19,7 @@ import TopicPage from './pages/TopicPage';
 import UserPage from './pages/UserPage';
 import PostPage from './pages/PostPage';
 import ProtectedRoute from './components/ProtectedRoute';
-
+import AdminProtectedRoute from './components/AdminProtectedRoute';
 import { useAuth } from './context/AuthContext';
 import ReportManagement from './features/admin/components/ReportManagement';
 import ReportDetailPage from './features/admin/components/ReportDetailPage';
@@ -29,7 +31,7 @@ import ContentDetailPage from './features/admin/components/ContentDetailPage';
 import Dashboard from './features/admin/components/Dashboard';
 import AdminProfile from './features/admin/components/AdminProfile';
 import AdminNotificationPage from './features/admin/components/AdminNotificationPage';
-import AdminActivityLogPage from './features/admin/components/AdminActivityLogPage';
+
 import GroupManagement from './features/admin/components/GroupManagement';
 
 // Component điều hướng thông minh cho đường dẫn không tồn tại
@@ -48,23 +50,26 @@ function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/oauth2/callback/google" element={<OAuth2Callback />} />
           </Route>
 
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="reports" element={<ReportManagement />} />
-            <Route path="reports/:reportId" element={<ReportDetailPage />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="users/:userId" element={<UserDetailPage />} />
-            <Route path="groups" element={<GroupManagement />} />
-            <Route path="posts" element={<ContentModeration />} />
-            <Route path="posts/:postId" element={<ContentDetailPage />} />
-            <Route path="profile" element={<AdminProfile />} />
-            <Route path="notifications" element={<AdminNotificationPage />} />
-            <Route path="activity-logs" element={<AdminActivityLogPage />} />
-            {/* Thêm các trang quản trị khác ở đây */}
+          <Route element={<AdminProtectedRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="reports" element={<ReportManagement />} />
+              <Route path="reports/:reportId" element={<ReportDetailPage />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="users/:userId" element={<UserDetailPage />} />
+              <Route path="groups" element={<GroupManagement />} />
+              <Route path="posts" element={<ContentModeration />} />
+              <Route path="posts/:postId" element={<ContentDetailPage />} />
+              <Route path="profile" element={<AdminProfile />} />
+              <Route path="notifications" element={<AdminNotificationPage />} />
+              {/* Thêm các trang quản trị khác ở đây */}
+            </Route>
           </Route>
 
 

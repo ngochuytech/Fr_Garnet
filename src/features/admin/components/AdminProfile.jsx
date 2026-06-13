@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
-import { getProfile } from '../../profile/services/profileSerivce';
+import { getProfile, updatePassword } from '../../profile/services/profileSerivce';
+import { toast } from 'sonner';
 
 // ─── SVG ICONS (Inline, no external deps) ────────────────────────────────────
 const IconCamera = ({ size = 16 }) => (
@@ -28,29 +29,7 @@ const IconKeyRound = ({ size = 16 }) => (
   </svg>
 );
 
-const IconActivity = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-  </svg>
-);
 
-const IconCheckCircle2 = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><polyline points="9 11 12 14 22 4"/>
-  </svg>
-);
-
-const IconTrash2 = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
-  </svg>
-);
-
-const IconLogIn = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
-  </svg>
-);
 
 const IconMail = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -70,28 +49,7 @@ const IconCalendar = ({ size = 16 }) => (
   </svg>
 );
 
-// ─── MOCK DATA ───────────────────────────────────────────────────────────────
-const MOCK_DATA = {
-  activity_logs: [
-    { id: 1, action: "TAKE_DOWN_POST", description: "Đã gỡ bài viết p892 của Trần B", time: "15 phút trước" },
-    { id: 2, action: "RESOLVE_REPORT", description: "Đã xử lý xong báo cáo r152", time: "2 giờ trước" },
-    { id: 3, action: "LOGIN", description: "Đăng nhập thành công từ IP 192.168.1.1", time: "Hôm qua" }
-  ]
-};
-
 // ─── HELPER COMPONENTS ────────────────────────────────────────────────────────
-const ActivityIcon = ({ action }) => {
-  switch (action) {
-    case 'TAKE_DOWN_POST':
-      return <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-500"><IconTrash2 size={14} /></div>;
-    case 'RESOLVE_REPORT':
-      return <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-500"><IconCheckCircle2 size={14} /></div>;
-    case 'LOGIN':
-      return <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500"><IconLogIn size={14} /></div>;
-    default:
-      return <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500"><IconActivity size={14} /></div>;
-  }
-};
 
 const formatDate = (value) => {
   if (!value) return 'Chưa cập nhật';
@@ -126,9 +84,45 @@ const formatRole = (role) => {
 const AdminProfile = () => {
   const { user, isLoading, logout, updateUser } = useAuth();
   const navigate = useNavigate();
-  const { activity_logs } = MOCK_DATA;
   const [profileUser, setProfileUser] = useState(null);
   const userId = user?.id || user?.userId || user?.email;
+
+  const [formDataPassword, setFormDataPassword] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setFormDataPassword((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmitPassword = async (e) => {
+    e.preventDefault();
+    if (formDataPassword.newPassword !== formDataPassword.confirmPassword) {
+      toast.error("Mật khẩu mới không khớp!");
+      return;
+    }
+    setIsSavingPassword(true);
+    try {
+      await updatePassword(formDataPassword);
+      toast.success('Cập nhật mật khẩu thành công!');
+      setFormDataPassword({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    } catch (error) {
+      toast.error(typeof error === 'string' ? error : error.message || 'Có lỗi xảy ra');
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
 
   useEffect(() => {
     if (!userId) {
@@ -233,16 +227,6 @@ const AdminProfile = () => {
 
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-gray-50 flex flex-shrink-0 items-center justify-center text-gray-400">
-                    <IconPhone size={14} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Số điện thoại</p>
-                    <p className="text-sm font-semibold text-gray-900">{profile.phone}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gray-50 flex flex-shrink-0 items-center justify-center text-gray-400">
                     <IconCalendar size={14} />
                   </div>
                   <div>
@@ -270,7 +254,7 @@ const AdminProfile = () => {
         {/* ── Cột phải: Bảo mật & Hoạt động ── */}
         <div className="md:col-span-2 space-y-6">
           
-          {/* Khối 1: Bảo mật & Cài đặt */}
+          {/* Bảo mật & Cài đặt */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center gap-2 mb-6">
               <IconShield className="text-gray-400" size={20} />
@@ -281,73 +265,61 @@ const AdminProfile = () => {
               {/* Form đổi mật khẩu */}
               <div className="space-y-4">
                 <h4 className="text-[11px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-4">Thay đổi mật khẩu</h4>
-                <div className="space-y-3">
+                <form onSubmit={handleSubmitPassword} className="space-y-3">
                   <div>
                     <input 
                       type="password" 
+                      name="currentPassword"
+                      value={formDataPassword.currentPassword}
+                      onChange={handlePasswordChange}
                       placeholder="Mật khẩu hiện tại" 
+                      required
                       className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
                     />
                   </div>
                   <div>
                     <input 
                       type="password" 
+                      name="newPassword"
+                      value={formDataPassword.newPassword}
+                      onChange={handlePasswordChange}
                       placeholder="Mật khẩu mới" 
+                      required
                       className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
                     />
                   </div>
                   <div>
                     <input 
                       type="password" 
+                      name="confirmPassword"
+                      value={formDataPassword.confirmPassword}
+                      onChange={handlePasswordChange}
                       placeholder="Xác nhận mật khẩu mới" 
+                      required
                       className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
                     />
                   </div>
-                  <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white bg-gray-900 hover:bg-gray-800 transition-all shadow-sm">
-                    <IconKeyRound size={16} />
-                    Lưu mật khẩu mới
+                  <button 
+                    type="submit" 
+                    disabled={isSavingPassword}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white bg-gray-900 hover:bg-gray-800 transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {isSavingPassword ? (
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <IconKeyRound size={16} />
+                    )}
+                    {isSavingPassword ? 'Đang cập nhật...' : 'Lưu mật khẩu mới'}
                   </button>
-                </div>
+                </form>
               </div>
             </div>
           </div>
 
-          {/* Khối 2: Nhật ký hoạt động */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <IconActivity className="text-gray-400" size={20} />
-                <h3 className="text-lg font-black text-gray-900">Nhật ký hoạt động</h3>
-              </div>
-              <Link to="/admin/activity-logs" className="text-[11px] font-bold uppercase tracking-wider text-gray-400 hover:text-gray-900 transition-colors">
-                Xem toàn bộ
-              </Link>
-            </div>
 
-            <div className="relative">
-              {/* Timeline Line */}
-              <div className="absolute left-4 top-4 bottom-4 w-px bg-gray-100" />
-              
-              <div className="space-y-6 relative">
-                {activity_logs.map((log) => (
-                  <div key={log.id} className="flex gap-4">
-                    {/* Timeline dot */}
-                    <div className="relative z-10">
-                      <ActivityIcon action={log.action} />
-                    </div>
-                    {/* Content */}
-                    <div className="flex-1 pt-1">
-                      <p className="text-sm font-semibold text-gray-900">{log.description}</p>
-                      <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mt-1 block">
-                        {log.time}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
 
         </div>
       </div>

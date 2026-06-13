@@ -55,6 +55,8 @@ const ReportManagement = () => {
     setTypeFilter,
     searchQuery,
     setSearchQuery,
+    sortOrder,
+    setSortOrder,
     pagination,
     fetchReports,
     filteredReports,
@@ -138,6 +140,19 @@ const ReportManagement = () => {
                   <option value="POST">Bài viết</option>
                   <option value="COMMENT">Bình luận</option>
                   <option value="GROUP">Nhóm</option>
+                </select>
+                <svg className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+              </div>
+
+              {/* Sort Filter */}
+              <div className="relative">
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-gray-200 cursor-pointer"
+                >
+                  <option value="desc">Mới nhất</option>
+                  <option value="asc">Cũ nhất</option>
                 </select>
                 <svg className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
               </div>

@@ -50,6 +50,7 @@ const ReportDetailPage = () => {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [adminNotes, setAdminNotes] = useState('');
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
   useEffect(() => {
     fetchReport();
@@ -103,6 +104,21 @@ const ReportDetailPage = () => {
     }
   };
 
+  const openImageModal = (index) => setSelectedImageIndex(index);
+  const closeImageModal = () => setSelectedImageIndex(null);
+
+  const showPrevImage = () => {
+    const images = Array.isArray(report?.reportedContentImages) ? report.reportedContentImages : [];
+    if (images.length === 0) return;
+    setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const showNextImage = () => {
+    const images = Array.isArray(report?.reportedContentImages) ? report.reportedContentImages : [];
+    if (images.length === 0) return;
+    setSelectedImageIndex((prev) => (prev + 1) % images.length);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -112,6 +128,8 @@ const ReportDetailPage = () => {
   }
 
   if (!report) return null;
+
+  const reportedImages = Array.isArray(report.reportedContentImages) ? report.reportedContentImages : [];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -215,6 +233,29 @@ const ReportDetailPage = () => {
                         className="relative z-10 text-gray-100 text-sm leading-loose prose prose-invert max-w-none"
                         dangerouslySetInnerHTML={{ __html: report.reportedContentSnapshot || 'Nội dung không khả dụng.' }}
                      />
+                     {reportedImages.length > 0 && (
+                        <div className={`relative z-10 mt-6 grid gap-3 ${reportedImages.length === 1 ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
+                           {reportedImages.slice(0, 4).map((img, idx) => (
+                              <button
+                                 key={`${img}-${idx}`}
+                                 type="button"
+                                 onClick={() => openImageModal(idx)}
+                                 className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 text-left group"
+                              >
+                                 <img
+                                    src={img}
+                                    alt={`Reported attachment ${idx + 1}`}
+                                    className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                 />
+                                 {idx === 3 && reportedImages.length > 4 && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-2xl font-black text-white">
+                                       +{reportedImages.length - 4}
+                                    </div>
+                                 )}
+                              </button>
+                           ))}
+                        </div>
+                     )}
                      <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between relative z-10">
                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Lưu vào {formatDate(report.createdAt)}</p>
                         <span className="px-2 py-1 bg-white/10 rounded text-[10px] font-bold text-white uppercase">ID: {report.targetId}</span>
@@ -284,6 +325,50 @@ const ReportDetailPage = () => {
           </div>
         </div>
       </div>
+      {selectedImageIndex !== null && reportedImages.length > 0 && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 sm:p-10 animate-in fade-in duration-300 backdrop-blur-sm"
+          onClick={closeImageModal}
+        >
+          <button
+            type="button"
+            className="absolute top-6 right-6 text-white/70 hover:text-white transition-all p-3 bg-white/10 hover:bg-white/20 rounded-full z-[110]"
+            onClick={closeImageModal}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+
+          {reportedImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="absolute left-4 sm:left-10 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-all p-4 bg-white/10 hover:bg-white/20 rounded-full z-[110]"
+                onClick={(e) => { e.stopPropagation(); showPrevImage(); }}
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="15 18 9 12 15 6" /></svg>
+              </button>
+              <button
+                type="button"
+                className="absolute right-4 sm:right-10 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-all p-4 bg-white/10 hover:bg-white/20 rounded-full z-[110]"
+                onClick={(e) => { e.stopPropagation(); showNextImage(); }}
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="9 18 15 12 9 6" /></svg>
+              </button>
+            </>
+          )}
+
+          <div className="relative max-w-full max-h-full flex flex-col items-center gap-6" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={reportedImages[selectedImageIndex]}
+              alt="Reported attachment full view"
+              className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-300"
+            />
+            <div className="text-white/80 text-[11px] font-black uppercase tracking-[0.2em] bg-white/10 px-6 py-2 rounded-full border border-white/10">
+              {selectedImageIndex + 1} / {reportedImages.length}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -13,7 +13,6 @@ export const useProfileSetting = () => {
 
     const [formDataInformation, setFormDataInformation] = useState({
         fullname: '',
-        phone: '',
         gender: null,
         dateOfBirth: '',
         email: ''
@@ -25,7 +24,6 @@ export const useProfileSetting = () => {
                 const data = await getProfile();
                 setFormDataInformation({
                     fullname: data.fullname || '',
-                    phone: data.phone || '',
                     dateOfBirth: data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '', // Format date for input[type=date]
                     email: data.email || '',
                     bio: data.bio || '',
@@ -89,10 +87,6 @@ export const useProfileSetting = () => {
         setIsSavingInformation(true);
         try {
             const { email, ...dataToUpdate } = formDataInformation;
-            if (dataToUpdate.phone.length > 0 && (dataToUpdate.phone.length > 10 || dataToUpdate.phone.length < 10)) {
-                toast.error("Số điện thoại không hợp lệ!");
-                return;
-            }
             await updateProfile(dataToUpdate);
             updateUser(dataToUpdate);
             toast.success('Cập nhật thông tin thành công!');

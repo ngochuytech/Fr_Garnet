@@ -14,6 +14,7 @@ export const useReportManagement = () => {
   const [statusFilter, setStatusFilter] = useState('OPEN');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState('desc');
   const [selectedReport, setSelectedReport] = useState(null);
   const [pagination, setPagination] = useState({
     page: 0,
@@ -30,14 +31,14 @@ export const useReportManagement = () => {
   ], []);
 
   // ── Actions ─────────────────────────────────────────────────────────────────
-  const fetchReports = useCallback(async (status, type, page, query = '') => {
+  const fetchReports = useCallback(async (status, type, page, query = '', currentSortOrder = sortOrder) => {
     setLoading(true);
     try {
       const pageable = {
         page: page,
         size: pagination.size,
-        sortBy: 'id',
-        sortDir: 'desc'
+        sortBy: 'createdAt',
+        sortDir: currentSortOrder
       };
 
       const response = query.trim()
@@ -57,13 +58,13 @@ export const useReportManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.size]);
+  }, [pagination.size, sortOrder]);
 
   const handleResolve = async (id, adminNotes) => {
     try {
       await resolveReportAPI(id, { adminNotes });
       toast.success('Đã xử lý vi phạm thành công');
-      fetchReports(statusFilter, typeFilter, pagination.page, searchQuery);
+      fetchReports(statusFilter, typeFilter, pagination.page, searchQuery, sortOrder);
       setSelectedReport(null);
     } catch (error) {
       toast.error('Có lỗi xảy ra khi xử lý báo cáo');
@@ -74,7 +75,7 @@ export const useReportManagement = () => {
     try {
       await closeReportAPI(id);
       toast.success('Đã từ chối báo cáo');
-      fetchReports(statusFilter, typeFilter, pagination.page, searchQuery);
+      fetchReports(statusFilter, typeFilter, pagination.page, searchQuery, sortOrder);
       setSelectedReport(null);
     } catch (error) {
       toast.error('Có lỗi xảy ra khi đóng báo cáo');
@@ -84,11 +85,11 @@ export const useReportManagement = () => {
   // ── Effects ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      fetchReports(statusFilter, typeFilter, 0, searchQuery);
+      fetchReports(statusFilter, typeFilter, 0, searchQuery, sortOrder);
     }, searchQuery ? 500 : 0);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [statusFilter, typeFilter, searchQuery, fetchReports]);
+  }, [statusFilter, typeFilter, searchQuery, sortOrder, fetchReports]);
 
   return {
     reports,
@@ -99,6 +100,8 @@ export const useReportManagement = () => {
     setTypeFilter,
     searchQuery,
     setSearchQuery,
+    sortOrder,
+    setSortOrder,
     selectedReport,
     setSelectedReport,
     pagination,

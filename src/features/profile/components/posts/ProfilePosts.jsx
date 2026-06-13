@@ -18,19 +18,7 @@ const ProfilePosts = ({ userId = null }) => {
       {/* Divider */}
       <hr className="mb-4 border-gray-200" />
 
-      {/* Content Space & Empty State */}
-      <div className="flex items-center w-full max-w-[400px] h-10 border border-gray-300 rounded overflow-hidden hover:border-blue-500 hover:shadow-[0_0_0_2px_rgba(59,130,246,0.2)] transition-shadow">
-        <input
-          type="text"
-          placeholder="Search content"
-          className="w-full h-full px-3 text-sm outline-none text-gray-800 placeholder-gray-500"
-        />
-        <button className="w-10 h-10 flex items-center justify-center text-gray-400">
-          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
-      </div>
+
 
       <div className="flex flex-col mt-4">
         {Array.isArray(posts) && posts.length > 0 ? (

@@ -180,14 +180,14 @@ const TopicsModal = ({ isOpen, onClose }) => {
                         className="px-5 py-2 text-[15px] font-medium text-gray-600 hover:bg-gray-100 rounded-full transition-colors mr-3"
                         disabled={isSaving}
                     >
-                        Cancel
+                        Hủy
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
                         className="px-6 py-2 text-[15px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-md focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-50 flex items-center gap-2"
                     >
-                        {isSaving ? 'Saving...' : 'Save Changes'}
+                        {isSaving ? 'Saving...' : 'Lưu'}
                     </button>
                 </div>
 

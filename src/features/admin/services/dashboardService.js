@@ -17,9 +17,3 @@ export const getTopicDistributionAPI = async () => {
         method: 'GET',
     });
 };
-
-export const getReportWeeklyAPI = async () => {
-    return apiFetch('/admin/dashboard/weekly-reports', {
-        method: 'GET',
-    });
-};

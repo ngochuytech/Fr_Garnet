@@ -83,4 +83,43 @@ export const googleCallback = async ({ code }) => {
     throw new Error(error.message || 'Lỗi kết nối đến server. Vui lòng thử lại sau.');
   }
 
-}
+};
+
+export const forgotPasswordAPI = async (email) => {
+  try {
+    const API_URL = import.meta.env.VITE_API_URL;
+    const response = await fetch(`${API_URL}/auth/forgot-password?email=${encodeURIComponent(email)}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Gửi yêu cầu thất bại. Vui lòng thử lại.');
+    }
+    return result.message || 'Đã gửi liên kết khôi phục mật khẩu. Vui lòng kiểm tra email của bạn.';
+  } catch (error) {
+    throw new Error(error.message || 'Lỗi kết nối đến server. Vui lòng thử lại sau.');
+  }
+};
+
+export const resetPasswordAPI = async (token, newPassword, confirmPassword) => {
+  try {
+    const API_URL = import.meta.env.VITE_API_URL;
+    const response = await fetch(`${API_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token, newPassword, confirmPassword }),
+    });
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Đặt lại mật khẩu thất bại. Vui lòng thử lại.');
+    }
+    return result.message || 'Mật khẩu đã được đặt lại thành công.';
+  } catch (error) {
+    throw new Error(error.message || 'Lỗi kết nối đến server. Vui lòng thử lại sau.');
+  }
+};
