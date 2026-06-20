@@ -72,7 +72,7 @@ const ReportDetailPage = () => {
       const data = await getReportByIdAPI(reportId);
       setReport(data);
       if (data.adminNotes) setAdminNotes(data.adminNotes);
-    } catch (error) {
+    } catch {
       toast.error('Không thể tải chi tiết báo cáo');
       navigate('/admin/reports');
     } finally {
@@ -89,7 +89,7 @@ const ReportDetailPage = () => {
       await resolveReportAPI(report.id, { adminNotes });
       toast.success('Đã xử lý vi phạm thành công');
       fetchReport();
-    } catch (error) {
+    } catch {
       toast.error('Có lỗi xảy ra khi xử lý báo cáo');
     }
   };
@@ -99,7 +99,7 @@ const ReportDetailPage = () => {
       await closeReportAPI(report.id);
       toast.success('Đã từ chối báo cáo');
       fetchReport();
-    } catch (error) {
+    } catch {
       toast.error('Có lỗi xảy ra khi đóng báo cáo');
     }
   };
@@ -108,13 +108,13 @@ const ReportDetailPage = () => {
   const closeImageModal = () => setSelectedImageIndex(null);
 
   const showPrevImage = () => {
-    const images = Array.isArray(report?.reportedContentImages) ? report.reportedContentImages : [];
+    const images = Array.isArray(report?.target?.images) ? report.target.images : [];
     if (images.length === 0) return;
     setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
   const showNextImage = () => {
-    const images = Array.isArray(report?.reportedContentImages) ? report.reportedContentImages : [];
+    const images = Array.isArray(report?.target?.images) ? report.target.images : [];
     if (images.length === 0) return;
     setSelectedImageIndex((prev) => (prev + 1) % images.length);
   };
@@ -129,7 +129,7 @@ const ReportDetailPage = () => {
 
   if (!report) return null;
 
-  const reportedImages = Array.isArray(report.reportedContentImages) ? report.reportedContentImages : [];
+  const reportedImages = Array.isArray(report.target?.images) ? report.target.images : [];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -222,40 +222,107 @@ const ReportDetailPage = () => {
 
                {/* Content Snapshot */}
                <div className="space-y-4">
-                  <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Nội dung bị báo cáo (Snapshot)</h3>
+                  <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Nội dung bị báo cáo</h3>
                   <div className="bg-gray-800 rounded-2xl p-8 relative overflow-hidden group">
                      {/* Decorative background icon */}
                      <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform duration-700">
                         <svg width="120" height="120" viewBox="0 0 24 24" fill="white"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                      </div>
                      
-                     <div 
-                        className="relative z-10 text-gray-100 text-sm leading-loose prose prose-invert max-w-none"
-                        dangerouslySetInnerHTML={{ __html: report.reportedContentSnapshot || 'Nội dung không khả dụng.' }}
-                     />
-                     {reportedImages.length > 0 && (
-                        <div className={`relative z-10 mt-6 grid gap-3 ${reportedImages.length === 1 ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
-                           {reportedImages.slice(0, 4).map((img, idx) => (
-                              <button
-                                 key={`${img}-${idx}`}
-                                 type="button"
-                                 onClick={() => openImageModal(idx)}
-                                 className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 text-left group"
-                              >
-                                 <img
-                                    src={img}
-                                    alt={`Reported attachment ${idx + 1}`}
-                                    className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                     {!report.target ? (
+                        <div className="relative z-10 text-gray-100 text-sm leading-loose">
+                           Đối tượng không còn tồn tại.
+                        </div>
+                     ) : (
+                        <>
+                           {/* POST TARGET */}
+                           {report.targetType === 'POST' && (
+                              <>
+                                 <div className="flex items-center gap-2 mb-3 relative z-10">
+                                    <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${report.target.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-300' : report.target.status === 'DELETED' ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                                       {report.target.status}
+                                    </span>
+                                    {report.target.groupId && (
+                                       <span className="px-2 py-1 bg-white/10 text-white rounded text-[10px] font-bold uppercase">Nhóm: {report.target.groupId}</span>
+                                    )}
+                                 </div>
+                                 <div 
+                                    className="relative z-10 text-gray-100 text-sm leading-loose prose prose-invert max-w-none break-words"
+                                    dangerouslySetInnerHTML={{ __html: report.target.content || 'Không có nội dung chữ.' }}
                                  />
-                                 {idx === 3 && reportedImages.length > 4 && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-2xl font-black text-white">
-                                       +{reportedImages.length - 4}
+                                 {/* IMAGES (POST ONLY) */}
+                                 {reportedImages.length > 0 && (
+                                    <div className={`relative z-10 mt-6 grid gap-3 ${reportedImages.length === 1 ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
+                                       {reportedImages.slice(0, 4).map((img, idx) => (
+                                          <button
+                                             key={`${img}-${idx}`}
+                                             type="button"
+                                             onClick={() => openImageModal(idx)}
+                                             className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 text-left group"
+                                          >
+                                             <img
+                                                src={img}
+                                                alt={`Reported attachment ${idx + 1}`}
+                                                className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                             />
+                                             {idx === 3 && reportedImages.length > 4 && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-2xl font-black text-white">
+                                                   +{reportedImages.length - 4}
+                                                </div>
+                                             )}
+                                          </button>
+                                       ))}
                                     </div>
                                  )}
-                              </button>
-                           ))}
-                        </div>
+                              </>
+                           )}
+
+                           {/* COMMENT TARGET */}
+                           {report.targetType === 'COMMENT' && (
+                              <>
+                                 <div className="flex items-center gap-2 mb-3 relative z-10">
+                                    <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${report.target.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-300' : report.target.status === 'DELETED' ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                                       {report.target.status}
+                                    </span>
+                                    {report.target.postId && (
+                                       <span className="px-2 py-1 bg-white/10 text-white rounded text-[10px] font-bold uppercase cursor-pointer hover:bg-white/20" onClick={() => navigate(`/post/${report.target.postId}`)}>Bài viết gốc: {report.target.postId}</span>
+                                    )}
+                                 </div>
+                                 <div 
+                                    className="relative z-10 text-gray-100 text-sm leading-loose max-w-none break-words"
+                                 >
+                                    {report.target.content || 'Không có nội dung chữ.'}
+                                 </div>
+                              </>
+                           )}
+
+                           {/* GROUP TARGET */}
+                           {report.targetType === 'GROUP' && (
+                              <div className="relative z-10 flex flex-col sm:flex-row gap-6">
+                                 {report.target.avatarUrl ? (
+                                    <img src={report.target.avatarUrl} alt="Group Avatar" className="w-24 h-24 rounded-2xl object-cover shadow-sm bg-white/10 border border-white/20" />
+                                 ) : (
+                                    <div className="w-24 h-24 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white/50 text-xs font-medium">
+                                       Không có ảnh
+                                    </div>
+                                 )}
+                                 <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                       <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${report.target.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-300' : report.target.status === 'DELETED' ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                                          {report.target.status}
+                                       </span>
+                                       {report.target.memberCount !== null && report.target.memberCount !== undefined && (
+                                          <span className="px-2 py-1 bg-white/10 text-white rounded text-[10px] font-bold uppercase">{report.target.memberCount} thành viên</span>
+                                       )}
+                                    </div>
+                                    <h4 className="text-lg font-black text-white mb-2">{report.target.name || 'Nhóm không tên'}</h4>
+                                    <p className="text-gray-300 text-sm leading-relaxed">{report.target.description || 'Không có mô tả.'}</p>
+                                 </div>
+                              </div>
+                           )}
+                        </>
                      )}
+                     
                      <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between relative z-10">
                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Lưu vào {formatDate(report.createdAt)}</p>
                         <span className="px-2 py-1 bg-white/10 rounded text-[10px] font-bold text-white uppercase">ID: {report.targetId}</span>

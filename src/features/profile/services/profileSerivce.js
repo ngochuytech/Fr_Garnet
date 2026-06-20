@@ -58,8 +58,10 @@ export const updateAvatar = async (formData) => {
     });
 };
 
-export const getProfilePosts = async () => {
-    return apiFetch(`/users/posts/me`, {
+export const getProfilePosts = async (size = 20, cursor = null) => {
+    let url = `/users/posts/me?size=${size}`;
+    if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
+    return apiFetch(url, {
         method: 'GET',
     });
 };

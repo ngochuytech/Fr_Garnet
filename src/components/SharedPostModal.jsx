@@ -92,7 +92,7 @@ const SharedPostContent = ({ post, onClose }) => {
     <>
       {/* Post Header */}
       <div className="flex items-start gap-2 mb-3">
-        <div 
+        <div
           className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
           onClick={(e) => handleNavigateToUser(e, post.author?.id)}
         >
@@ -104,18 +104,12 @@ const SharedPostContent = ({ post, onClose }) => {
         </div>
         <div className="flex flex-col">
           <div className="flex items-center text-[14px] text-gray-900 font-bold flex-wrap">
-            <span 
+            <span
               className="hover:underline cursor-pointer"
               onClick={(e) => handleNavigateToUser(e, post.author?.id)}
             >
               {post.author.authorName}
             </span>
-            {!isOwnPost && (
-              <>
-                <span className="mx-1 font-normal text-gray-500">&middot;</span>
-                <button className="text-[13px] font-medium hover:underline" style={{ color: 'var(--color-dusty-rose-600)' }}>Theo dõi</button>
-              </>
-            )}
           </div>
           <div className="text-[13px] text-gray-500">
             {post.author.department} <span className="mx-1">&middot;</span> {formatTimeAgo(post.createdAt)}
@@ -133,8 +127,8 @@ const SharedPostContent = ({ post, onClose }) => {
       {post.images && post.images.length > 0 && (
         <div className={`grid gap-2 mb-4 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
           {post.images.map((imgUrl, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
               onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
             >
@@ -160,7 +154,7 @@ const SharedPostContent = ({ post, onClose }) => {
           {post.sharedPost.author ? (
             <>
               <div className="flex items-start gap-2 mb-2">
-                <div 
+                <div
                   className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
                   onClick={(e) => handleNavigateToUser(e, post.sharedPost.author?.id)}
                 >
@@ -172,7 +166,7 @@ const SharedPostContent = ({ post, onClose }) => {
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
-                    <span 
+                    <span
                       className="cursor-pointer hover:underline"
                       onClick={(e) => handleNavigateToUser(e, post.sharedPost.author?.id)}
                     >
@@ -192,10 +186,10 @@ const SharedPostContent = ({ post, onClose }) => {
               {post.sharedPost.images && post.sharedPost.images.length > 0 && (
                 <div className={`grid gap-1 mt-2 ${post.sharedPost.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   {post.sharedPost.images.map((imgUrl, i) => (
-                    <div 
-                        key={i} 
-                        className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
-                        onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
+                    <div
+                      key={i}
+                      className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
+                      onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
                     >
                       <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[150px]" />
                     </div>
@@ -541,9 +535,9 @@ const SharedPostContent = ({ post, onClose }) => {
       )}
 
       {/* Image Preview Modal */}
-      <ImagePreviewModal 
-          imageUrl={previewImageUrl} 
-          onClose={() => setPreviewImageUrl(null)} 
+      <ImagePreviewModal
+        imageUrl={previewImageUrl}
+        onClose={() => setPreviewImageUrl(null)}
       />
     </>
   );

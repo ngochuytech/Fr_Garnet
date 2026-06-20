@@ -30,18 +30,13 @@ export const getGroupStatus = async (groupId) => {
   });
 };
 
-export const getGroupPosts = async (
-  groupId,
-  { page = 0, size = 20, sortBy = 'createdAt', sortDir = 'desc' } = {},
-) => {
-  const params = new URLSearchParams({
-    page: String(page),
-    size: String(size),
-    sortBy,
-    sortDir,
-  });
+export const getGroupPosts = async (groupId, size = 20, cursor = null) => {
+  let url = `${GROUPS_ENDPOINT}/${groupId}/posts?size=${size}`;
+  if (cursor) {
+    url += `&cursor=${encodeURIComponent(cursor)}`;
+  }
 
-  return apiFetch(`${GROUPS_ENDPOINT}/${groupId}/posts?${params.toString()}`, {
+  return apiFetch(url, {
     method: 'GET',
   });
 };

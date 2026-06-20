@@ -115,7 +115,7 @@ const HomeLeftSidebar = () => {
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2 px-1">
           <span className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
-            Topics
+            Chủ đề
           </span>
         </div>
 

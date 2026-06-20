@@ -1,19 +1,21 @@
-import { useState, useEffect } from 'react';
-import { getMyPosts, getPostsForHome } from '../services/homeService';
+import { useState, useEffect, useRef } from 'react';
+import { getHomePosts } from '../services/homeService';
 
 export const useHomeFeed = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(0);
-  const [isLast, setIsLast] = useState(false);
+  const [nextCursor, setNextCursor] = useState(null);
+  const [hasNext, setHasNext] = useState(true);
+  const isFetchingRef = useRef(false);
 
   const fetchPosts = async (quiet = false) => {
     try {
       if (!quiet) setLoading(true);
-      const data = await getMyPosts();
+      const data = await getHomePosts(20, null);
       setPosts(data.items || []);
-      setIsLast(data.isLast !== undefined ? data.isLast : (data.last !== undefined ? data.last : (data.items && data.items.length === 0)));
+      setNextCursor(data.nextCursor || null);
+      setHasNext(data.hasNext !== undefined ? data.hasNext : true);
     } catch (err) {
       setError(err.message || 'Lỗi khi tải bài viết');
     } finally {
@@ -26,13 +28,25 @@ export const useHomeFeed = () => {
   }, []);
 
   const handleGetMorePost = async () => {
+    if (!hasNext || isFetchingRef.current || !nextCursor) return;
+
     try {
-      const data = await getPostsForHome(page + 1);
-      setPage(page + 1);
-      setPosts((prevPosts) => [...prevPosts, ...(data.items || [])]);
-      setIsLast(data.isLast !== undefined ? data.isLast : (data.last !== undefined ? data.last : (data.items && data.items.length === 0)));
+      isFetchingRef.current = true;
+      const data = await getHomePosts(20, nextCursor);
+      
+      setPosts((prevPosts) => {
+        const newPosts = data.items || [];
+        const existingIds = new Set(prevPosts.map(p => p.id));
+        const filteredNewPosts = newPosts.filter(p => !existingIds.has(p.id));
+        return [...prevPosts, ...filteredNewPosts];
+      });
+      
+      setNextCursor(data.nextCursor || null);
+      setHasNext(data.hasNext !== undefined ? data.hasNext : true);
     } catch (err) {
       setError(err.message || 'Lỗi khi tải bài viết');
+    } finally {
+      isFetchingRef.current = false;
     }
   };
 
@@ -40,7 +54,7 @@ export const useHomeFeed = () => {
     posts,
     loading,
     error,
-    isLast,
+    hasNext,
     refreshPosts: () => fetchPosts(true),
     handleGetMorePost
   };

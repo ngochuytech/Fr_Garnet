@@ -51,6 +51,11 @@ const TopicsModal = ({ isOpen, onClose }) => {
     };
 
     const handleSave = async () => {
+        if (selectedTopics.length < 3) {
+            toast.error("Vui lòng chọn ít nhất 3 chủ đề quan tâm.");
+            return;
+        }
+
         setIsSaving(true);
         try {
             await updateTopics(selectedTopics.map(t => t.topicName));
@@ -167,8 +172,12 @@ const TopicsModal = ({ isOpen, onClose }) => {
                                 </button>
                             </div>
                         ))}
-                        {selectedTopics.length === 0 && (
-                            <p className="text-sm text-gray-500 mt-4 italic">You haven't selected any topics yet.</p>
+                        {selectedTopics.length < 3 && (
+                            <p className="text-sm text-red-500 mt-4 italic">
+                                {selectedTopics.length === 0 
+                                    ? "Vui lòng chọn ít nhất 3 chủ đề quan tâm." 
+                                    : `Vui lòng chọn thêm ít nhất ${3 - selectedTopics.length} chủ đề nữa.`}
+                            </p>
                         )}
                     </div>
                 </div>
@@ -184,8 +193,8 @@ const TopicsModal = ({ isOpen, onClose }) => {
                     </button>
                     <button
                         onClick={handleSave}
-                        disabled={isSaving}
-                        className="px-6 py-2 text-[15px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-md focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-50 flex items-center gap-2"
+                        disabled={isSaving || selectedTopics.length < 3}
+                        className="px-6 py-2 text-[15px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-md focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
                     >
                         {isSaving ? 'Saving...' : 'Lưu'}
                     </button>

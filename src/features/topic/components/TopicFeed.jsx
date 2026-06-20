@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import PostCard from '../../../components/PostCard';
 import { getPostsByTopic } from '../services/topicService';
@@ -7,32 +7,64 @@ const TopicFeed = ({ topicName }) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
-  const [isLast, setIsLast] = useState(true); 
+  
+  const [nextCursor, setNextCursor] = useState(null);
+  const [hasNext, setHasNext] = useState(false);
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchFirstPage = async () => {
       setLoading(true);
       setError(null);
+      setPosts([]);
+      setNextCursor(null);
+      setHasNext(false);
+      
       try {
-        const data = await getPostsByTopic(topicName);
+        isFetchingRef.current = true;
+        const data = await getPostsByTopic(topicName, 20, null);
         setPosts(data.items || []);
-        setIsLast(data.isLast || true);        
+        setNextCursor(data.nextCursor || null);
+        setHasNext(data.hasNext !== undefined ? data.hasNext : false);
       } catch (err) {
         console.error("Error fetching topic posts:", err);
         setError("Không thể tải bài viết của chủ đề này.");
       } finally {
         setLoading(false);
+        isFetchingRef.current = false;
       }
     };
 
     if (topicName) {
-      fetchPosts();
+      fetchFirstPage();
     }
   }, [topicName]);
 
-  const handleGetMorePost = () => {
-      // Pagination logic can be added here if needed in the future
+  const handleGetMorePost = async () => {
+    if (!hasNext || isFetchingRef.current || nextCursor === null) return;
+
+    try {
+      isFetchingRef.current = true;
+      setLoadingMore(true);
+      const data = await getPostsByTopic(topicName, 20, nextCursor);
+      
+      setPosts((prevPosts) => {
+        const newPosts = data.items || [];
+        const existingIds = new Set(prevPosts.map(p => p.id));
+        const filteredNewPosts = newPosts.filter(p => !existingIds.has(p.id));
+        return [...prevPosts, ...filteredNewPosts];
+      });
+      
+      setNextCursor(data.nextCursor || null);
+      setHasNext(data.hasNext !== undefined ? data.hasNext : false);
+    } catch (err) {
+      console.error("Error loading more topic posts:", err);
+    } finally {
+      isFetchingRef.current = false;
+      setLoadingMore(false);
+    }
   };
 
   return (
@@ -62,17 +94,18 @@ const TopicFeed = ({ topicName }) => {
         </div>
 
         {/* Load more */}
-        {!isLast && posts.length > 0 && (
+        {hasNext && posts.length > 0 && (
           <div className="flex justify-center py-4 border-t border-gray-100">
             <button
-              className="px-6 py-2 rounded-full text-[14px] font-medium border transition-all hover:shadow-md"
+              className="px-6 py-2 rounded-full text-[14px] font-medium border transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 borderColor: 'var(--color-dusty-rose-300)',
                 color: 'var(--color-dusty-rose-700)',
               }}
               onClick={handleGetMorePost}
+              disabled={loadingMore}
             >
-              Tải thêm bài viết
+              {loadingMore ? 'Đang tải...' : 'Tải thêm bài viết'}
             </button>
           </div>
         )}

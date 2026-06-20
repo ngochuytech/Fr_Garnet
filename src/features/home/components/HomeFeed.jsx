@@ -4,7 +4,7 @@ import { useHomeFeed } from '../hooks/useHomeFeed';
 import { useAuth } from '../../../context/AuthContext';
 
 const HomeFeed = ({ avatarUrl }) => {
-  const { posts, loading, error, isLast, refreshPosts, handleGetMorePost } = useHomeFeed();
+  const { posts, loading, error, hasNext, refreshPosts, handleGetMorePost } = useHomeFeed();
   const { user } = useAuth();
 
   return (
@@ -44,7 +44,7 @@ const HomeFeed = ({ avatarUrl }) => {
         </div>
 
         {/* Load more */}
-        {!isLast && posts.length > 0 && (
+        {hasNext && posts.length > 0 && (
           <div className="flex justify-center py-4 border-t border-gray-100">
             <button
               className="px-6 py-2 rounded-full text-[14px] font-medium border transition-all hover:shadow-md"

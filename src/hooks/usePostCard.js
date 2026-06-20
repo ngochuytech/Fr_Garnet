@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { likePostAPI, dislikePostAPI, getCommentsByPostId, createCommentAPI, likeCommentAPI, dislikeCommentAPI, editPostAPI, deletePostAPI, reportPostAPI, sharePostAPI } from '../services/postService';
+import { likePostAPI, dislikePostAPI, getCommentsByPostId, createCommentAPI, likeCommentAPI, dislikeCommentAPI, deletePostAPI, reportPostAPI, sharePostAPI } from '../services/postService';
 import { fetchUserTopics } from '../services/createPostBarService';
 
 export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, initialCommentCount = 0, initialShareCount = 0, initialUserReaction = null, initialContent = '' } = {}) => {
 
   // Nội dung bài viết (dùng chung: hiển thị card, modal xem, modal sửa)
-  const [localContent, setLocalContent] = useState(initialContent);
+  const localContent = initialContent;
 
   // Trạng thái bị xóa (dùng chung: ẩn toàn bộ card sau khi xóa)
   const [isDeleted, setIsDeleted] = useState(false);
@@ -354,59 +354,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
   const insertCode = (e) => { e.preventDefault(); applyFormat(e, 'formatBlock', 'PRE'); };
 
 
-  // + EDIT POST (Chỉnh sửa bài viết)
 
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const editEditorRef = useRef(null);
-  const [editHasText, setEditHasText] = useState(true);
-  const [editShowFormatBar, setEditShowFormatBar] = useState(false);
-
-  const openEditModal = () => {
-    setIsEditModalOpen(true);
-    setIsOptionOpen(false);        // đóng dropdown card
-    setIsModalOptionOpen(false);   // đóng dropdown trong Post Modal
-    setEditHasText(localContent ? localContent.trim().length > 0 : false);
-  };
-  const closeEditModal = () => setIsEditModalOpen(false);
-
-  const handleEditInput = () => {
-    if (editEditorRef.current) {
-      const content = editEditorRef.current.textContent || '';
-      setEditHasText(content.trim().length > 0);
-    }
-  };
-
-  const applyEditFormat = (e, command, value = null) => {
-    e.preventDefault();
-    if (editEditorRef.current) {
-      document.execCommand(command, false, value);
-      editEditorRef.current.focus();
-      handleEditInput();
-    }
-  };
-
-  const handleEditLink = (e) => {
-    e.preventDefault();
-    const url = window.prompt('Nhập link URL liên kết:', 'https://');
-    if (url) applyEditFormat(e, 'createLink', url);
-  };
-
-  const insertEditQuote = (e) => { e.preventDefault(); applyEditFormat(e, 'formatBlock', 'BLOCKQUOTE'); };
-  const insertEditCode = (e) => { e.preventDefault(); applyEditFormat(e, 'formatBlock', 'PRE'); };
-
-  const handleUpdatePost = async () => {
-    if (editEditorRef.current && editHasText) {
-      const newContent = editEditorRef.current.innerHTML;
-      try {
-        await editPostAPI(postId, { content: newContent });
-        toast.success('Đã cập nhật bài viết!');
-        setLocalContent(newContent);  // cập nhật shared localContent
-        closeEditModal();
-      } catch (error) {
-        toast.error(error || 'Lỗi khi cập nhật bài viết');
-      }
-    }
-  };
 
   // + DELETE POST (Xóa bài viết)
 
@@ -512,12 +460,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     setTagSearchQuery, setIsTagDropdownOpen, handleAddTag, handleRemoveTag,
     handleInput, applyFormat, handleLink, insertQuote, insertCode,
 
-    // Edit Post
-    isEditModalOpen, openEditModal, closeEditModal,
-    editEditorRef, editHasText, editShowFormatBar, setEditShowFormatBar,
-    handleEditInput, applyEditFormat,
-    handleEditLink, insertEditQuote, insertEditCode,
-    handleUpdatePost,
+
 
     // Delete Post
     handleDeletePost,

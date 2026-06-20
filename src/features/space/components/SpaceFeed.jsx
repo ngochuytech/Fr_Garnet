@@ -20,7 +20,7 @@ const SpaceFeed = ({ space, detailLoading, onBack, onShowMembers }) => {
     loading,
     loadingMore,
     error,
-    isLast,
+    hasNext,
     refreshPosts,
     handleGetMorePosts,
   } = useSpacePosts(space?.id);
@@ -125,7 +125,7 @@ const SpaceFeed = ({ space, detailLoading, onBack, onShowMembers }) => {
             })}
           </div>
 
-          {!loading && !isLast && posts.length > 0 && (
+          {!loading && hasNext && posts.length > 0 && (
             <div className="flex justify-center py-4 border-t border-gray-100">
               <button
                 type="button"
@@ -143,7 +143,7 @@ const SpaceFeed = ({ space, detailLoading, onBack, onShowMembers }) => {
           )}
         </div>
 
-        {isLast && posts.length > 0 && (
+        {!hasNext && posts.length > 0 && (
           <div className="py-6 text-center text-gray-500 font-medium text-sm">
             Đã xem hết tin mới nhất
           </div>
