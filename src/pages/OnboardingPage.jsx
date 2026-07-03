@@ -20,7 +20,7 @@ const OnboardingPage = () => {
     // If user already completed onboarding, redirect them
     useEffect(() => {
         if (user && user.department) {
-            navigate('/dashboard', { replace: true });
+            navigate('/home', { replace: true });
         }
     }, [user, navigate]);
 
@@ -29,8 +29,21 @@ const OnboardingPage = () => {
         const fetchMetadata = async () => {
             try {
                 const [majorsData, tagsData] = await Promise.all([getMajors(), getTags()]);
-                setMajors(majorsData || []);
-                setTags(tagsData || []);
+                
+                const uniqueMajors = [...new Set(majorsData || [])];
+                
+                const uniqueTags = [];
+                const seenTagNames = new Set();
+                (tagsData || []).forEach(tag => {
+                    const tagName = tag.topicName || tag;
+                    if (!seenTagNames.has(tagName)) {
+                        seenTagNames.add(tagName);
+                        uniqueTags.push(tag);
+                    }
+                });
+
+                setMajors(uniqueMajors);
+                setTags(uniqueTags);
             } catch (error) {
                 console.error('Failed to fetch metadata:', error);
                 toast.error('Có lỗi xảy ra khi lấy dữ liệu hệ thống.');
@@ -139,8 +152,8 @@ const OnboardingPage = () => {
                                     required
                                 >
                                     <option value="" disabled>-- Chọn chuyên ngành --</option>
-                                    {majors.map((major) => (
-                                        <option key={major} value={major}>
+                                    {majors.map((major, index) => (
+                                        <option key={`${major}-${index}`} value={major}>
                                             {major}
                                         </option>
                                     ))}

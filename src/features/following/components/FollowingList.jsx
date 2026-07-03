@@ -62,7 +62,7 @@ const FollowingList = () => {
                       ))
                     ) : (
                       <span className="text-[12px] text-[#8d3f41] font-medium bg-[#f7edee] w-fit px-2 py-0.5 rounded">
-                        ✨ {user.reason || 'Có thể bạn biết'}
+                        ✨ {(!user.reason || (Array.isArray(user.reason) && user.reason.length === 0)) ? 'Bạn có thể biết' : user.reason}
                       </span>
                     )}
                   </div>

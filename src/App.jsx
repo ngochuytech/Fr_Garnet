@@ -33,12 +33,8 @@ import AdminProfile from './features/admin/components/AdminProfile';
 import AdminNotificationPage from './features/admin/components/AdminNotificationPage';
 
 import GroupManagement from './features/admin/components/GroupManagement';
+import NotFoundPage from './pages/NotFoundPage';
 
-// Component điều hướng thông minh cho đường dẫn không tồn tại
-const NotFoundRedirect = () => {
-  const { isAuthenticated } = useAuth();
-  return <Navigate to={isAuthenticated ? "/home" : "/login"} replace />;
-};
 
 function App() {
   return (
@@ -92,7 +88,7 @@ function App() {
 
           {/* Fallback */}
           <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="*" element={<NotFoundRedirect />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

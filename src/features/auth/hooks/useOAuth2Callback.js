@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from 'sonner';
 import { useAuth } from "../../../context/AuthContext";
@@ -8,9 +8,13 @@ export const useOAuth2Callback = ({code}) => {
     const [params] = useSearchParams();
     const navigate = useNavigate();
     const { login } = useAuth();
+    const calledCode = useRef(null);
 
     useEffect(() => {        
         const fetchGoogleUser = async () => {
+            if (calledCode.current === code) return;
+            calledCode.current = code;
+
             try {
                 const { user, token } = await googleCallback({ code });
                 login(user, token);
@@ -24,5 +28,5 @@ export const useOAuth2Callback = ({code}) => {
         if (code) {
             fetchGoogleUser();
         }
-    }, [params, code, navigate])
+    }, [params, code, navigate, login])
 }
