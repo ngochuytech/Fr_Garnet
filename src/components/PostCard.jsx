@@ -419,9 +419,9 @@ const PostCard = ({ post, isOwnPost, group }) => {
         isOpen={isShareModalOpen}
         onClose={closeShareModal}
         quotedPost={{
-          authorAvatar: sharedPost ? sharedPost.author.authorAvatar : avatarUrl,
-          authorName: sharedPost ? sharedPost.author.authorName : authorName,
-          department: sharedPost ? sharedPost.author.department : authorCredential,
+          authorAvatar: sharedPost ? sharedPost.author?.authorAvatar : avatarUrl,
+          authorName: sharedPost ? sharedPost.author?.authorName : authorName,
+          department: sharedPost ? sharedPost.author?.department : authorCredential,
           createdAt: sharedPost ? sharedPost.createdAt : post.createdAt,
           content: sharedPost ? sharedPost.content : post.content,
           images: sharedPost ? sharedPost.images : post.images,
