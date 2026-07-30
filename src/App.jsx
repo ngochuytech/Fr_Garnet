@@ -20,7 +20,6 @@ import UserPage from './pages/UserPage';
 import PostPage from './pages/PostPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
-import { useAuth } from './context/AuthContext';
 import ReportManagement from './features/admin/components/ReportManagement';
 import ReportDetailPage from './features/admin/components/ReportDetailPage';
 import UserManagement from './features/admin/components/UserManagement';
@@ -34,6 +33,8 @@ import AdminNotificationPage from './features/admin/components/AdminNotification
 
 import GroupManagement from './features/admin/components/GroupManagement';
 import NotFoundPage from './pages/NotFoundPage';
+import { WebSocketProvider } from './context/WebSocketContext';
+import ChatPage from './pages/ChatPage';
 
 
 function App() {
@@ -41,55 +42,57 @@ function App() {
     <BrowserRouter>
       <Toaster position="top-center" richColors duration={3000} />
       <AuthProvider>
-        <Routes>
-          {/* Public auth routes */}
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/oauth2/callback/google" element={<OAuth2Callback />} />
-          </Route>
-
-          <Route element={<AdminProtectedRoute />}>
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="reports" element={<ReportManagement />} />
-              <Route path="reports/:reportId" element={<ReportDetailPage />} />
-              <Route path="users" element={<UserManagement />} />
-              <Route path="users/:userId" element={<UserDetailPage />} />
-              <Route path="groups" element={<GroupManagement />} />
-              <Route path="posts" element={<ContentModeration />} />
-              <Route path="posts/:postId" element={<ContentDetailPage />} />
-              <Route path="profile" element={<AdminProfile />} />
-              <Route path="notifications" element={<AdminNotificationPage />} />
-              {/* Thêm các trang quản trị khác ở đây */}
+        <WebSocketProvider>
+          <Routes>
+            {/* Public auth routes */}
+            <Route element={<AuthLayout />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/oauth2/callback/google" element={<OAuth2Callback />} />
             </Route>
-          </Route>
 
-
-          {/* Protected routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/onboarding" element={<OnboardingPage />} />
-            {/* App main layout routes */}
-            <Route element={<MainLayout />}>
-              <Route path="/home" element={<HomePage />} />
-              <Route path="/following" element={<FollowingPage />} />
-              <Route path="/spaces" element={<SpacePage />} />
-              <Route path="/spaces/:spaceId" element={<SpaceDetailPage />} />
-              <Route path="/notifications" element={<NotificationPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/user/:id" element={<UserPage />} />
-              <Route path="/topic/:topicName" element={<TopicPage />} />
-              <Route path="/post/:id" element={<PostPage />} />
+            <Route element={<AdminProtectedRoute />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="reports" element={<ReportManagement />} />
+                <Route path="reports/:reportId" element={<ReportDetailPage />} />
+                <Route path="users" element={<UserManagement />} />
+                <Route path="users/:userId" element={<UserDetailPage />} />
+                <Route path="groups" element={<GroupManagement />} />
+                <Route path="posts" element={<ContentModeration />} />
+                <Route path="posts/:postId" element={<ContentDetailPage />} />
+                <Route path="profile" element={<AdminProfile />} />
+                <Route path="notifications" element={<AdminNotificationPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* Fallback */}
-          <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+
+            {/* Protected routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              {/* App main layout routes */}
+              <Route element={<MainLayout />}>
+                <Route path="/home" element={<HomePage />} />
+                <Route path="/following" element={<FollowingPage />} />
+                <Route path="/spaces" element={<SpacePage />} />
+                <Route path="/spaces/:spaceId" element={<SpaceDetailPage />} />
+                <Route path="/notifications" element={<NotificationPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/user/:id" element={<UserPage />} />
+                <Route path="/topic/:topicName" element={<TopicPage />} />
+                <Route path="/post/:id" element={<PostPage />} />
+                <Route path="/chat" element={<ChatPage />} />
+              </Route>
+            </Route>
+
+            {/* Fallback */}
+            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </WebSocketProvider>
       </AuthProvider>
     </BrowserRouter>
   );

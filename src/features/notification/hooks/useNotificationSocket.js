@@ -1,10 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
+import { useWebSocket } from '../../../context/WebSocketContext';
 import { toast } from 'sonner';
-
-const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY;
-const WS_URL = import.meta.env.VITE_WS_URL;
 
 const GROUP_NOTIFICATION_TYPES = new Set([
   'GROUP_JOIN_REQUEST',
@@ -31,99 +27,65 @@ export const dispatchNewNotification = (notification) => {
   }, 0);
 };
 
-const useNotificationSocket = (user, setUnreadCount) => {
-  const stompClientRef = useRef(null);
-  const isConnectedRef = useRef(false);
+const useNotificationSocket = (setUnreadCount) => {
+  const { isConnected, subscribeToNotifications } = useWebSocket();
 
   useEffect(() => {
-    if (!user) return;
-    if (isConnectedRef.current) return;
+    if (!isConnected)
+      return;
 
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) return;
+    const subscription = subscribeToNotifications((newNotif) => {
+      try {
+        const notifId = newNotif.id;
+        console.info(`[WS Global] Notification mới (${notifId}):`, newNotif);
 
-    const client = new Client({
-      webSocketFactory: () => new SockJS(WS_URL),
-      connectHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-      reconnectDelay: 5000,
-      debug: (msg) => console.debug('[STOMP Global]', msg),
-      onConnect: () => {
-        isConnectedRef.current = true;
-        console.info('[WS Global] Đã kết nối STOMP ✓');
+        dispatchNewNotification(newNotif);
 
-        client.subscribe('/user/queue/notifications', (stompMessage) => {
-          try {
-            const newNotif = JSON.parse(stompMessage.body);
-            const notifId = newNotif.id;
-            console.info(`[WS Global] Notification mới (${notifId}):`, newNotif);
+        const isUnread =
+          newNotif.isRead === false ||
+          newNotif.read === false ||
+          newNotif.status === 'UNREAD' ||
+          newNotif.isRead === undefined;
 
-            // Dispatch global event cho NotificationView
-            dispatchNewNotification(newNotif);
+        if (isUnread) {
+          setUnreadCount((prev) => prev + 1);
+        }
 
-            // Cập nhật unread count ở Header
-            const isUnread =
-              newNotif.isRead === false ||
-              newNotif.read === false ||
-              newNotif.status === 'UNREAD' ||
-              newNotif.isRead === undefined;
-
-            if (isUnread) {
-              setUnreadCount((prev) => prev + 1);
-            }
-
-            // Hiển thị toast thông báo cho người dùng
-            toast('Thông báo mới', {
-              description: newNotif.content || newNotif.message || 'Bạn có một thông báo mới.',
-              action: {
-                label: 'Xem',
-                onClick: () => {
-                  if (GROUP_NOTIFICATION_TYPES.has(newNotif.type)) {
-                    const groupId = getGroupId(newNotif);
-                    window.location.href = groupId ? `/spaces/${groupId}` : '/notifications';
-                    return;
-                  }
-
-                  const postId = newNotif.postId || newNotif.targetId;
-                  if (postId && newNotif.type !== 'NEW_FOLLOWER') {
-                    window.location.href = `/post/${postId}`;
-                  } else if (newNotif.type === 'NEW_FOLLOWER' && newNotif.actor) {
-                    window.location.href = `/user/${newNotif.actor.id}`;
-                  } else {
-                    window.location.href = '/notifications';
-                  }
-                }
+        // Hiển thị toast thông báo cho người dùng
+        toast('Thông báo mới', {
+          description: newNotif.content || newNotif.message || 'Bạn có một thông báo mới.',
+          action: {
+            label: 'Xem',
+            onClick: () => {
+              if (GROUP_NOTIFICATION_TYPES.has(newNotif.type)) {
+                const groupId = getGroupId(newNotif);
+                window.location.href = groupId ? `/spaces/${groupId}` : '/notifications';
+                return;
               }
-            });
 
-          } catch (err) {
-            console.error('[WS Global] Lỗi parse message:', err);
+              const postId = newNotif.postId || newNotif.targetId;
+              if (postId && newNotif.type !== 'NEW_FOLLOWER') {
+                window.location.href = `/post/${postId}`;
+              } else if (newNotif.type === 'NEW_FOLLOWER' && newNotif.actor) {
+                window.location.href = `/user/${newNotif.actor.id}`;
+              } else {
+                window.location.href = '/notifications';
+              }
+            }
           }
         });
-      },
-      onDisconnect: () => {
-        isConnectedRef.current = false;
-        console.info('[WS Global] Đã ngắt kết nối STOMP.');
-      },
-      onStompError: (frame) => {
-        console.error('[WS Global] STOMP error:', frame.headers['message'], frame.body);
-      },
-      onWebSocketError: (evt) => {
-        console.error('[WS Global] WebSocket error:', evt);
-      },
+
+      } catch (err) {
+        console.error('[WS Global] Lỗi parse message:', err);
+      }
     });
 
-    client.activate();
-    stompClientRef.current = client;
-
     return () => {
-      if (stompClientRef.current?.active) {
-        stompClientRef.current.deactivate();
+      if (subscription) {
+        subscription.unsubscribe();
       }
-      isConnectedRef.current = false;
     };
-  }, [user, setUnreadCount]);
+  }, [isConnected, subscribeToNotifications, setUnreadCount]);
 };
 
 export default useNotificationSocket;
