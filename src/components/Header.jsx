@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { getUnreadCount } from '../features/notification/services/NotificationService';
 import { searchUsers } from '../features/following/services/followingService';
 import { getGroups } from '../features/space/services/spaceService';
+import { getConversations } from '../features/chat/services/chatService';
 import { apiFetch } from '../utils/api';
 import useNotificationSocket from '../features/notification/hooks/useNotificationSocket';
+import { useWebSocket } from '../context/WebSocketContext';
 
 const EMPTY_SEARCH_RESULTS = { users: [], topics: [], groups: [] };
 
@@ -52,6 +54,7 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [chatUnread, setChatUnread] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(EMPTY_SEARCH_RESULTS);
@@ -59,6 +62,7 @@ const Header = () => {
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const dropdownRef = useRef(null);
   const searchRef = useRef(null);
+  const { subscribeToChat, isConnected } = useWebSocket();
 
   const displayName = user?.fullname || 'User';
   const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30&size=128`;
@@ -163,6 +167,42 @@ const Header = () => {
     window.addEventListener('unread-count-changed', handleUnreadChange);
     return () => window.removeEventListener('unread-count-changed', handleUnreadChange);
   }, []);
+
+  // Fetch chat unread status
+  useEffect(() => {
+    const fetchChatUnread = async () => {
+      if (!user) return;
+      try {
+        const data = await getConversations();
+        const rawList = data?.data || data?.content || data || [];
+        const hasUnread = rawList.some((c) => c.isRead === false);
+        setChatUnread(hasUnread);
+      } catch (err) {
+        console.error('Error fetching chat unread:', err);
+      }
+    };
+    
+    fetchChatUnread();
+
+    const handleChatRead = () => {
+      fetchChatUnread();
+    };
+    window.addEventListener('chat-read', handleChatRead);
+    return () => window.removeEventListener('chat-read', handleChatRead);
+  }, [user]);
+
+  // Listen to new messages to light up the chat dot instantly
+  useEffect(() => {
+    if (!user || !subscribeToChat || !isConnected) return;
+    const sub = subscribeToChat((msg) => {
+      if (msg.sender?.id !== user.id) {
+        setChatUnread(true);
+      }
+    });
+    return () => {
+      if (sub) sub.unsubscribe();
+    };
+  }, [user, subscribeToChat, isConnected]);
 
   const isActive = (path) => location.pathname === path;
 
@@ -392,12 +432,17 @@ const Header = () => {
         {/* Right Actions */}
         <div className="flex items-center space-x-3 flex-shrink-0 relative" ref={dropdownRef}>
 
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="w-8 h-8 flex items-center justify-center rounded-full overflow-hidden border border-gray-200 cursor-pointer hover:border-gray-400 transition-all shadow-sm"
-          >
-            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-8 h-8 flex items-center justify-center rounded-full overflow-hidden border border-gray-200 cursor-pointer hover:border-gray-400 transition-all shadow-sm"
+            >
+              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            </button>
+            {chatUnread && (
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 border-2 border-white rounded-full z-10"></span>
+            )}
+          </div>
 
           {/* User Dropdown Menu */}
           {isDropdownOpen && (
@@ -426,10 +471,15 @@ const Header = () => {
                 onClick={() => setIsDropdownOpen(false)}
                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-[14.5px] w-full text-left"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
-                </svg>
-                <span>Nhắn tin</span>
+                <div className="relative">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+                  </svg>
+                  {chatUnread && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  )}
+                </div>
+                <span className={chatUnread ? "font-semibold" : ""}>Nhắn tin</span>
               </Link>
 
               <div className="h-px bg-gray-100 mx-2 my-1" />

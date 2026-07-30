@@ -65,14 +65,12 @@ const ChatSidebar = ({ activeConversationId, onSelectConversation, newMessageEve
   // Khi nhận tin nhắn mới qua WS → cập nhật conversation tương ứng lên đầu
   useEffect(() => {
     if (!newMessageEvent) return;
-    console.log('[ChatSidebar] Nhận tin nhắn mới:', newMessageEvent);
     setConversations((prev) => {
       const senderId = newMessageEvent.senderId || newMessageEvent.sender?.id;
       const receiverId = newMessageEvent.receiver?.id;
       const existing = prev.find(
         (c) => c.otherUser?.id === senderId || c.otherUser?.id === receiverId || c.id === newMessageEvent.conversationId
       );
-      console.log('[ChatSidebar] Tìm thấy existing:', existing);
       if (existing) {
         const updated = {
           ...existing,
@@ -83,10 +81,8 @@ const ChatSidebar = ({ activeConversationId, onSelectConversation, newMessageEve
               ? 0
               : (existing.unreadCount || 0) + 1,
         };
-        console.log('[ChatSidebar] Cập nhật existing:', updated);
         return [updated, ...prev.filter((c) => c.id !== existing.id)];
       }
-      console.log('[ChatSidebar] Cuộc trò chuyện mới, fetch lại danh sách');
       fetchConversations();
       return prev;
     });

@@ -41,6 +41,7 @@ const ChatBox = ({ conversation, newMessageEvent, readReceiptEvent, onReadSent, 
         setMessages([...list].reverse());
         await markAsRead(conversation.otherUser.id);
         onReadSent?.();
+        window.dispatchEvent(new CustomEvent('chat-read'));
       } catch (err) {
         console.error('[ChatBox] Lỗi tải lịch sử:', err);
       } finally {
@@ -69,7 +70,10 @@ const ChatBox = ({ conversation, newMessageEvent, readReceiptEvent, onReadSent, 
       
       // Đánh dấu đã đọc nếu người khác gửi cho mình
       if (senderId === conversation?.otherUser?.id) {
-        markAsRead(conversation.otherUser.id).then(() => onReadSent?.());
+        markAsRead(conversation.otherUser.id).then(() => {
+          onReadSent?.();
+          window.dispatchEvent(new CustomEvent('chat-read'));
+        });
       }
     }
   }, [newMessageEvent]);
@@ -78,7 +82,6 @@ const ChatBox = ({ conversation, newMessageEvent, readReceiptEvent, onReadSent, 
   useEffect(() => {
     if (!readReceiptEvent) return;
     if (readReceiptEvent === conversation?.otherUser?.id) {
-      console.log('[ChatBox] Đối phương đã xem tin nhắn');
       setMessages((prev) => 
         prev.map((msg) => ({ ...msg, isRead: true, read: true }))
       );

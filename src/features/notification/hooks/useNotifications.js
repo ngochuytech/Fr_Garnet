@@ -107,7 +107,6 @@ const useNotifications = (activeFilter) => {
     // isRead: false hoặc undefined → chưa đọc, tiếp tục
     if (notif.isRead === true) return;
     try {
-      console.log('[Notification] Marking as read:', notifId);
       await markAsRead(notifId);
       setNotifications((prev) =>
         prev.map((n) =>
