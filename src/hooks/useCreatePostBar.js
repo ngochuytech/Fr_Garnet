@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { createPostBarService, fetchUserTopics } from '../services/createPostBarService';
+import { getVideoUploadUrl, getImageUploadUrl, uploadToS3, extractPublicUrl } from '../services/mediaService';
 
 export const useCreatePostBar = (onPostCreated, options = {}) => {
     const [isFocused, setIsFocused] = useState(false);
@@ -9,6 +10,12 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
     const [selectedImages, setSelectedImages] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [previewImages, setPreviewImages] = useState([]);
+    const [isUploadingImages, setIsUploadingImages] = useState(false);
+    
+    // Video state
+    const [selectedVideos, setSelectedVideos] = useState([]);
+    const [previewVideos, setPreviewVideos] = useState([]);
+    const [isUploadingVideos, setIsUploadingVideos] = useState(false);
     
     // Tag state
     const [userTopics, setUserTopics] = useState([]);
@@ -18,9 +25,10 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
     
     const editorRef = useRef(null);
     const fileInputRef = useRef(null);
+    const videoInputRef = useRef(null);
     const dropdownRef = useRef(null);
 
-    const isExpanded = isFocused || hasText || selectedImages.length > 0 || tagSearchQuery.length > 0 || selectedTags.length > 0;
+    const isExpanded = isFocused || hasText || selectedImages.length > 0 || selectedVideos.length > 0 || tagSearchQuery.length > 0 || selectedTags.length > 0;
 
     useEffect(() => {
         const loadTopics = async () => {
@@ -83,14 +91,20 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
 
-        if (selectedImages.length + files.length > 5) {
+        const maxImageSize = 10 * 1024 * 1024;
+        const validFiles = files.filter(f => f.size <= maxImageSize);
+        if (validFiles.length < files.length) {
+            toast.error('Có ảnh vượt quá dung lượng 10MB');
+        }
+
+        if (selectedImages.length + validFiles.length > 5) {
             toast.error('Chỉ được tải lên tối đa 5 ảnh');
             if (fileInputRef.current) fileInputRef.current.value = null;
             return;
         }
 
-        const newSelectedImages = [...selectedImages, ...files];
-        const newPreviewImages = [...previewImages, ...files.map(file => URL.createObjectURL(file))];
+        const newSelectedImages = [...selectedImages, ...validFiles];
+        const newPreviewImages = [...previewImages, ...validFiles.map(file => URL.createObjectURL(file))];
 
         setSelectedImages(newSelectedImages);
         setPreviewImages(newPreviewImages);
@@ -103,6 +117,38 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
         
         setSelectedImages(updatedImages);
         setPreviewImages(updatedPreviews);
+    };
+
+    const handleVideoChange = (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+
+        const maxVideoSize = 10 * 1024 * 1024;
+        const validFiles = files.filter(f => f.size <= maxVideoSize);
+        if (validFiles.length < files.length) {
+            toast.error('Có video vượt quá dung lượng 10MB');
+        }
+
+        if (selectedVideos.length + validFiles.length > 3) {
+            toast.error('Chỉ được tải lên tối đa 3 video');
+            if (videoInputRef.current) videoInputRef.current.value = null;
+            return;
+        }
+
+        const newSelectedVideos = [...selectedVideos, ...validFiles];
+        const newPreviewVideos = [...previewVideos, ...validFiles.map(file => URL.createObjectURL(file))];
+
+        setSelectedVideos(newSelectedVideos);
+        setPreviewVideos(newPreviewVideos);
+        if (videoInputRef.current) videoInputRef.current.value = null;
+    };
+
+    const removeVideo = (indexToRemove) => {
+        const updatedVideos = selectedVideos.filter((_, i) => i !== indexToRemove);
+        const updatedPreviews = previewVideos.filter((_, i) => i !== indexToRemove);
+        
+        setSelectedVideos(updatedVideos);
+        setPreviewVideos(updatedPreviews);
     };
 
     const applyFormat = (e, command, value = null) => {
@@ -136,17 +182,44 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if ((editorRef.current && hasText) || selectedImages.length > 0) {
+        if ((editorRef.current && hasText) || selectedImages.length > 0 || selectedVideos.length > 0) {
             setIsSubmitting(true);
-            const content = editorRef.current ? editorRef.current.innerHTML : '';
             try {
+                let videoUrls = [];
+                if (selectedVideos.length > 0) {
+                    setIsUploadingVideos(true);
+                    for (const video of selectedVideos) {
+                        const res = await getVideoUploadUrl(video.name);
+                        const presignedUrl = res?.uploadUrl;
+                        if (!presignedUrl) throw new Error('Không lấy được link upload');
+                        await uploadToS3(presignedUrl, video);
+                        videoUrls.push(extractPublicUrl(presignedUrl));
+                    }
+                    setIsUploadingVideos(false);
+                }
+
+                let imageUrls = [];
+                if (selectedImages.length > 0) {
+                    setIsUploadingImages(true);
+                    for (const image of selectedImages) {
+                        const res = await getImageUploadUrl(image.name, 'posts');
+                        const presignedUrl = res?.uploadUrl;
+                        if (!presignedUrl) throw new Error('Không lấy được link upload ảnh');
+                        await uploadToS3(presignedUrl, image);
+                        imageUrls.push(extractPublicUrl(presignedUrl));
+                    }
+                    setIsUploadingImages(false);
+                }
+
+                const content = editorRef.current ? editorRef.current.innerHTML : '';
                 let postData = new FormData();
                 postData.append('content', content === '<br>' ? '' : content);
                 
-                selectedImages.forEach(img => postData.append('images', img));
+                imageUrls.forEach(url => postData.append('imageUrls', url));
                 selectedTags.forEach(tag => {
                     postData.append('tags', getTopicNameStr(tag));
                 });
+                videoUrls.forEach(url => postData.append('videoUrls', url));
                 if (options.groupId) {
                     postData.append('groupId', options.groupId);
                 }
@@ -161,16 +234,22 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
                 setShowFormatBar(false);
                 setSelectedImages([]);
                 setPreviewImages([]);
+                setSelectedVideos([]);
+                setPreviewVideos([]);
                 setSelectedTags([]);
                 setTagSearchQuery('');
                 if (fileInputRef.current) {
                     fileInputRef.current.value = null;
                 }
+                if (videoInputRef.current) {
+                    videoInputRef.current.value = null;
+                }
                 if (onPostCreated) {
                     onPostCreated();
                 }
             } catch (error) {
-                toast.error(error || 'Đăng bài viết thất bại. Vui lòng thử lại!');
+                const errorMessage = typeof error === 'string' ? error : (error?.message || 'Đăng bài viết thất bại. Vui lòng thử lại!');
+                toast.error(errorMessage);
             } finally {
                 setIsSubmitting(false);
             }
@@ -181,14 +260,15 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
         isFocused, setIsFocused,
         hasText, setHasText,
         showFormatBar, setShowFormatBar,
-        editorRef, fileInputRef, dropdownRef,
+        editorRef, fileInputRef, videoInputRef, dropdownRef,
         isExpanded,
-        selectedImages, previewImages, isSubmitting,
+        selectedImages, previewImages, isUploadingImages, isSubmitting,
+        selectedVideos, previewVideos, isUploadingVideos,
         selectedTags, tagSearchQuery, isTagDropdownOpen,
         userTopics, filteredTopics,
         setTagSearchQuery, setIsTagDropdownOpen, handleAddTag, handleRemoveTag,
         handleInput, applyFormat, handleLink, insertQuote, insertCode,
-        handleImageChange, removeImage,
+        handleImageChange, removeImage, handleVideoChange, removeVideo,
         handleSubmit
     }
 }

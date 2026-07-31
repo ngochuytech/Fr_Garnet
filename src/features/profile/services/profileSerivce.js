@@ -51,10 +51,9 @@ export const setupProfile = async (setupData) => {
     });
 };
 
-export const updateAvatar = async (formData) => {
-    return apiFetch('/users/profiles/avatar', {
+export const updateAvatar = async (avatarUrl) => {
+    return apiFetch(`/users/profiles/avatar?avatarUrl=${encodeURIComponent(avatarUrl)}`, {
         method: 'PUT',
-        body: formData,
     });
 };
 

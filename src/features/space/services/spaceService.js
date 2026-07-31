@@ -2,16 +2,6 @@ import { apiFetch } from '../../../utils/api';
 
 const GROUPS_ENDPOINT = '/users/groups';
 
-const toFileFormData = (file) => {
-  if (file instanceof FormData) {
-    return file;
-  }
-
-  const formData = new FormData();
-  formData.append('file', file);
-  return formData;
-};
-
 export const getGroups = async () => {
   return apiFetch(GROUPS_ENDPOINT, {
     method: 'GET',
@@ -110,17 +100,15 @@ export const updateGroupDescription = async (groupId, description) => {
   });
 };
 
-export const updateGroupAvatar = async (groupId, file) => {
-  return apiFetch(`${GROUPS_ENDPOINT}/${groupId}/avatar`, {
+export const updateGroupAvatar = async (groupId, avatarUrl) => {
+  return apiFetch(`${GROUPS_ENDPOINT}/${groupId}/avatar?avatarUrl=${encodeURIComponent(avatarUrl)}`, {
     method: 'POST',
-    body: toFileFormData(file),
   });
 };
 
-export const updateGroupCover = async (groupId, file) => {
-  return apiFetch(`${GROUPS_ENDPOINT}/${groupId}/cover`, {
+export const updateGroupCover = async (groupId, coverUrl) => {
+  return apiFetch(`${GROUPS_ENDPOINT}/${groupId}/cover?coverUrl=${encodeURIComponent(coverUrl)}`, {
     method: 'POST',
-    body: toFileFormData(file),
   });
 };
 

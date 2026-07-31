@@ -179,7 +179,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
       if (parentId) setActiveReplyId(null);
       setCommentAmount(prev => prev + 1);
     } catch (error) {
-      toast.error(error || 'Không thể đăng bình luận');
+      toast.error(typeof error === 'string' ? error : (error?.message || 'Không thể đăng bình luận'));
     }
   };
 
@@ -207,7 +207,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
       else await dislikeCommentAPI(commentId);
     } catch (error) {
       setComments(originalComments);
-      toast.error(error || 'Lỗi khi tương tác bình luận');
+      toast.error(typeof error === 'string' ? error : (error?.message || 'Lỗi khi tương tác bình luận'));
     }
   };
 
@@ -322,7 +322,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
       if (editorRef.current) editorRef.current.innerHTML = '';
       setHasText(false);
     } catch (error) {
-      toast.error(error || 'Lỗi khi chia sẻ bài viết');
+      toast.error(typeof error === 'string' ? error : (error?.message || 'Lỗi khi chia sẻ bài viết'));
     } finally {
       setIsSharing(false);
     }
@@ -365,7 +365,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
         toast.success('Đã xóa bài viết!');
         setIsDeleted(true);  // cập nhật shared isDeleted
       } catch (error) {
-        toast.error(error || 'Lỗi khi xóa bài viết');
+        toast.error(typeof error === 'string' ? error : (error?.message || 'Lỗi khi xóa bài viết'));
       }
     }
   };
@@ -413,7 +413,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
       toast.success('Đã gửi báo cáo. Cảm ơn bạn!');
       closeReportModal();
     } catch (error) {
-      toast.error(error || 'Lỗi khi gửi báo cáo');
+      toast.error(typeof error === 'string' ? error : (error?.message || 'Lỗi khi gửi báo cáo'));
     } finally {
       setIsSubmittingReport(false);
     }

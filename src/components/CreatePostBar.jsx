@@ -1,14 +1,21 @@
 import { useCreatePostBar } from '../hooks/useCreatePostBar'
+import { useAuth } from '../context/AuthContext';
+import AutoPlayVideo from './AutoPlayVideo';
+
 export const CreatePostBar = ({ avatarUrl, onPostCreated, placeholder = "Bạn đang nghĩ gì? Hỏi hoặc chia sẻ với cộng đồng...", groupId }) => {
     const { isExpanded,
         editorRef,
         fileInputRef,
+        videoInputRef,
         dropdownRef,
         isFocused,
         hasText,
         showFormatBar,
         previewImages,
+        previewVideos,
         isSubmitting,
+        isUploadingImages,
+        isUploadingVideos,
         selectedTags,
         tagSearchQuery,
         isTagDropdownOpen,
@@ -24,6 +31,8 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated, placeholder = "Bạn �
         handleInput,
         handleImageChange,
         removeImage,
+        handleVideoChange,
+        removeVideo,
         handleSubmit,
         insertQuote,
         insertCode,
@@ -82,12 +91,39 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated, placeholder = "Bạn �
                         </div>
                     )}
                     
+                    {previewVideos && previewVideos.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {previewVideos.map((preview, index) => (
+                                <div key={`vid-${index}`} className="relative rounded-md overflow-hidden bg-gray-50 border border-gray-200 w-32 h-32 flex-shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => removeVideo(index)}
+                                        className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-gray-800/60 hover:bg-gray-800/80 text-white rounded-full transition-colors z-10"
+                                        title="Xóa video"
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                    </button>
+                                    <AutoPlayVideo src={preview} controls={false} className="w-full h-full object-cover" />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    
                     <input
                         type="file"
                         accept="image/*"
                         multiple
                         ref={fileInputRef}
                         onChange={handleImageChange}
+                        className="hidden"
+                    />
+                    
+                    <input
+                        type="file"
+                        accept="video/*"
+                        multiple
+                        ref={videoInputRef}
+                        onChange={handleVideoChange}
                         className="hidden"
                     />
                 </div>
@@ -97,19 +133,19 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated, placeholder = "Bạn �
                     <div className="flex items-center gap-1 flex-shrink-0">
                         <button
                             onClick={handleSubmit}
-                            disabled={isSubmitting || (!hasText && previewImages.length === 0)}
-                            className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold rounded-full text-white transition-colors shadow-sm ${(hasText || previewImages.length > 0) && !isSubmitting ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-60'}`}
+                            disabled={isSubmitting || (!hasText && previewImages.length === 0 && previewVideos.length === 0)}
+                            className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold rounded-full text-white transition-colors shadow-sm ${(hasText || previewImages.length > 0 || previewVideos.length > 0) && !isSubmitting ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-60'}`}
                             style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}
                         >
                             {isSubmitting ? (
                                 <>
                                     <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    <span>...</span>
-                                </>
-                            ) : (
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>{isUploadingImages ? 'Tải ảnh...' : isUploadingVideos ? 'Tải video...' : '...'}</span>
+                            </>
+                        ) : (
                                 "Đăng"
                             )}
                         </button>
@@ -185,6 +221,9 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated, placeholder = "Bạn �
                                 <button onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} onMouseDown={(e) => e.preventDefault()} className="p-1.5 hover:bg-gray-100 rounded-md transition-colors" title="Thêm ảnh">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
                                 </button>
+                                <button onClick={(e) => { e.preventDefault(); videoInputRef.current?.click(); }} onMouseDown={(e) => e.preventDefault()} className="p-1.5 hover:bg-gray-100 rounded-md transition-colors" title="Thêm video">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                                </button>
                             </>
                         ) : (
                             <div className="flex items-center gap-1">
@@ -214,8 +253,8 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated, placeholder = "Bạn �
                     </div>
                     <button
                         onClick={handleSubmit}
-                        disabled={isSubmitting || (!hasText && previewImages.length === 0)}
-                        className={`min-w-[80px] flex items-center justify-center gap-1.5 px-6 py-1.5 text-[14px] font-semibold rounded-full text-white transition-colors shadow-sm ${(hasText || previewImages.length > 0) && !isSubmitting ? 'cursor-pointer opacity-100 hover:brightness-95' : 'cursor-not-allowed opacity-60'}`}
+                        disabled={isSubmitting || (!hasText && previewImages.length === 0 && previewVideos.length === 0)}
+                        className={`min-w-[80px] flex items-center justify-center gap-1.5 px-6 py-1.5 text-[14px] font-semibold rounded-full text-white transition-colors shadow-sm ${(hasText || previewImages.length > 0 || previewVideos.length > 0) && !isSubmitting ? 'cursor-pointer opacity-100 hover:brightness-95' : 'cursor-not-allowed opacity-60'}`}
                         style={{ backgroundColor: 'var(--color-dusty-rose-600)' }}
                     >
                         {isSubmitting ? (
@@ -224,7 +263,7 @@ export const CreatePostBar = ({ avatarUrl, onPostCreated, placeholder = "Bạn �
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span>...</span>
+                                <span>{isUploadingImages ? 'Tải ảnh...' : isUploadingVideos ? 'Tải video...' : '...'}</span>
                             </>
                         ) : (
                             "Đăng"

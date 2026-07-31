@@ -1,4 +1,7 @@
 import { useAuth } from "../context/AuthContext";
+import { toast } from 'sonner';
+import AutoPlayVideo from './AutoPlayVideo';
+
 /**
  * SharePostModal — Modal chia sẻ bài viết tái sử dụng.
  *
@@ -204,6 +207,15 @@ const SharePostModal = ({
                   {quotedPost.images.map((imgUrl, i) => (
                     <div key={i} className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50">
                       <img src={imgUrl} alt={`Quoted post attachment ${i}`} className="w-full h-auto object-cover max-h-[150px]" />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {quotedPost.videos && quotedPost.videos.length > 0 && (
+                <div className={`grid gap-1 mt-2 ${quotedPost.videos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {quotedPost.videos.map((vidUrl, i) => (
+                    <div key={`qvid-${i}`} className="w-full rounded-md overflow-hidden border border-gray-200 bg-black">
+                      <AutoPlayVideo src={vidUrl} className="w-full h-auto object-cover max-h-[150px]" />
                     </div>
                   ))}
                 </div>

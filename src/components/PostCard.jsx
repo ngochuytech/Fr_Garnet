@@ -7,6 +7,7 @@ import Comment from './Comment';
 import SharedPostModal from './SharedPostModal';
 import SharePostModal from './SharePostModal';
 import { ImagePreviewModal } from './ImagePreviewModal';
+import AutoPlayVideo from './AutoPlayVideo';
 
 const formatTimeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -228,6 +229,21 @@ const PostCard = ({ post, isOwnPost, group }) => {
           </div>
         )}
 
+        {/* Post Videos */}
+        {post.videos && post.videos.length > 0 && (
+          <div className={`grid gap-2 mb-3 ${post.videos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            {post.videos.map((vidUrl, i) => (
+              <div 
+                key={`vid-${i}`} 
+                className="w-full rounded-md overflow-hidden border border-gray-200 bg-black cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <AutoPlayVideo src={vidUrl} className="w-full h-auto object-cover max-h-[300px] sm:max-h-[400px]" />
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Quoted Shared Post */}
         {sharedPost && (
           <div
@@ -286,6 +302,19 @@ const PostCard = ({ post, isOwnPost, group }) => {
                         onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
                       >
                         <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[300px]" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {sharedPost.videos && sharedPost.videos.length > 0 && (
+                  <div className={`grid gap-1 mt-2 ${sharedPost.videos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                    {sharedPost.videos.map((vidUrl, i) => (
+                      <div 
+                        key={`svid-${i}`} 
+                        className="w-full rounded-md overflow-hidden border border-gray-200 bg-black cursor-pointer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <AutoPlayVideo src={vidUrl} className="w-full h-auto object-cover max-h-[300px]" />
                       </div>
                     ))}
                   </div>
@@ -425,6 +454,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
           createdAt: sharedPost ? sharedPost.createdAt : post.createdAt,
           content: sharedPost ? sharedPost.content : post.content,
           images: sharedPost ? sharedPost.images : post.images,
+          videos: sharedPost ? sharedPost.videos : post.videos,
         }}
         editorRef={editorRef}
         hasText={hasText}
@@ -516,6 +546,21 @@ const PostCard = ({ post, isOwnPost, group }) => {
                 </div>
               )}
 
+              {/* Post Videos */}
+              {post.videos && post.videos.length > 0 && (
+                <div className={`grid gap-2 mb-4 ${post.videos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {post.videos.map((vidUrl, i) => (
+                    <div 
+                      key={`mvid-${i}`} 
+                      className="w-full rounded-md overflow-hidden border border-gray-200 bg-black cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <AutoPlayVideo src={vidUrl} className="w-full h-auto object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Post Tags (Main Post Tags) */}
               {post.tags && post.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3 mt-1">
@@ -573,6 +618,19 @@ const PostCard = ({ post, isOwnPost, group }) => {
                               onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
                             >
                               <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[200px]" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {sharedPost.videos && sharedPost.videos.length > 0 && (
+                        <div className={`grid gap-1 mt-2 ${sharedPost.videos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                          {sharedPost.videos.map((vidUrl, i) => (
+                            <div 
+                              key={`msvid-${i}`} 
+                              className="w-full rounded-md overflow-hidden border border-gray-200 bg-black cursor-pointer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <AutoPlayVideo src={vidUrl} className="w-full h-auto object-cover max-h-[200px]" />
                             </div>
                           ))}
                         </div>

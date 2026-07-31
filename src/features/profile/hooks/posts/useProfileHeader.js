@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
-import { updateAvatar } from '../../services/profileSerivce';
-
+import { updateAvatar, getProfile } from '../../services/profileSerivce';
+import { getImageUploadUrl, uploadToS3, extractPublicUrl } from '../../../../services/mediaService';
 export const useProfileHeader = () => {
   const { user, updateUser } = useAuth(); // Extract updateUser
   const fileInputRef = useRef(null);
@@ -17,15 +17,29 @@ export const useProfileHeader = () => {
     const file = event.target.files[0];
     if (!file) return;
 
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Kích thước ảnh không được vượt quá 10MB');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+      return;
+    }
+
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('avatarFile', file);
+      const res = await getImageUploadUrl(file.name, 'avatars');
+      const presignedUrl = res?.uploadUrl;
+      if (!presignedUrl) throw new Error('Không lấy được link upload ảnh');
 
-      const updatedProfile = await updateAvatar(formData);
+      await uploadToS3(presignedUrl, file);
+      const avatarUrl = extractPublicUrl(presignedUrl);
+
+      await updateAvatar(avatarUrl);
+      
+      const updatedProfile = await getProfile();
       
       if (updateUser && updatedProfile) {
-        updateUser(updatedProfile); 
+        updateUser(updatedProfile.data); 
       }
     } catch (error) {
       console.error('Lỗi khi cập nhật ảnh đại diện:', error);

@@ -6,6 +6,7 @@ import { usePostCard } from '../hooks/usePostCard';
 import { useSharedPostModal } from '../hooks/useSharedPostModal';
 import CommentInput from './CommentInput';
 import Comment from './Comment';
+import AutoPlayVideo from './AutoPlayVideo';
 import SharePostModal from './SharePostModal';
 import { ImagePreviewModal } from './ImagePreviewModal';
 
@@ -137,6 +138,21 @@ const SharedPostContent = ({ post, onClose }) => {
           ))}
         </div>
       )}
+
+      {/* Post Videos */}
+      {post.videos && post.videos.length > 0 && (
+        <div className={`grid gap-2 mb-4 ${post.videos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+          {post.videos.map((vidUrl, i) => (
+            <div
+              key={`svvid-${i}`}
+              className="w-full rounded-md overflow-hidden border border-gray-200 bg-black cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AutoPlayVideo src={vidUrl} className="w-full h-auto object-cover max-h-[300px] sm:max-h-[400px]" />
+            </div>
+          ))}
+        </div>
+      )}
       {/* Post Tags */}
       {post.tags && post.tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-3 mt-1">
@@ -192,6 +208,19 @@ const SharedPostContent = ({ post, onClose }) => {
                       onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
                     >
                       <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[150px]" />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {post.sharedPost.videos && post.sharedPost.videos.length > 0 && (
+                <div className={`grid gap-1 mt-2 ${post.sharedPost.videos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {post.sharedPost.videos.map((vidUrl, i) => (
+                    <div
+                      key={`ssvid-${i}`}
+                      className="w-full rounded-md overflow-hidden border border-gray-200 bg-black cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <AutoPlayVideo src={vidUrl} className="w-full h-auto object-cover max-h-[150px]" />
                     </div>
                   ))}
                 </div>
@@ -346,6 +375,7 @@ const SharedPostContent = ({ post, onClose }) => {
           createdAt: post.createdAt,
           content: post.content,
           images: post.images,
+          videos: post.videos,
         }}
         editorRef={editorRef}
         hasText={hasText}

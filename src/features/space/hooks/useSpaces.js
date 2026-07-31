@@ -19,6 +19,7 @@ import {
   updateGroupDescription,
   updateGroupName,
 } from '../services/spaceService';
+import { getImageUploadUrl, uploadToS3, extractPublicUrl } from '../../../services/mediaService';
 
 const DEFAULT_COVER_URL = 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80';
 const GROUP_NAME_MAX_LENGTH = 50;
@@ -697,11 +698,21 @@ export const useSpaces = (routeSpaceId = null) => {
   }, [setActionLoading]);
 
   const handleUpdateGroupAvatar = useCallback(async (groupId, file) => {
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Kích thước ảnh đại diện không được vượt quá 10MB');
+      return;
+    }
     const key = `avatar:${groupId}`;
 
     try {
       setActionLoading(key, true);
-      const updatedGroup = await updateGroupAvatar(groupId, file);
+      const res = await getImageUploadUrl(file.name, 'groups/avatars');
+      const presignedUrl = res?.uploadUrl;
+      if (!presignedUrl) throw new Error('Không lấy được link upload ảnh đại diện');
+      await uploadToS3(presignedUrl, file);
+      const avatarUrl = extractPublicUrl(presignedUrl);
+
+      const updatedGroup = await updateGroupAvatar(groupId, avatarUrl);
       syncSpace(updatedGroup);
       toast.success('Đã cập nhật ảnh đại diện nhóm');
     } catch (err) {
@@ -712,11 +723,21 @@ export const useSpaces = (routeSpaceId = null) => {
   }, [setActionLoading, syncSpace]);
 
   const handleUpdateGroupCover = useCallback(async (groupId, file) => {
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Kích thước ảnh bìa không được vượt quá 10MB');
+      return;
+    }
     const key = `cover:${groupId}`;
 
     try {
       setActionLoading(key, true);
-      const updatedGroup = await updateGroupCover(groupId, file);
+      const res = await getImageUploadUrl(file.name, 'groups/covers');
+      const presignedUrl = res?.uploadUrl;
+      if (!presignedUrl) throw new Error('Không lấy được link upload ảnh bìa');
+      await uploadToS3(presignedUrl, file);
+      const coverUrl = extractPublicUrl(presignedUrl);
+
+      const updatedGroup = await updateGroupCover(groupId, coverUrl);
       syncSpace(updatedGroup);
       toast.success('Đã cập nhật ảnh bìa nhóm');
     } catch (err) {
