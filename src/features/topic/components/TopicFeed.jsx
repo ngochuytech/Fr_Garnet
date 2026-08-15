@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import PostCard from '../../../components/PostCard';
 import { getPostsByTopic } from '../services/topicService';
+import { useActivityTracker } from '../../../hooks/useActivityTracker';
 
 const TopicFeed = ({ topicName }) => {
   const { user } = useAuth();
+  const { trackEvent } = useActivityTracker();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -87,6 +89,7 @@ const TopicFeed = ({ topicName }) => {
                   post={post}
                   isOwnPost={isOwnPost}
                   isOwnSharePost={isOwnSharePost}
+                  onTrackEvent={trackEvent}
                 />
               </div>
             );

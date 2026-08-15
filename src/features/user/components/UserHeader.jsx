@@ -9,10 +9,12 @@ const UserHeader = ({ user }) => {
   const [isFollowing, setIsFollowing] = useState(user?.following || false);
   const [followersCount, setFollowersCount] = useState(user?.followersCount || 0);
   const [isLoading, setIsLoading] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   // Refs để quản lý debounce
   const debounceTimerRef = useRef(null);
   const lastSyncedStateRef = useRef(user?.following || false);
+  const moreMenuRef = useRef(null);
 
   // Đồng bộ state nếu prop user thay đổi
   useEffect(() => {
@@ -20,6 +22,17 @@ const UserHeader = ({ user }) => {
     setFollowersCount(user?.followersCount || 0);
     lastSyncedStateRef.current = user?.following || false;
   }, [user]);
+
+  // Đóng menu khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const isOwnProfile = currentUser && (currentUser.id === user?.id || currentUser.userId === user?.id);
   const displayName = user?.fullname || 'User';
@@ -61,6 +74,13 @@ const UserHeader = ({ user }) => {
             setIsLoading(false);
         }
     }, 1000);
+  };
+
+  const handleBlockUser = () => {
+    // TODO: Tích hợp logic/API chặn người dùng
+    console.log("Chặn người dùng:", user?.id);
+    setShowMoreMenu(false);
+    alert("Chức năng chặn người dùng đang được phát triển!");
   };
 
   return (
@@ -123,6 +143,33 @@ const UserHeader = ({ user }) => {
                   'Theo dõi'
                 )}
               </button>
+
+              {/* Nút 3 chấm cho chức năng khác */}
+              <div className="relative" ref={moreMenuRef}>
+                <button
+                  onClick={() => setShowMoreMenu(!showMoreMenu)}
+                  className="w-[42px] h-[42px] rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm flex items-center justify-center"
+                  aria-label="Thêm tùy chọn"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M10.5 6a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm0 6a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm0 6a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" clipRule="evenodd" />
+                  </svg>
+                </button>
+
+                {showMoreMenu && (
+                  <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-10 py-1 overflow-hidden">
+                    <button
+                      onClick={handleBlockUser}
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2.5 transition-colors duration-150"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                      </svg>
+                      <span className="font-medium">Chặn người dùng</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -1,7 +1,9 @@
 import { useHomeRightSideBar } from '../hooks/useHomeRightSideBar';
+import { useNavigate } from 'react-router-dom';
 
 const HomeRightSidebar = () => {
     const { currentUser, suggestedUsers, loadingSuggestions, actionLoadingIds, toggleFollow } = useHomeRightSideBar();
+    const navigate = useNavigate();
 
     return (
         <aside className="w-full pb-6 pl-2 space-y-5">
@@ -10,9 +12,13 @@ const HomeRightSidebar = () => {
                 <img
                     src={currentUser?.avatarUrl}
                     alt={currentUser.displayName}
-                    className="w-16 h-16 rounded-full object-cover mb-3 border-2 border-white shadow-sm ring-2 ring-gray-100"
+                    className="w-16 h-16 rounded-full object-cover mb-3 border-2 border-white shadow-sm ring-2 ring-gray-100 cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => navigate(`/user/${currentUser.id}`)}
                 />
-                <h2 className="text-base font-bold text-gray-900 hover:underline cursor-pointer">
+                <h2 
+                    className="text-base font-bold text-gray-900 hover:underline cursor-pointer"
+                    onClick={() => navigate(`/user/${currentUser.id}`)}
+                >
                     {currentUser.displayName}
                 </h2>
                 <p className="text-sm text-gray-500 mb-4">{currentUser.major}</p>
@@ -43,29 +49,23 @@ const HomeRightSidebar = () => {
                             const name = user.fullName || user.name || 'Người dùng';
                             const avatar = user.avatarUrl || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f7edee&color=8d3f41`;
                             const major = user.department || user.major || 'Thành viên CampusHub';
-                            const reason = Array.isArray(user.reason) && user.reason.length > 0
-                                ? user.reason.join(', ')
-                                : user.reason || 'Gợi ý kết nối mới';
 
                             return (
                                 <div key={user.id} className="flex items-start justify-between">
-                                    <div className="flex items-center gap-3">
+                                    <div 
+                                        className="flex items-center gap-3 cursor-pointer group"
+                                        onClick={() => navigate(`/user/${user.id}`)}
+                                    >
                                         <img
                                             src={avatar}
                                             alt={name}
-                                            className="w-10 h-10 rounded-full object-cover border border-gray-100"
+                                            className="w-10 h-10 rounded-full object-cover border border-gray-100 group-hover:opacity-90 transition-opacity"
                                         />
                                         <div className="flex flex-col">
-                                            <h3 className="text-sm font-semibold text-gray-900 leading-tight hover:underline cursor-pointer">
+                                            <h3 className="text-sm font-semibold text-gray-900 leading-tight group-hover:underline group-hover:text-[#8d3f41] transition-colors">
                                                 {name}
                                             </h3>
                                             <span className="text-xs text-gray-500 mt-0.5">{major}</span>
-                                            <span
-                                                className="text-[11px] text-[#8d3f41] mt-1 self-start max-w-[150px] truncate font-medium bg-[#f7edee] px-1.5 py-0.5 rounded"
-                                                title={reason}
-                                            >
-                                                {reason}
-                                            </span>
                                         </div>
                                     </div>
                                     <button

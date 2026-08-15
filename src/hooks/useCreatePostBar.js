@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { createPostBarService, fetchUserTopics } from '../services/createPostBarService';
+import { createPostBarService, fetchTopics } from '../services/createPostBarService';
 import { getVideoUploadUrl, getImageUploadUrl, uploadToS3, extractPublicUrl } from '../services/mediaService';
 
 export const useCreatePostBar = (onPostCreated, options = {}) => {
@@ -11,18 +11,18 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [previewImages, setPreviewImages] = useState([]);
     const [isUploadingImages, setIsUploadingImages] = useState(false);
-    
+
     // Video state
     const [selectedVideos, setSelectedVideos] = useState([]);
     const [previewVideos, setPreviewVideos] = useState([]);
     const [isUploadingVideos, setIsUploadingVideos] = useState(false);
-    
+
     // Tag state
     const [userTopics, setUserTopics] = useState([]);
     const [selectedTags, setSelectedTags] = useState([]);
     const [tagSearchQuery, setTagSearchQuery] = useState('');
     const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
-    
+
     const editorRef = useRef(null);
     const fileInputRef = useRef(null);
     const videoInputRef = useRef(null);
@@ -33,7 +33,7 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
     useEffect(() => {
         const loadTopics = async () => {
             try {
-                const data = await fetchUserTopics();
+                const data = await fetchTopics();
                 setUserTopics(data || []);
             } catch (error) {
                 console.error('Failed to load user topics:', error);
@@ -63,10 +63,10 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
     const filteredTopics = userTopics.filter(topic => {
         const topicStr = getTopicNameStr(topic);
         if (!topicStr) return false;
-        
+
         const matchesQuery = topicStr.toLowerCase().includes(tagSearchQuery.toLowerCase());
         const isNotSelected = !selectedTags.some(t => getTopicNameStr(t) === topicStr);
-        
+
         return matchesQuery && isNotSelected;
     });
 
@@ -114,7 +114,7 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
     const removeImage = (indexToRemove) => {
         const updatedImages = selectedImages.filter((_, i) => i !== indexToRemove);
         const updatedPreviews = previewImages.filter((_, i) => i !== indexToRemove);
-        
+
         setSelectedImages(updatedImages);
         setPreviewImages(updatedPreviews);
     };
@@ -146,7 +146,7 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
     const removeVideo = (indexToRemove) => {
         const updatedVideos = selectedVideos.filter((_, i) => i !== indexToRemove);
         const updatedPreviews = previewVideos.filter((_, i) => i !== indexToRemove);
-        
+
         setSelectedVideos(updatedVideos);
         setPreviewVideos(updatedPreviews);
     };
@@ -214,7 +214,7 @@ export const useCreatePostBar = (onPostCreated, options = {}) => {
                 const content = editorRef.current ? editorRef.current.innerHTML : '';
                 let postData = new FormData();
                 postData.append('content', content === '<br>' ? '' : content);
-                
+
                 imageUrls.forEach(url => postData.append('imageUrls', url));
                 selectedTags.forEach(tag => {
                     postData.append('tags', getTopicNameStr(tag));

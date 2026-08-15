@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { likePostAPI, dislikePostAPI, getCommentsByPostId, createCommentAPI, likeCommentAPI, dislikeCommentAPI, deletePostAPI, reportPostAPI, sharePostAPI } from '../services/postService';
-import { fetchUserTopics } from '../services/createPostBarService';
+import { fetchTopics } from '../services/createPostBarService';
 
 export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, initialCommentCount = 0, initialShareCount = 0, initialUserReaction = null, initialContent = '' } = {}) => {
 
@@ -285,7 +285,7 @@ export const usePostCard = ({ postId, initialUpvotes = 0, initialDownvotes = 0, 
     setIsShareModalOpen(true);
     const loadTopics = async () => {
         try {
-            const data = await fetchUserTopics();
+            const data = await fetchTopics();
             setUserTopics(data || []);
         } catch (error) {
             console.error('Failed to load user topics:', error);

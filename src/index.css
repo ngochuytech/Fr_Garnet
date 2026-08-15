@@ -97,3 +97,9 @@ body {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Hide default browser password reveal icon (mainly Edge) */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}

@@ -50,22 +50,9 @@ const FollowingList = () => {
                   <span className="font-bold text-[15px] text-gray-800 group-hover:underline group-hover:text-[#8d3f41] transition-colors">
                     {user.fullName}
                   </span>
-                  <div className="flex flex-wrap items-center gap-1 mt-1">
-                    {Array.isArray(user.reason) && user.reason.length > 0 ? (
-                      user.reason.map((reason) => (
-                        <span
-                          key={reason}
-                          className="text-[12px] text-[#8d3f41] font-medium bg-[#f7edee] px-2 py-0.5 rounded"
-                        >
-                          ✨ {reason}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-[12px] text-[#8d3f41] font-medium bg-[#f7edee] w-fit px-2 py-0.5 rounded">
-                        ✨ {(!user.reason || (Array.isArray(user.reason) && user.reason.length === 0)) ? 'Bạn có thể biết' : user.reason}
-                      </span>
-                    )}
-                  </div>
+                  <span className="text-[12px] text-gray-500 mt-0.5">
+                    {user.department || 'Người dùng Garnet'}
+                  </span>
                 </div>
               </div>
 

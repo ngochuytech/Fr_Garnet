@@ -62,9 +62,9 @@ const GroupBadge = ({ group, onNavigate }) => {
         <img src={group.avatarUrl} alt={group.name} className="w-4 h-4 rounded-full object-cover" />
       ) : (
         <span className="w-4 h-4 rounded-full bg-[#8d3f41]/10 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-            </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+          </svg>
         </span>
       )}
       <span className="truncate">Hội {group.name}</span>
@@ -72,18 +72,101 @@ const GroupBadge = ({ group, onNavigate }) => {
   );
 };
 
-const PostCard = ({ post, isOwnPost, group }) => {
+// Smart thumbnail grid: shows 1 image (full width) or 2 images side-by-side.
+// If there are more than 2 images, the last visible thumbnail gets an overlay "+N" counter.
+const PostImageGrid = ({ images, onOpen, maxH = 'max-h-[340px]' }) => {
+  if (!images || images.length === 0) return null;
+
+  if (images.length === 1) {
+    return (
+      <div className="mb-3">
+        <div
+          className="w-full rounded-xl overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); onOpen(0); }}
+        >
+          <img
+            src={images[0]}
+            alt="Attachment 1"
+            className={`w-full h-auto object-cover ${maxH}`}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // 2+ images: show max 2 thumbnails, second slot may have +N overlay
+  const visible = images.slice(0, 2);
+  const hiddenCount = images.length - 2;
+
+  return (
+    <div className="grid grid-cols-2 gap-1.5 mb-3">
+      {visible.map((imgUrl, i) => {
+        const isLast = i === 1;
+        const showOverlay = isLast && hiddenCount > 0;
+        return (
+          <div
+            key={i}
+            className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-100 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); onOpen(i); }}
+          >
+            <img
+              src={imgUrl}
+              alt={`Attachment ${i + 1}`}
+              className={`w-full h-full object-cover ${maxH}`}
+            />
+            {showOverlay && (
+              <div className="absolute inset-0 bg-black/55 flex items-center justify-center rounded-xl">
+                <span className="text-white text-2xl font-bold select-none">+{hiddenCount}</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const PostCard = ({ post, isOwnPost, group, onTrackEvent }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null); // { images: [], index: 0 }
   const [isContentExpanded, setIsContentExpanded] = useState(false);
   const [showContentToggle, setShowContentToggle] = useState(false);
   const contentRef = useRef(null);
-  
+  const postRef = useRef(null);
+
   const [isSharedContentExpanded, setIsSharedContentExpanded] = useState(false);
   const [showSharedContentToggle, setShowSharedContentToggle] = useState(false);
   const sharedContentRef = useRef(null);
-  
+
+  useEffect(() => {
+    if (!onTrackEvent || !post?.id || !postRef.current) return;
+
+    let timer = null;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting) {
+          timer = setTimeout(() => {
+            onTrackEvent(post.id, 'POST_IMPRESSION');
+            if (postRef.current) observer.unobserve(postRef.current);
+          }, 1500);
+        } else {
+          if (timer) clearTimeout(timer);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    const currentRef = postRef.current;
+    observer.observe(currentRef);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      if (currentRef) observer.unobserve(currentRef);
+    };
+  }, [post?.id, onTrackEvent]);
+
   const handleNavigateToUser = (e, userId) => {
     if (e) e.stopPropagation();
     if (userId) {
@@ -96,7 +179,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
   const authorCredential = post.author?.department ? `${post.author.department}` : 'Thành viên CampusHub';
   const avatarUrl = post.author?.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=dfb9b9&color=6a2f30`;
   const postGroup = getPostGroup(post, group);
-  const groupInfo =  group;
+  const groupInfo = group;
   const isLeaderOfGroup = groupInfo?.memberRole === 'LEADER';
 
   const handleNavigateToGroup = (event, groupId) => {
@@ -140,6 +223,19 @@ const PostCard = ({ post, isOwnPost, group }) => {
     initialContent: post.content,
   });
 
+  // Track POST_OPEN and POST_DWELL when modal is opened
+  useEffect(() => {
+    if (isPostModalOpen && onTrackEvent && post?.id) {
+      onTrackEvent(post.id, 'POST_OPEN');
+
+      const dwellTimer = setTimeout(() => {
+        onTrackEvent(post.id, 'POST_DWELL');
+      }, 10000); // 10 seconds threshold
+
+      return () => clearTimeout(dwellTimer);
+    }
+  }, [isPostModalOpen, post?.id, onTrackEvent]);
+
   useEffect(() => {
     if (contentRef.current) {
       setTimeout(() => {
@@ -163,10 +259,10 @@ const PostCard = ({ post, isOwnPost, group }) => {
   if (isDeleted) return null;
 
   return (
-    <div className="py-4 border-b border-gray-200">
+    <div ref={postRef} className="py-4 border-b border-gray-200">
       {/* Post Header */}
       <div className="flex items-start gap-2 mb-2">
-        <div 
+        <div
           className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
           onClick={(e) => handleNavigateToUser(e, post.author?.id)}
         >
@@ -174,7 +270,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
         </div>
         <div className="flex flex-col">
           <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
-            <span 
+            <span
               className="cursor-pointer hover:underline"
               onClick={(e) => handleNavigateToUser(e, post.author?.id)}
             >
@@ -214,27 +310,20 @@ const PostCard = ({ post, isOwnPost, group }) => {
           )}
         </div>
 
-        {/* Post Images */}
+        {/* Post Images - thumbnail grid with carousel */}
         {post.images && post.images.length > 0 && (
-          <div className={`grid gap-2 mb-3 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-            {post.images.map((imgUrl, i) => (
-              <div 
-                key={i} 
-                className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
-              >
-                <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[300px] sm:max-h-[400px]" />
-              </div>
-            ))}
-          </div>
+          <PostImageGrid
+            images={post.images}
+            onOpen={(idx) => setImagePreview({ images: post.images, index: idx })}
+          />
         )}
 
         {/* Post Videos */}
         {post.videos && post.videos.length > 0 && (
           <div className={`grid gap-2 mb-3 ${post.videos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
             {post.videos.map((vidUrl, i) => (
-              <div 
-                key={`vid-${i}`} 
+              <div
+                key={`vid-${i}`}
                 className="w-full rounded-md overflow-hidden border border-gray-200 bg-black cursor-pointer"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -253,7 +342,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
             {sharedPost.author ? (
               <>
                 <div className="flex items-start gap-2 mb-2">
-                  <div 
+                  <div
                     className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
                     onClick={(e) => handleNavigateToUser(e, sharedPost.author?.id)}
                   >
@@ -265,7 +354,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
-                      <span 
+                      <span
                         className="cursor-pointer hover:underline"
                         onClick={(e) => handleNavigateToUser(e, sharedPost.author?.id)}
                       >
@@ -294,23 +383,17 @@ const PostCard = ({ post, isOwnPost, group }) => {
                   </div>
                 )}
                 {sharedPost.images && sharedPost.images.length > 0 && (
-                  <div className={`grid gap-1 mt-2 ${sharedPost.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                    {sharedPost.images.map((imgUrl, i) => (
-                      <div 
-                        key={i} 
-                        className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
-                        onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
-                      >
-                        <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[300px]" />
-                      </div>
-                    ))}
-                  </div>
+                  <PostImageGrid
+                    images={sharedPost.images}
+                    maxH="max-h-[220px]"
+                    onOpen={(idx) => { setImagePreview({ images: sharedPost.images, index: idx }); }}
+                  />
                 )}
                 {sharedPost.videos && sharedPost.videos.length > 0 && (
                   <div className={`grid gap-1 mt-2 ${sharedPost.videos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                     {sharedPost.videos.map((vidUrl, i) => (
-                      <div 
-                        key={`svid-${i}`} 
+                      <div
+                        key={`svid-${i}`}
                         className="w-full rounded-md overflow-hidden border border-gray-200 bg-black cursor-pointer"
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -499,7 +582,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 relative">
               {/* Post Header */}
               <div className="flex items-start gap-2 mb-3">
-                <div 
+                <div
                   className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
                   onClick={(e) => handleNavigateToUser(e, post.author?.id)}
                 >
@@ -507,7 +590,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center text-[14px] text-gray-900 font-bold flex-wrap">
-                    <span 
+                    <span
                       className="hover:underline cursor-pointer"
                       onClick={(e) => handleNavigateToUser(e, post.author?.id)}
                     >
@@ -531,14 +614,14 @@ const PostCard = ({ post, isOwnPost, group }) => {
                 dangerouslySetInnerHTML={{ __html: localContent }}
               />
 
-              {/* Post Images */}
+              {/* Post Images in modal - show all */}
               {post.images && post.images.length > 0 && (
                 <div className={`grid gap-2 mb-4 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   {post.images.map((imgUrl, i) => (
-                    <div 
-                      key={i} 
+                    <div
+                      key={i}
                       className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
-                      onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
+                      onClick={(e) => { e.stopPropagation(); setImagePreview({ images: post.images, index: i }); }}
                     >
                       <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover" />
                     </div>
@@ -550,8 +633,8 @@ const PostCard = ({ post, isOwnPost, group }) => {
               {post.videos && post.videos.length > 0 && (
                 <div className={`grid gap-2 mb-4 ${post.videos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   {post.videos.map((vidUrl, i) => (
-                    <div 
-                      key={`mvid-${i}`} 
+                    <div
+                      key={`mvid-${i}`}
                       className="w-full rounded-md overflow-hidden border border-gray-200 bg-black cursor-pointer"
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -581,7 +664,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
                   {sharedPost.author ? (
                     <>
                       <div className="flex items-start gap-2 mb-2">
-                        <div 
+                        <div
                           className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
                           onClick={(e) => handleNavigateToUser(e, sharedPost.author?.id)}
                         >
@@ -593,7 +676,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
                         </div>
                         <div className="flex flex-col">
                           <div className="flex items-center text-[13px] text-gray-900 font-bold flex-wrap">
-                            <span 
+                            <span
                               className="cursor-pointer hover:underline"
                               onClick={(e) => handleNavigateToUser(e, sharedPost.author?.id)}
                             >
@@ -612,10 +695,10 @@ const PostCard = ({ post, isOwnPost, group }) => {
                       {sharedPost.images && sharedPost.images.length > 0 && (
                         <div className={`grid gap-1 mt-2 ${sharedPost.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                           {sharedPost.images.map((imgUrl, i) => (
-                            <div 
-                              key={i} 
+                            <div
+                              key={i}
                               className="w-full rounded-md overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
-                              onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(imgUrl); }}
+                              onClick={(e) => { e.stopPropagation(); setImagePreview({ images: sharedPost.images, index: i }); }}
                             >
                               <img src={imgUrl} alt={`Attachment ${i}`} className="w-full h-auto object-cover max-h-[200px]" />
                             </div>
@@ -625,8 +708,8 @@ const PostCard = ({ post, isOwnPost, group }) => {
                       {sharedPost.videos && sharedPost.videos.length > 0 && (
                         <div className={`grid gap-1 mt-2 ${sharedPost.videos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                           {sharedPost.videos.map((vidUrl, i) => (
-                            <div 
-                              key={`msvid-${i}`} 
+                            <div
+                              key={`msvid-${i}`}
                               className="w-full rounded-md overflow-hidden border border-gray-200 bg-black cursor-pointer"
                               onClick={(e) => e.stopPropagation()}
                             >
@@ -689,7 +772,7 @@ const PostCard = ({ post, isOwnPost, group }) => {
                       {shareAmount > 0 && <span className="text-[13px] font-medium ml-1">{formatNumber(shareAmount)}</span>}
                     </span>
                   </button>
-                  
+
                   {/* Option button */}
                   <div className='relative' ref={modalOptionRef}>
                     <button
@@ -856,10 +939,11 @@ const PostCard = ({ post, isOwnPost, group }) => {
         />
       )}
 
-      {/* Image Preview Modal */}
-      <ImagePreviewModal 
-          imageUrl={previewImageUrl} 
-          onClose={() => setPreviewImageUrl(null)} 
+      {/* Image Preview Modal - Carousel */}
+      <ImagePreviewModal
+        images={imagePreview?.images}
+        initialIndex={imagePreview?.index || 0}
+        onClose={() => setImagePreview(null)}
       />
     </div>
 

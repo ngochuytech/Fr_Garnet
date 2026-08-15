@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getPostByIdAPI } from '../../../services/postService';
 import PostCard from '../../../components/PostCard';
 import { toast } from 'sonner';
+import { useActivityTracker } from '../../../hooks/useActivityTracker';
 
 const PostDetailView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { trackEvent } = useActivityTracker();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -59,7 +61,7 @@ const PostDetailView = () => {
             </svg>
             Quay lại
           </button>
-          <PostCard post={post} />
+          <PostCard post={post} onTrackEvent={trackEvent} />
         </div>
       </div>
     </div>

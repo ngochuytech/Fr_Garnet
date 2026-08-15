@@ -5,3 +5,9 @@ export const getSuggestedUser = async () => {
     method: "GET",
   })
 };
+
+export const getFollowStats = async () => {
+    return apiFetch('/users/profiles/me/follow-stats', {
+        method: 'GET',
+    });
+};

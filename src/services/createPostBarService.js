@@ -12,9 +12,9 @@ export const createPostBarService = async (postData) => {
     }
 }
 
-export const fetchUserTopics = async () => {
+export const fetchTopics = async () => {
     try {
-        return apiFetch('/users/topics', {
+        return apiFetch('/users/topics/all', {
             method: 'GET',
         });
     } catch (error) {

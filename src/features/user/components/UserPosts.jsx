@@ -1,8 +1,10 @@
 import PostCard from '../../../components/PostCard';
 import { useProfilePosts } from '../../profile/hooks/posts/useProfilePosts';
+import { useActivityTracker } from '../../../hooks/useActivityTracker';
 
 const UserPosts = ({ userId }) => {
   const { posts, loading, loadingMore, error, hasNext, handleGetMorePosts } = useProfilePosts(userId);
+  const { trackEvent } = useActivityTracker();
 
   return (
     <>
@@ -19,7 +21,7 @@ const UserPosts = ({ userId }) => {
             <div className="py-6 text-center text-red-500">{error}</div>
         ) : Array.isArray(posts) && posts.length > 0 ? (
           posts.map((post) => (
-            <PostCard key={post.id} post={post} isOwnPost={false} />
+            <PostCard key={post.id} post={post} isOwnPost={false} onTrackEvent={trackEvent} />
           ))
         ) : (
           <div className="flex flex-col items-center justify-center py-10 text-gray-500">

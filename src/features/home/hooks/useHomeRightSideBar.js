@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { getSuggestedUser } from '../services/homeRightSidebarService';
+import { getSuggestedUser, getFollowStats } from '../services/homeRightSidebarService';
 import { followUser, unfollowUser } from '../../following/services/followingService';
 
 export const useHomeRightSideBar = () => {
@@ -8,6 +8,7 @@ export const useHomeRightSideBar = () => {
     const [suggestedUsers, setSuggestedUsers] = useState([]);
     const [loadingSuggestions, setLoadingSuggestions] = useState(true);
     const [actionLoadingIds, setActionLoadingIds] = useState([]);
+    const [followStats, setFollowStats] = useState({ followingCount: 0, followerCount: 0 });
 
     const debounceTimersRef = useRef({});
     const lastSyncedStatesRef = useRef({});
@@ -15,18 +16,28 @@ export const useHomeRightSideBar = () => {
     const displayName = user?.fullname || 'User';
     const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30`;
     const major = user?.department || 'Thành viên CampusHub';
-    const followingCount = user?.followingCount || 0;
-    const followerCount = user?.followerCount || 0;
+    const followingCount = followStats.followingCount;
+    const followerCount = followStats.followerCount;
 
     useEffect(() => {
         const fetchSuggestedUsers = async () => {
             try {
                 const data = await getSuggestedUser();
-                if (data && Array.isArray(data)) {
-                    setSuggestedUsers(data);
+                let candidates = [];
+                if (data?.candidates) {
+                    candidates = data.candidates;
+                } else if (data && Array.isArray(data)) {
+                    candidates = data;
                 } else if (data && data.items && Array.isArray(data.items)) {
-                    setSuggestedUsers(data.items);
+                    candidates = data.items;
                 }
+
+                const formattedUsers = candidates.map(user => ({
+                    ...user,
+                    id: user.candidateUserId || user.id,
+                }));
+
+                setSuggestedUsers(formattedUsers);
             } catch (error) {
                 console.error("Error fetching suggested users:", error);
             } finally {
@@ -34,8 +45,21 @@ export const useHomeRightSideBar = () => {
             }
         };
 
+        const fetchFollowStats = async () => {
+            try {
+                const stats = await getFollowStats();
+                setFollowStats({
+                    followingCount: stats.followingCount || 0,
+                    followerCount: stats.followersCount || stats.followerCount || 0
+                });
+            } catch (error) {
+                console.error("Error fetching follow stats:", error);
+            }
+        };
+
         if (user) {
             fetchSuggestedUsers();
+            fetchFollowStats();
         } else {
             setLoadingSuggestions(false);
         }

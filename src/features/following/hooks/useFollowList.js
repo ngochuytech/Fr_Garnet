@@ -21,7 +21,16 @@ export const useFollowList = () => {
             try {
                 setLoading(true);
                 const data = await getSuggestedUsers();
-                setUsers(data || []);
+                console.log(data);
+                
+                
+                const candidates = data.items;
+                const formattedUsers = candidates.map(user => ({
+                    ...user,
+                    id: user.candidateUserId || user.id,
+                }));
+                
+                setUsers(formattedUsers);
             } catch (error) {
                 console.error("Lỗi khi tải danh sách gợi ý:", error);
             } finally {

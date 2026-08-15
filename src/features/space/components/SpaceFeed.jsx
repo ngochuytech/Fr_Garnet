@@ -2,6 +2,7 @@ import PostCard from '../../../components/PostCard';
 import { CreatePostBar } from '../../../components/CreatePostBar';
 import { useAuth } from '../../../context/AuthContext';
 import { useSpacePosts } from '../hooks/useSpacePosts';
+import { useActivityTracker } from '../../../hooks/useActivityTracker';
 
 const canCreateGroupPost = (space) => {
   return Boolean(
@@ -13,6 +14,7 @@ const canCreateGroupPost = (space) => {
 
 const SpaceFeed = ({ space, detailLoading, onBack, onShowMembers }) => {
   const { user } = useAuth();
+  const { trackEvent } = useActivityTracker();
   const displayName = user?.fullname || 'User';
   const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30`;
   const {
@@ -88,7 +90,7 @@ const SpaceFeed = ({ space, detailLoading, onBack, onShowMembers }) => {
         )}
 
         {canCreatePost && (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
             <div className="p-3">
               <CreatePostBar
                 avatarUrl={avatarUrl}
@@ -119,6 +121,7 @@ const SpaceFeed = ({ space, detailLoading, onBack, onShowMembers }) => {
                     isOwnPost={isOwnPost}
                     isOwnSharePost={isOwnSharePost}
                     group={space}
+                    onTrackEvent={trackEvent}
                   />
                 </div>
               );

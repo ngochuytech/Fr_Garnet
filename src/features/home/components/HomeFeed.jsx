@@ -2,15 +2,17 @@ import { CreatePostBar } from '../../../components/CreatePostBar';
 import PostCard from '../../../components/PostCard';
 import { useHomeFeed } from '../hooks/useHomeFeed';
 import { useAuth } from '../../../context/AuthContext';
+import { useActivityTracker } from '../../../hooks/useActivityTracker';
 
 const HomeFeed = ({ avatarUrl }) => {
   const { posts, loading, error, hasNext, refreshPosts, handleGetMorePost } = useHomeFeed();
   const { user } = useAuth();
+  const { trackEvent } = useActivityTracker();
 
   return (
     <div className="flex-1 min-w-0">
       {/* Create Post */}
-      <div className="bg-white rounded-xl border border-gray-200 mb-4 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-xl border border-gray-200 mb-4 shadow-sm">
         <div className="p-3">
           <CreatePostBar avatarUrl={avatarUrl} onPostCreated={refreshPosts} />
         </div>
@@ -37,6 +39,7 @@ const HomeFeed = ({ avatarUrl }) => {
                   post={post}
                   isOwnPost={isOwnPost}
                   isOwnSharePost={isOwnSharePost}
+                  onTrackEvent={trackEvent}
                 />
               </div>
             );
