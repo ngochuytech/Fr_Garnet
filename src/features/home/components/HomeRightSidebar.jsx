@@ -48,7 +48,7 @@ const HomeRightSidebar = () => {
                         suggestedUsers.map((user) => {
                             const name = user.fullName || user.name || 'Người dùng';
                             const avatar = user.avatarUrl || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f7edee&color=8d3f41`;
-                            const major = user.department || user.major || 'Thành viên CampusHub';
+                            const major = user.department || user.major || 'Thành viên Garnet';
 
                             return (
                                 <div key={user.id} className="flex items-start justify-between">

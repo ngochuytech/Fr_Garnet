@@ -15,7 +15,7 @@ export const useHomeRightSideBar = () => {
 
     const displayName = user?.fullname || 'User';
     const avatarUrl = user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=dfb9b9&color=6a2f30`;
-    const major = user?.department || 'Thành viên CampusHub';
+    const major = user?.department || 'Thành viên Garnet';
     const followingCount = followStats.followingCount;
     const followerCount = followStats.followerCount;
 
@@ -130,4 +130,4 @@ export const useHomeRightSideBar = () => {
         actionLoadingIds,
         toggleFollow
     }
-}
+}

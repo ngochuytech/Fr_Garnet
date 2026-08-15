@@ -182,7 +182,7 @@ const SpaceGrid = ({
     <main className="w-full">
       <div className="flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Hội nhóm CampusHub</h1>
+          <h1 className="text-xl font-bold text-gray-800">Hội nhóm Garnet</h1>
           <p className="text-sm text-gray-500 mt-1">Quản lý nhóm đã tham gia và khám phá cộng đồng mới</p>
         </div>
         <button
@@ -305,7 +305,7 @@ const SpaceGrid = ({
       {!loading && spaces.length === 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
           <h2 className="text-lg font-bold text-gray-900">Chưa có nhóm nào</h2>
-          <p className="text-sm text-gray-500 mt-2">Tạo nhóm đầu tiên để bắt đầu xây dựng cộng đồng trong CampusHub.</p>
+          <p className="text-sm text-gray-500 mt-2">Tạo nhóm đầu tiên để bắt đầu xây dựng cộng đồng trong Garnet.</p>
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}

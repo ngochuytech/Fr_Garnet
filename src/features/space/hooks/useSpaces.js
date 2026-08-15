@@ -101,7 +101,7 @@ const normalizeMember = (member) => {
     || member?.fullName
     || member?.fullname
     || member?.name
-    || 'Người dùng CampusHub';
+    || 'Người dùng Garnet';
   const profileId = user?.id
     || user?.userId
     || member?.userId

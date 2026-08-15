@@ -91,7 +91,7 @@ const NotificationList = ({
       case 'SHARE_POST': return `${senderName} đã chia sẻ bài viết của bạn`;
       case 'NEW_FOLLOWER': return `${senderName} đã bắt đầu theo dõi bạn`;
       case 'REPORT_RESOLVED': return 'Báo cáo của bạn đã được giải quyết';
-      case 'SYSTEM_ALERT': return 'Thông báo hệ thống CampusHub';
+      case 'SYSTEM_ALERT': return 'Thông báo hệ thống Garnet';
       case 'GROUP_JOIN_REQUEST': return `${senderName} đã yêu cầu tham gia nhóm`;
       case 'GROUP_JOIN_APPROVED': return 'Yêu cầu tham gia nhóm của bạn đã được duyệt';
       case 'GROUP_NAME_UPDATED': return 'Tên nhóm đã được cập nhật';
@@ -198,7 +198,7 @@ const NotificationList = ({
                   <div className="flex-1 min-w-0 pr-6">
                     <div className="flex flex-col">
                       <span className="text-[13px] text-gray-500 mb-1 leading-tight flex items-center flex-wrap gap-1">
-                        <span>CampusHub</span>
+                        <span>Garnet</span>
                         <span className="inline-block px-1">·</span>
                         <span>{formatTime(notif.createdAt)}</span>
                       </span>
@@ -248,7 +248,7 @@ const NotificationList = ({
             <div className="flex items-start justify-between gap-4 p-5 border-b border-gray-100">
               <div className="min-w-0">
                 <p className="text-[12px] font-medium text-gray-500">
-                  CampusHub · {formatTime(selectedNotification.createdAt)}
+                  Garnet · {formatTime(selectedNotification.createdAt)}
                 </p>
                 <h3 className="text-lg font-bold text-gray-900 mt-1 leading-snug">
                   {getNotificationTitle(selectedNotification)}

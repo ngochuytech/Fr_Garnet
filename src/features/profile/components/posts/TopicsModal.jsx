@@ -100,7 +100,7 @@ const TopicsModal = ({ isOpen, onClose }) => {
                 {/* Content */}
                 <div className="p-5 flex-1 overflow-y-auto">
                     <p className="text-[15px] text-gray-600 mb-6 leading-relaxed">
-                        Chủ đề là cách CampusHub biết những bài viết nào cần gửi đến bạn. Hãy càng toàn diện và cụ thể càng tốt để nhận được những bài viết phù hợp nhất.
+                        Chủ đề là cách Garnet biết những bài viết nào cần gửi đến bạn. Hãy càng toàn diện và cụ thể càng tốt để nhận được những bài viết phù hợp nhất.
                     </p>
 
                     <div className="relative" ref={dropdownRef}>

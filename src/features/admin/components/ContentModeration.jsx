@@ -48,7 +48,7 @@ const ContentModeration = () => {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-gray-900">Quản lý bài viết</h1>
-          <p className="text-sm font-medium text-gray-500 mt-0.5">Kiểm duyệt bài viết trên nền tảng CampusHub.</p>
+          <p className="text-sm font-medium text-gray-500 mt-0.5">Kiểm duyệt bài viết trên nền tảng Garnet.</p>
         </div>
       </div>
 

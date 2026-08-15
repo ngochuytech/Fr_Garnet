@@ -94,7 +94,7 @@ const AdminLayout = () => {
               </svg>
             </div>
             <div>
-              <span className="text-lg font-black tracking-tight text-gray-900">CAMPUSHUB</span>
+              <span className="text-lg font-black tracking-tight text-gray-900">Garnet</span>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Admin Console</p>
             </div>
           </Link>

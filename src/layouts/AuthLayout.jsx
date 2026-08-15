@@ -41,7 +41,7 @@ const AuthLayout = () => {
                 color: 'var(--color-dusty-rose-600)',
               }}
             >
-              CampusHub
+              Garnet
             </h1>
           </div>
           <p className="text-sm text-slate-500 font-medium">

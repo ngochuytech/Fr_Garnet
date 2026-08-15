@@ -136,7 +136,7 @@ const FollowingList = () => {
                       {user.fullName}
                     </span>
                     <span className="text-[12px] text-gray-500 mt-0.5">
-                      {user.department || 'Người dùng CampusHub'}
+                      {user.department || 'Người dùng Garnet'}
                     </span>
                   </div>
                 </div>

@@ -137,7 +137,7 @@ const UserManagement = () => {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-gray-900">Người dùng</h1>
-          <p className="text-sm font-medium text-gray-500 mt-0.5">Quản lý tài khoản sinh viên và người dùng CampusHub.</p>
+          <p className="text-sm font-medium text-gray-500 mt-0.5">Quản lý tài khoản sinh viên và người dùng Garnet.</p>
         </div>
       </div>
 

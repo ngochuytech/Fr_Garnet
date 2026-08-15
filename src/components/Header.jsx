@@ -17,7 +17,7 @@ const getPayloadItems = (payload) => {
 };
 
 const normalizeSearchUser = (user) => {
-  const name = user?.fullName || user?.fullname || user?.displayName || user?.name || 'Người dùng CampusHub';
+  const name = user?.fullName || user?.fullname || user?.displayName || user?.name || 'Người dùng Garnet';
 
   return {
     id: user?.id || user?.userId,
@@ -264,7 +264,7 @@ const Header = () => {
         {/* Logo */}
         <Link to="/home" className="flex-shrink-0 cursor-pointer">
           <span className="text-[28px] font-bold font-display" style={{ color: 'var(--color-dusty-rose-600)' }}>
-            CampusHub
+            Garnet
           </span>
         </Link>
 
@@ -338,7 +338,7 @@ const Header = () => {
               onFocus={() => {
                 if (searchQuery.trim()) setIsSearchOpen(true);
               }}
-              placeholder="Tìm kiếm CampusHub"
+              placeholder="Tìm kiếm Garnet"
               className="w-full bg-transparent border-none outline-none px-2 text-sm text-gray-800 placeholder-gray-500"
             />
             {searchQuery && (

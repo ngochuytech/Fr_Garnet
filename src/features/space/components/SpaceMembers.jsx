@@ -59,7 +59,7 @@ const MemberCard = ({
             {member.fullName}
           </h3>
           <p className="text-[13px] text-gray-500 truncate">
-            {member.email || 'CampusHub'}
+            {member.email || 'Garnet'}
           </p>
         </div>
       </button>
