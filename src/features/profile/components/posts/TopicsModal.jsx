@@ -119,7 +119,7 @@ const TopicsModal = ({ isOpen, onClose }) => {
                         </div>
 
                         {/* Search Dropdown */}
-                        {showDropdown && searchTerm && (
+                        {showDropdown && (
                             <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
                                 {isLoading ? (
                                     <div className="p-3 text-sm text-gray-500 text-center">Loading topics...</div>
