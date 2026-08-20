@@ -13,11 +13,11 @@ const HomeRightSidebar = () => {
                     src={currentUser?.avatarUrl}
                     alt={currentUser.displayName}
                     className="w-16 h-16 rounded-full object-cover mb-3 border-2 border-white shadow-sm ring-2 ring-gray-100 cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => navigate(`/user/${currentUser.id}`)}
+                    onClick={() => navigate(`/profile`)}
                 />
                 <h2 
                     className="text-base font-bold text-gray-900 hover:underline cursor-pointer"
-                    onClick={() => navigate(`/user/${currentUser.id}`)}
+                    onClick={() => navigate(`/profile`)}
                 >
                     {currentUser.displayName}
                 </h2>
